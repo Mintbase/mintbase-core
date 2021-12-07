@@ -1,0 +1,48 @@
+name: Build binary
+'on':
+  push:
+    branches:
+      - dontrun
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: clone main repository
+        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          path: mintbase-near-indexer
+          repository: Mintbase/mintbase-near-indexer
+          ssh-key: ${{ secrets.MINTBASE_NEAR_INDEXER_DEPLOY_KEY }}
+#      - uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
+#      - uses: actions-rs/cargo@v1
+#      - name: run indexer
+#        run: ls -lah && cargo indexer
+      - uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.TESTNET_IP }}
+          username: ${{ secrets.VM_USER }}
+          password: ${{ secrets.VM_PASS }}
+          source: "./indexer"
+          target: "/app"
+      - uses: garygrossgarten/github-action-ssh@release
+        with:
+          host: ${{ secrets.TESTNET_IP }}
+          username: ${{ secrets.VM_USER }}
+          password: ${{ secrets.VM_PASS }}
+          command: |
+            cd /app;
+            pi=$(pgrep -f mintbase-near-indexer);
+            po=11;
+            echo '"$po yo"';
+            echo '5 */6 * * * bash -c "exec -a mintbase-near-indexer NETWORK=${{secrets.TESTNET}} POSTGRES=postgres://${{secrets.POSTGRES_USER}}:${{secrets.POSTGRES_PASS}}@localhost:5432/mintlivebase WATCH_ACCOUNTS=test ./indexer --home-dir /home/admin/.near/testnet runa; 2> /app/error.log 1> /app/out.log"' >> mycron;
+            echo '0 */6 * * * pkill "$pi";' >> mycron;
+            echo '* * * * * bash -c "exec -a mintbase-near-indexer /app/run.sh 2> /app/error.log 1> /app/out.log"' >> mycron;
+            echo '*/2 * * * * pkill "$pi"' >> mycron;
+
+            crontab mycron;
+            rm mycron;
+
+

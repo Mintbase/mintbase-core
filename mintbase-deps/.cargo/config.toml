@@ -1,0 +1,2 @@
+[build]
+rustflags = ["-C", "link-arg=-s","-C", "opt-level=s","-C","codegen-units=1"]

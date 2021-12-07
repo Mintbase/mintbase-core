@@ -1,0 +1,13 @@
+root_account="$root.$top_level_account"; # MUST ALREADY EXIST WITH LOCAL CRED
+minter_account="minter02.$root_account";
+market_account="market.$root_account";
+store_account="store906.$root_account"; #don't create store manually
+store_owner_account="store-owner01.$root_account";
+seller1_account="seller01.$root_account";
+buyer1_account="buyer100.$root_account";
+buyer2_account="buyer200.$root_account";
+royalty1_account="royalty01.$root_account";
+royalty2_account="royalty02.$root_account";
+receiver_account="receiver01.$root_account";
+receiver300_account="receiver01.$root_account";
+receiver301_account="receiver01.$root_account";

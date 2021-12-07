@@ -1,0 +1,8 @@
+/target
+.idea
+.vscode
+*leak*
+indexer
+_scripts
+scripts/.postgres.sh
+wasm/*.wasm
