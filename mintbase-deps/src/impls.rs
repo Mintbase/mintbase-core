@@ -1,19 +1,19 @@
-use crate::*;
 #[cfg(feature = "all")]
 use crate::{tokio, tokio_postgres::{self,NoTls}, near_indexer};
 #[cfg(feature = "wasm")]
-pub use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{collections::{LookupMap, UnorderedSet}};
-use near_sdk::*;
+pub use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::*,
+    *,
+    json_types::*
+};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
-use near_sdk::collections::LookupSet;
-use near_sdk::json_types::{U128, U64};
-use near_sdk::{ Balance, StorageUsage};
 use std::convert::TryInto;
-
+use serde::*;
+use crate::*;
 
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
@@ -118,14 +118,14 @@ impl StorageCosts {
 impl NearJsonEvent {
     pub fn near_json_event(&self) -> String {
         let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON {}", &json)
+        format!("EVENT_JSON: {}", &json)
     }
 }
 
 impl Nep171Event {
     pub fn near_json_event(&self) -> String {
         let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON {}", &json)
+        format!("EVENT_JSON: {}", &json)
     }
 }
 
@@ -168,7 +168,12 @@ impl Default for MintbaseStoreFactory {
     }
 }
 
-
+#[cfg(feature="factory-wasm")]
+impl Default for A {
+    fn default() -> Self {
+        env::panic_str("Not initialized yet.");
+    }
+}
 ////////////////
 // Core Logic //
 ////////////////
@@ -353,7 +358,7 @@ impl MintbaseStoreFactory {
             .transfer(self.store_cost)
             .add_full_access_key(self.admin_public_key.clone())
             .deploy_contract(
-                include_bytes!("../../store.wasm")
+                include_bytes!("../../wasm/store.wasm")
                     .to_vec(),
             )
             .function_call("new".to_string(), init_args, 0, GAS_CREATE_STORE)
@@ -540,14 +545,13 @@ impl NewSplitOwner for SplitOwners {
     }
 }
 
-#[cfg(feature="store-wasm")]
-#[near_bindgen]
-#[cfg(feature="store-wasm")]
-impl NonFungibleContractMetadata for MintbaseStore {
-    fn nft_metadata(&self) -> &NFTContractMetadata {
-        &self.metadata
-    }
-}
+// #[cfg_attr(feature="store-wasm",near_bindgen)]
+// #[cfg(feature="store-wasm")]
+// impl NonFungibleContractMetadata for MintbaseStore {
+//     fn nft_metadata(&self) -> &NFTContractMetadata {
+//         &self.metadata
+//     }
+// }
 
 
 
@@ -555,6 +559,7 @@ impl NonFungibleContractMetadata for MintbaseStore {
 // Store Owner Only Methods //
 //////////////////////////////
 /// Only the Owner of this `Store` may call these methods.
+
 #[cfg_attr(feature="store-wasm",near_bindgen)]
 #[cfg(feature="store-wasm")]
 impl MintbaseStore {
@@ -1416,7 +1421,7 @@ impl MintbaseStore {
     /// Internal
     /// update the set of tokens composed underneath parent. If insert is
     /// true, insert token_id; if false, try to remove it.
-    pub fn get_or_new_composed(&mut self, parent: String) -> UnorderedSet<String> {
+    pub(crate) fn get_or_new_composed(&mut self, parent: String) -> UnorderedSet<String> {
         self.composeables.get(&parent).unwrap_or_else(|| {
             let mut prefix: Vec<u8> = vec![b'h'];
             prefix.extend_from_slice(parent.to_string().as_bytes());
@@ -1428,7 +1433,7 @@ impl MintbaseStore {
     /// construct an `UnorderedSet` for them. If they have owned tokens on
     /// this store, get that set.
     /// Internal
-    pub fn get_or_make_new_owner_set(&self, account_id: &AccountId) -> UnorderedSet<u64> {
+    pub(crate) fn get_or_make_new_owner_set(&self, account_id: &AccountId) -> UnorderedSet<u64> {
         self.tokens_per_owner.get(&account_id).unwrap_or_else(|| {
             let mut prefix: Vec<u8> = vec![b'j'];
             prefix.extend_from_slice(account_id.as_bytes());
@@ -1490,7 +1495,7 @@ impl MintbaseStore {
                 approval_id
             ));
         }
-        
+
         self.transfer_internal(&mut token, receiver_id.clone(), true);
         log_nft_transfer(&receiver_id, token_idu64, &memo, token.owner_id.to_string());
     }

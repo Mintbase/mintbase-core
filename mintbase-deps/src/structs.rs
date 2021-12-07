@@ -310,9 +310,59 @@ pub struct StoreInitArgs {
     pub owner_id: AccountId,
 }
 
+#[cfg_attr(feature = "factory-wasm", derive(BorshDeserialize, BorshSerialize))]
+#[cfg(feature="factory-wasm")]
+pub struct A {
+    /// Accounts that are allowed to mint tokens on this Store.
+    pub minters: UnorderedSet<AccountId>,
+    /// Initial deployment data of this Store.
+    pub metadata: NFTContractMetadata,
+    /// If a Minter mints more than one token at a time, all tokens will
+    /// share the same `TokenMetadata`. It's more storage-efficient to store
+    /// that `TokenMetadata` once, rather than to copy the data on each
+    /// Token. The key is generated from `tokens_minted`. The map keeps count
+    /// of how many copies of this token remain, so that the element may be
+    /// dropped when the number reaches zero (ie, when tokens are burnt).
+    pub token_metadata: LookupMap<u64, (u16, TokenMetadata)>,
+    /// If a Minter mints more than one token at a time, all tokens will
+    /// share the same `Royalty`. It's more storage-efficient to store that
+    /// `Royalty` once, rather than to copy the data on each Token. The key
+    /// is generated from `tokens_minted`. The map keeps count of how many
+    /// copies of this token remain, so that the element may be dropped when
+    /// the number reaches zero (ie, when tokens are burnt).
+    pub token_royalty: LookupMap<u64, (u16, Royalty)>,
+    /// Tokens this Store has minted, excluding those that have been burned.
+    pub tokens: LookupMap<u64, Token>,
+    /// A mapping from each user to the tokens owned by that user. The owner
+    /// of the token is also stored on the token itself.
+    pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<u64>>,
+    /// A map from a token_id of a token on THIS contract to a set of tokens,
+    /// that may be on ANY contract. If the owned-token is on this contract,
+    /// the id will have format "<u64>". If the token is on another contract,
+    /// the token will have format "<u64>:account_id"
+    pub composeables: LookupMap<String, UnorderedSet<String>>,
+    /// The number of tokens this `Store` has minted. Used to generate
+    /// `TokenId`s.
+    pub tokens_minted: u64,
+    /// The number of tokens this `Store` has burned.
+    pub tokens_burned: u64,
+    /// The number of tokens approved (listed) by this `Store`. Used to index
+    /// listings and approvals. List ID format: `list_nonce:token_key`
+    pub num_approved: u64,
+    /// The owner of the Contract.
+    pub owner_id: AccountId,
+    /// The Near-denominated price-per-byte of storage, and associated
+    /// contract storage costs. As of April 2021, the price per bytes is set
+    /// to 10^19, but this may change in the future, thus this
+    /// future-proofing field.
+    pub storage_costs: StorageCosts,
+    /// If false, disallow users to call `nft_move`.
+    pub allow_moves: bool,
+}
+
+
+#[cfg_attr(feature = "store-wasm",near_sdk::near_bindgen, derive(BorshDeserialize, BorshSerialize))]
 #[cfg(feature="store-wasm")]
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
 pub struct MintbaseStore {
     /// Accounts that are allowed to mint tokens on this Store.
     pub minters: UnorderedSet<AccountId>,

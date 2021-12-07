@@ -1,21 +1,17 @@
-// #[cfg(feature = "wasm")]
 mod impls;
-// #[cfg(feature = "wasm")]
 mod consts;
 mod enums;
 mod fns;
 mod structs;
 mod traits;
 
-// #[cfg(feature = "wasm")]
 pub use impls::*;
-// #[cfg(feature = "wasm")]
 pub use fns::*;
-
 pub use consts::*;
 pub use enums::*;
 pub use structs::*;
 pub use traits::*;
+
 use std::env::var;
 use std::path::PathBuf;
 use std::str::FromStr;

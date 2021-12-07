@@ -9,7 +9,7 @@
 # `near` if `network` is local or mainnet
 # `testnet` `network` is testnet
 
-. .postgres.sh;
+. scripts/.postgres.sh;
 
 # localnet
 network="local";
@@ -27,8 +27,8 @@ root="test"
 #root="mintbase1"
 
 postgres_user=$_postgres_user;
-postgres_password=$_postgres_pass;
-
-
-
-. .data.sh;
+postgres_password=$_postgres_password;
+postgres_host=$_postgres_host;
+postgres_database=$_postgres_database;
+echo $postgres_host;
+. scripts/.data.sh;

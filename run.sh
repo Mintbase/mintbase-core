@@ -1,4 +1,4 @@
-. scripts/env.sh;
+. scripts/.env.sh;
 
 export NEAR_ENV=$network;
 
@@ -22,6 +22,7 @@ if [ $network = "local" ]; then
       key_path="~/.near-credentials/$network/$root_account.json"
 fi
 
+. scripts/.cmd.sh;
 
 #near create-account $root_account --masterAccount $top_level_account;
 
@@ -32,53 +33,17 @@ fi
 #  near create-account $account --masterAccount $root_account --initialBalance 10;
 #done;
 
-question=$(cat <<EOF
-Type number
-(-2.1) init and run indexer
-(-2) run indexer
-(-1) build contracts
-(0) create required accounts
-(1) redeploy contracts.
-(2) deploy contracts
-(3) create store
-(4) grant minter permission
-(5) mint 10 tokens with no royalty
-(6) mint 10 tokens with royalty
-(7) approve nft to be market listed with auto-transfer
-(8) approve nft to be market listed without auto-transfer
-(9) make offer to buy nft
-(10) accept offer and transfer nft
-(11) revoke minter permissions
-(12) Batch transfer nft tokens
-(13) Batch upgrade stores
-(14) Revoke all approvals
-EOF
-)
 
 
-function build_contracts(){
-  cd mintbase-deps && cargo market-wasm && cargo store-wasm && cargo factory-wasm && cd ../;
-#echo $root_account;
-#echo 333;
-}
-
-function init_and_run_indexer() {
-#    cargo indexer;
-    str='rm -rf _near_dir_';
-    str="${str//_near_dir_/$near_dir}";
-    echo $str;
-    eval $str;
-
-    str='./indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;';
+function run_local_indexer() {
+    str='bin/indexer --home-dir _near_dir_ init --chain-id local;';
     str="${str//_near_dir_/$near_dir}";
     str="${str//_NEAR_ENV_/$NEAR_ENV}";
     echo $str;
     eval $str;
+    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/local/config.json;
 
-    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json;
-
-#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
-    str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
+    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
     str="${str//_near_dir_/$near_dir}";
     str="${str//_root_/$root}";
     str="${str//_network_/$network}";
@@ -89,7 +54,41 @@ function init_and_run_indexer() {
     eval $str;
 }
 
-function run_indexer() {
+
+function build_contracts(){
+  cd mintbase-deps && cargo market-wasm && cargo store-wasm && cargo factory-wasm && cd ../;
+#echo $root_account;
+#echo 333;
+}
+
+function run_local_indexer() {
+    str='rm -rf _near_dir_';
+    str="${str//_near_dir_/$near_dir}";
+    echo $str;
+    eval $str;
+
+    str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;';
+    str="${str//_near_dir_/$near_dir}";
+    str="${str//_NEAR_ENV_/$NEAR_ENV}";
+    echo $str;
+    eval $str;
+
+    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json;
+
+#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
+    str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
+    str="${str//_near_dir_/$near_dir}";
+    str="${str//_root_/$root}";
+    str="${str//_network_/$network}";
+    str="${str//_postgres_password_/$postgres_password}";
+    str="${str//_postgres_user_/$postgres_user}";
+    str="${str//_postgres_host_/$postgres_host}";
+    str="${str//_postgres_database_/$postgres_database}";
+    echo $str;
+    eval $str;
+}
+
+function run_indexer2() {
 #    cargo indexer;
     str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
     str="${str//_near_dir_/$near_dir}";
@@ -115,13 +114,13 @@ function create_accounts() {
 }
 
 function deploy() {
-  str='near deploy --wasmFile factory.wasm _root_account_ --initFunction new --initArgs null --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_';
+  str='near deploy --wasmFile wasm/factory.wasm _root_account_ --initFunction new --initArgs null --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_';
   str="${str//_root_account_/$root_account}";
   str="${str//_node_url_/$node_url}";
   str="${str//_key_path_/$key_path}";
   echo running "$str";
   eval "$str";
-  str='near deploy --wasmFile market.wasm _market_account_ --initFunction new --initArgs '\''{"init_allowlist": ["_root_account_"]}'\'' --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_';
+  str='near deploy --wasmFile wasm/market.wasm _market_account_ --initFunction new --initArgs '\''{"init_allowlist": ["_root_account_"]}'\'' --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_';
   str="${str//_root_account_/$root_account}";
   str="${str//_market_account_/$market_account}";
   str="${str//_node_url_/$node_url}";
@@ -318,108 +317,10 @@ function revoke_all_approvals() {
   eval "$str";
 }
 
-function programa() {
-  echo "$question";
-  read -r response;
-  echo "you chose $response";
-
-  case $response in
-  -2.1)
-    if [ $network = 'mainnet' ]; then
-      echo 'we stopped you from doing something dangerous';
-    elif [ $network = 'testnet' ]; then
-      echo 'we stopped you from doing something dangerous';
-   else
-       init_and_run_indexer;
-    fi
-#    init_and_run_indexer & (sleep 2 && create_accounts && deploy);
-    programa;
-    ;;
-  -2)
-    run_indexer &
-    programa;
-    ;;
-  -1)
-    build_contracts;
-    programa;
-    ;;
-  0)
-    create_accounts;
-    programa;
-    ;;
-  1)
-    redeploy;
-    programa;
-    ;;
-  2)
-    deploy;
-    programa;
-    ;;
-  3)
-    create_store;
-    programa;
-    ;;
-  4)
-    grant_minter;
-    programa;
-    ;;
-  5)
-    mint_tokens_nr;
-    echo "remember token_id to list in marketplace";
-    programa;
-    ;;
-  6)
-    mint_tokens;
-    echo "remember token_id to list in marketplace";
-    programa;
-    ;;
-  7)
-    echo "enter token_id:";
-    read -r token_id;
-    nft_approve_autotransfer "$token_id";
-    programa;
-    ;;
-  8)
-    echo "enter token_id:";
-    read -r token_id;
-    nft_approve_manual_transfer "$token_id";
-    programa;
-    ;;
-  9)
-    echo "token_id:";
-    read -r token_id;
-    make_offer "$token_id";
-    programa;
-    ;;
-  10)
-    echo "token_id:";
-    read -r token_id;
-    accept_offer_and_transfer "$token_id";
-    programa;
-    ;;
-  11)
-    revoke_minter;
-    programa;
-    ;;
-  12)
-    echo "token_id:";
-    read -r token_id;
-    nft_batch_transfer "$token_id";
-    programa;
-    ;;
-  13)
-    batch_upgrade_stores;
-    programa;
-    ;;
-  *)
-    echo not a command;
-    programa
-    ;;
-  esac
-}
 
 if [ -n "$1" ]; then
   echo $1;
+  programa $1;
   else
   programa
 fi

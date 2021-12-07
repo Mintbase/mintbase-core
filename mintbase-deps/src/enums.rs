@@ -1,13 +1,11 @@
-use crate::*;
 #[cfg(feature = "wasm")]
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
     env,
     json_types::Base64VecU8,
     serde::{Deserialize, Serialize},
     AccountId,
 };
-use serde::*;
 
 /// This enum used to support other time denominations, which were dropped
 /// for simplicity.
@@ -21,36 +19,36 @@ pub enum TimeUnit {
 #[serde(tag = "event", content = "data")]
 #[serde(rename_all = "snake_case")]
 pub enum Nep171EventLog{
-    NftMint(Vec<NftMintLog>),
-    NftBurn(Vec<NftBurnLog>),
-    NftTransfer(Vec<NftTransferLog>)
+    NftMint(Vec<crate::NftMintLog>),
+    NftBurn(Vec<crate::NftBurnLog>),
+    NftTransfer(Vec<crate::NftTransferLog>)
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum NftEvent {
-    NftCreateStore(NftStoreCreateLog),
-    NftStringEvent(NftStringLog),
-    NftCreate(Vec<NftMintLog>),
-    NftDelete(Vec<NftBurnLog>),
-    NftCreateApproval(Vec<NftApproveLog>),
-    NftRevoke(NftRevokeLog),
-    NftUpdate(Vec<NftTransferLog>),
-    NftUpdateSplitOwner(NftSetSplitOwnerLog),
-    NftUpdateLoan(NftLoanSetLog),
-    NftCreateCompose(NftComposeLog),
-    NftDeleteCompose(NftUncomposeLog),
-    NftOnCreateCompose(NftOnComposeLog),
-    NftOnDeleteCompose(NftOnUncomposeLog),
-    NftOnMove(NftOnMoveLog),
-    NftMoved(NftMovedLog),
-    NftCreateList(Vec<NftListLog>),
-    NftCreateOffer(NftOfferLog),
-    NftUpdateOffer(NftUpdateOfferLog),
-    NftCreateSale(NftSaleLog),
-    NftUpdateMarket(NftMarketLog),
-    NftUpdateIcon(NftOptionStringLog),
-    NftUpdateList(NftUpdateListLog),
+    NftCreateStore(crate::NftStoreCreateLog),
+    NftStringEvent(crate::NftStringLog),
+    NftCreate(Vec<crate::NftMintLog>),
+    NftDelete(Vec<crate::NftBurnLog>),
+    NftCreateApproval(Vec<crate::NftApproveLog>),
+    NftRevoke(crate::NftRevokeLog),
+    NftUpdate(Vec<crate::NftTransferLog>),
+    NftUpdateSplitOwner(crate::NftSetSplitOwnerLog),
+    NftUpdateLoan(crate::NftLoanSetLog),
+    NftCreateCompose(crate::NftComposeLog),
+    NftDeleteCompose(crate::NftUncomposeLog),
+    NftOnCreateCompose(crate::NftOnComposeLog),
+    NftOnDeleteCompose(crate::NftOnUncomposeLog),
+    NftOnMove(crate::NftOnMoveLog),
+    NftMoved(crate::NftMovedLog),
+    NftCreateList(Vec<crate::NftListLog>),
+    NftCreateOffer(crate::NftOfferLog),
+    NftUpdateOffer(crate::NftUpdateOfferLog),
+    NftCreateSale(crate::NftSaleLog),
+    NftUpdateMarket(crate::NftMarketLog),
+    NftUpdateIcon(crate::NftOptionStringLog),
+    NftUpdateList(crate::NftUpdateListLog),
 }
 
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
@@ -61,7 +59,7 @@ pub enum Owner {
     /// Compose pattern: owned by a token on this contract.
     TokenId(u64),
     /// Cross-compose pattern: owned by a token on another contract.
-    CrossKey(TokenKey),
+    CrossKey(crate::TokenKey),
     /// Lock: temporarily locked until some callback returns.
     Lock(AccountId),
 }
