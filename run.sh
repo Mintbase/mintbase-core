@@ -107,7 +107,7 @@ function create_accounts() {
     $buyer1_account $buyer2_account $royalty1_account \
     $royalty2_account $receiver_account; do
       ((z=z%N)); ((z++==0)) && wait
-        str="near create-account $i --masterAccount $root_account --initialBalance 3 --nodeUrl $node_url --keyPath $key_path";
+        str="near create-account $i --masterAccount $root_account --initialBalance 4 --nodeUrl $node_url --keyPath $key_path";
         echo running $str;
         eval $str &
     done
@@ -130,14 +130,14 @@ function deploy() {
 }
 
 function redeploy() {
-  str='near deploy --wasmFile factory.wasm _root_account_ --masterAccount _root_account_ --nodeUrl _node_url_';
+  str='near deploy --wasmFile wasm/factory.wasm _root_account_ --masterAccount _root_account_ --nodeUrl _node_url_';
   str="${str//_root_account_/$root_account}";
   str="${str//_node_url_/$node_url}";
   str="${str//_key_path_/$key_path}";
   echo running "$str";
   eval "$str";
 
-  str='near deploy --wasmFile market.wasm _market_account_ --masterAccount _root_account_ --nodeUrl _node_url_';
+  str='near deploy --wasmFile wasm/market.wasm _market_account_ --masterAccount _root_account_ --nodeUrl _node_url_';
   str="${str//_root_account_/$root_account}";
   str="${str//_market_account_/$market_account}";
   str="${str//_node_url_/$node_url}";
@@ -226,7 +226,7 @@ function nft_approve_manual_transfer() {
 }
 
 function make_offer() {
-  str='near call _market_account_ make_offer '\''{"token_key":"_1_:_store_account_", "price":"1000000000000000000000000", "timeout":{"Hours":24} }'\'' --accountId _buyer1_account_ --deposit 1 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_';
+  str='near call _market_account_ make_offer '\''{"token_key":["_1_:_store_account_"], "price":["1000000000000000000000000"], "timeout":[{"Hours":24}] }'\'' --accountId _buyer1_account_ --deposit 1 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_';
   str="${str//_1_/$1}";
   str="${str//_market_account_/$market_account}";
   str="${str//_store_account_/$store_account}";

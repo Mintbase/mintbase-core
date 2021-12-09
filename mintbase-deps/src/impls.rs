@@ -679,7 +679,7 @@ impl MintbaseStore {
                 approval_id.into(),
                 msg,
                 account_id,
-                env::attached_deposit() - self.storage_costs.common,
+                0,
                 GAS_PASS_TO_APPROVED,
             )
             .into()
@@ -1723,6 +1723,7 @@ impl From<String> for TokenKey {
         }
     }
 }
+
 
 impl SafeFraction {
     /// Take a u32 numerator to a 10^4 denominator.

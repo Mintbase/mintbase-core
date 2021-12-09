@@ -628,6 +628,14 @@ pub struct NftUpdateListLog {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOfferLog2 {
+    pub offer: TokenOffer,
+    pub list_id:String,
+    pub token_key:String,
+    pub offer_num:u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftOfferLog {
     pub price: String,
     pub from:String,

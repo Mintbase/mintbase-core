@@ -41,6 +41,7 @@ pub async fn get_postgres_conn() -> tokio_postgres::Client {
 
 #[cfg(feature = "all")]
 pub fn near_json_event_from_str(s:&str)->Result<NearJsonEvent,serde_json::Error>{
+    let s = s.replace("EVENT_JSON:","");
     let s = s.replace("EVENT_JSON","");
     let event = serde_json::from_str::<NearJsonEvent>(s.as_str())?;
     Ok(event)
@@ -927,22 +928,22 @@ pub fn log_set_token_asking_price(price: &U128, list_id: &str) {
     // );
 }
 
-pub fn log_make_offer(offer: &TokenOffer, token_key: &str, list_id: &str, offer_num: u64) {
-    let log = NftOfferLog{ 
-        price: offer.price.to_string(),
-        from: offer.from.to_string(),
-        timeout: offer.timeout.0.to_string(),
-        list_id: list_id.to_string(), 
-        token_key: token_key.to_string(),
-        offer_num
-     };
+pub fn log_make_offer(offer: Vec<&TokenOffer>, token_key: Vec<&String>, list_id: Vec<String>, offer_num: Vec<u64>) {
+    let log = offer.iter().enumerate().map(|(u,&x)|{
+        NftOfferLog2{
+            offer: x.clone(),
+            list_id: list_id[u].clone(),
+            token_key: token_key[u].clone(),
+            offer_num:offer_num[u]
+        }
+    }).collect::<Vec<_>>();
     let event = NearJsonEvent {
         standard: "nep171".to_string(),
         version: "1.0.0".to_string(),
         event: "nft_make_offer".to_string(),
         data: serde_json::to_string(&log).unwrap(),
     };
-               env::log_str(event.near_json_event().as_str());
+   env::log_str(event.near_json_event().as_str());
     // env::log(
     //     json!({
     //   "type": "make_offer".to_string(),
