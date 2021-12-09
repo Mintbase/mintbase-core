@@ -150,7 +150,7 @@ function redeploy_single_store() {
   cred=$(cat ~/.near-credentials/$top_level_account/$root_account.json);
   echo creating credentials "$cred";
   echo "$cred" > ~/.near-credentials/"$network"/"$1".json
-  str='near deploy --wasmFile store.wasm _1_ --masterAccount _root_account_';
+  str='near deploy --wasmFile wasm/store.wasm _1_ --masterAccount _root_account_';
   str="${str//_root_account_/$root_account}";
   str="${str//_1_/$1}";
   echo running "$str";
@@ -297,7 +297,7 @@ function batch_upgrade_stores() {
   for row in $(jq -r '.[]'); do
     ((i=i%N)); ((i++==0)) && wait
       redeploy_single_store "$row" &
-  done < ./stores.json
+  done < scripts/arr.json
 }
 
 function revoke_all_approvals() {
