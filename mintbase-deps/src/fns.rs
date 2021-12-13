@@ -524,11 +524,11 @@ pub fn log_nft_transfer(to: &AccountId, token_id: u64, memo: &Option<String>, ol
     // );
 }
 
-pub fn log_nft_batch_transfer(tokens: &[U64], accounts: &[AccountId], old_owner:String) {
+pub fn log_nft_batch_transfer(tokens: &[U64], accounts: &[AccountId], old_owners:Vec<String>) {
     let log = accounts.iter().enumerate().map(|(u,x)|{
         NftTransferLog {
             authorized_id: None,
-            old_owner_id: old_owner.clone(),
+            old_owner_id: old_owners[u].clone(),
             new_owner_id: x.to_string(),
             token_ids: vec![tokens[u].0.to_string()],
             memo: None,
