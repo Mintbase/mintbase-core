@@ -545,13 +545,13 @@ impl NewSplitOwner for SplitOwners {
     }
 }
 
-// #[cfg_attr(feature="store-wasm",near_bindgen)]
-// #[cfg(feature="store-wasm")]
-// impl NonFungibleContractMetadata for MintbaseStore {
-//     fn nft_metadata(&self) -> &NFTContractMetadata {
-//         &self.metadata
-//     }
-// }
+#[cfg_attr(feature="store-wasm",near_bindgen)]
+#[cfg(feature="store-wasm")]
+impl NonFungibleContractMetadata for MintbaseStore {
+    fn nft_metadata(&self) -> &NFTContractMetadata {
+        &self.metadata
+    }
+}
 
 
 
