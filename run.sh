@@ -7,7 +7,7 @@ near_dir=~/.near/$network;
 if [ "$network" = "testnet" ]; then
   node_url="https://rpc.testnet.near.org"; #testnet
   elif [ $network == "mainnet" ]; then
-    node_url="https://rpc.near.org"; #mainnet
+    node_url="https://rpc.mainnet.near.org"; #mainnet
   elif [ $network == "local" ]; then
     node_url="http://127.0.0.1:3030"; #local
   else
@@ -147,7 +147,7 @@ function redeploy() {
 }
 
 function redeploy_single_store() {
-  cred=$(cat ~/.near-credentials/$top_level_account/$root_account.json);
+  cred=$(cat ~/.near-credentials/$network/$root_account.json);
   echo creating credentials "$cred";
   echo "$cred" > ~/.near-credentials/"$network"/"$1".json
   str='near deploy --wasmFile wasm/store.wasm _1_ --masterAccount _root_account_';
