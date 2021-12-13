@@ -624,21 +624,27 @@ impl MintbaseStore {
         assert!(!token_ids.is_empty());
         let pred = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&pred).expect("none owned");
-        let (tokens, accounts): (Vec<U64>, Vec<AccountId>) = token_ids
+        let (tokens,accounts,old_owners) = token_ids
             .into_iter()
             .map(|(token_id, account_id)| {
                 let token_idu64 = token_id.into();
                 let mut token = self.nft_token_internal(token_idu64);
+                let old_owner = token.owner_id.to_string();
                 assert!(!token.is_loaned());
                 assert!(token.is_pred_owner());
                 assert_ne!(account_id.to_string(), token.owner_id.to_string()); // can't transfer to self
                 self.transfer_internal(&mut token, account_id.clone(), false);
                 set_owned.remove(&token_idu64);
-                (token_id, account_id)
+                (token_id, account_id,old_owner)
             })
-            .unzip();
+            .fold((vec![],vec![],vec![]),|mut acc,(tid,aid,oid)|{
+                acc.0.push(tid);
+                acc.1.push(aid);
+                acc.2.push(oid);
+                acc
+            });
         self.tokens_per_owner.insert(&pred, &set_owned);
-        log_nft_batch_transfer(&tokens, &accounts, env::predecessor_account_id().to_string());
+        log_nft_batch_transfer(&tokens, &accounts, old_owners);
     }
 
     /// Get the holder of the token. The token may be owned by:
@@ -1485,6 +1491,7 @@ impl MintbaseStore {
         assert_one_yocto();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
+        let old_owner = token.owner_id.to_string();
         assert!(!token.is_loaned());
         if !token.is_pred_owner() {
             // check if pred has an approval
@@ -1497,7 +1504,7 @@ impl MintbaseStore {
         }
 
         self.transfer_internal(&mut token, receiver_id.clone(), true);
-        log_nft_transfer(&receiver_id, token_idu64, &memo, token.owner_id.to_string());
+        log_nft_transfer(&receiver_id, token_idu64, &memo, old_owner);
     }
 
     #[payable]
