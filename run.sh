@@ -317,6 +317,37 @@ function revoke_all_approvals() {
   eval "$str";
 }
 
+function update_list(){
+    str='near call _market_account_ update_allowlist '\''{"account_id":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000';
+    str="${str//_1_/$1}";
+    str="${str//_market_account_/$market_account}";
+    str="${str//_root_account_/$root_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function get_allow_list(){
+    str='near view _market_account_ get_allowlist';
+    str="${str//_market_account_/$market_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function update_ban_list(){
+    str='near call _market_account_ update_banlist '\''{"account_id":"_1_", "state":false}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000';
+    str="${str//_1_/$1}";
+    str="${str//_market_account_/$market_account}";
+    str="${str//_root_account_/$root_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function get_ban_list(){
+    str='near view _market_account_ get_banlist';
+    str="${str//_market_account_/$market_account}";
+    echo running "$str";
+    eval "$str";
+}
 
 if [ -n "$1" ]; then
   echo $1;
