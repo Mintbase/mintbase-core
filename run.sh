@@ -88,6 +88,19 @@ function run_local_indexer() {
     eval $str;
 }
 
+function run_stateful_indexer() {
+    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_watch_accounts_ bin/indexer --home-dir _near_dir_ run;';
+    str="${str//_near_dir_/$near_dir}";
+    str="${str//_watch_accounts_/$watch_accounts}";
+    str="${str//_network_/$network}";
+    str="${str//_postgres_password_/$postgres_password}";
+    str="${str//_postgres_user_/$postgres_user}";
+    str="${str//_postgres_host_/$postgres_host}";
+    str="${str//_postgres_database_/$postgres_database}";
+    echo $str;
+#    eval $str;
+}
+
 function run_indexer2() {
 #    cargo indexer;
     str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';

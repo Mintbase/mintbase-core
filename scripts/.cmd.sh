@@ -1,5 +1,6 @@
 question=$(cat <<EOF
 Type number
+(-2.2) run stateful indexer
 (-2.1) init and run indexer
 (-2) run indexer
 (-1) build contracts
@@ -33,6 +34,14 @@ function programa() {
   echo "you chose $response";
 
   case $response in
+  -2.2)
+    echo "are you sure? y/n";
+    read -r answer;
+    if [ $answer = 'y' ]; then
+          run_stateful_indexer;
+    fi
+    programa;
+    ;;
   -2.1)
     if [ $network = 'mainnet' ]; then
       echo 'we stopped you from doing something dangerous';

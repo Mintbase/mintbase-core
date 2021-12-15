@@ -20,6 +20,8 @@
 network="testnet";
 top_level_account="testnet"
 root="mintspace2"
+misfits_root="tenk"
+watch_accounts="$root,$misfits_root"
 
 # mainnet
 #network="mainnet";
