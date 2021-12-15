@@ -1,5 +1,6 @@
 question=$(cat <<EOF
 Type number
+(-2.2) run stateful indexer
 (-2.1) init and run indexer
 (-2) run indexer
 (-1) build contracts
@@ -18,6 +19,10 @@ Type number
 (12) Batch transfer nft tokens
 (13) Batch upgrade stores
 (14) Revoke all approvals
+(15) Update market allow list
+(16) Get allow list
+(17) Update ban list
+(18) Get ban list
 EOF
 );
 
@@ -29,6 +34,14 @@ function programa() {
   echo "you chose $response";
 
   case $response in
+  -2.2)
+    echo "are you sure? y/n";
+    read -r answer;
+    if [ $answer = 'y' ]; then
+          run_stateful_indexer;
+    fi
+    programa;
+    ;;
   -2.1)
     if [ $network = 'mainnet' ]; then
       echo 'we stopped you from doing something dangerous';
@@ -114,6 +127,26 @@ function programa() {
     ;;
   13)
     batch_upgrade_stores;
+    programa;
+    ;;
+  15)
+    echo "account_id:";
+    read -r account_id;
+    update_list $account_id;
+    programa;
+    ;;
+  16)
+    get_allow_list;
+    programa;
+    ;;
+  17)
+    echo "account_id:";
+    read -r account_id;
+    update_ban_list $account_id;
+    programa;
+    ;;
+  18)
+    get_ban_list;
     programa;
     ;;
   *)

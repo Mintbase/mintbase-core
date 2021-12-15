@@ -88,6 +88,19 @@ function run_local_indexer() {
     eval $str;
 }
 
+function run_stateful_indexer() {
+    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_watch_accounts_ bin/indexer --home-dir _near_dir_ run;';
+    str="${str//_near_dir_/$near_dir}";
+    str="${str//_watch_accounts_/$watch_accounts}";
+    str="${str//_network_/$network}";
+    str="${str//_postgres_password_/$postgres_password}";
+    str="${str//_postgres_user_/$postgres_user}";
+    str="${str//_postgres_host_/$postgres_host}";
+    str="${str//_postgres_database_/$postgres_database}";
+    echo $str;
+#    eval $str;
+}
+
 function run_indexer2() {
 #    cargo indexer;
     str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
@@ -317,6 +330,37 @@ function revoke_all_approvals() {
   eval "$str";
 }
 
+function update_list(){
+    str='near call _market_account_ update_allowlist '\''{"account_id":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000';
+    str="${str//_1_/$1}";
+    str="${str//_market_account_/$market_account}";
+    str="${str//_root_account_/$root_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function get_allow_list(){
+    str='near view _market_account_ get_allowlist';
+    str="${str//_market_account_/$market_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function update_ban_list(){
+    str='near call _market_account_ update_banlist '\''{"account_id":"_1_", "state":false}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000';
+    str="${str//_1_/$1}";
+    str="${str//_market_account_/$market_account}";
+    str="${str//_root_account_/$root_account}";
+    echo running "$str";
+    eval "$str";
+}
+
+function get_ban_list(){
+    str='near view _market_account_ get_banlist';
+    str="${str//_market_account_/$market_account}";
+    echo running "$str";
+    eval "$str";
+}
 
 if [ -n "$1" ]; then
   echo $1;
