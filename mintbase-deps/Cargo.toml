@@ -46,6 +46,7 @@ near-indexer = { git = "https://github.com/near/nearcore", rev="397a7a45b8efd3e4
 store-wasm = ["wasm"]
 factory-wasm = ["wasm"]
 market-wasm = ["wasm"]
+helper-wasm = ["wasm"]
 test = ["clap","all"]
 panic-test=[]
 blockchain = ["near-indexer","near-jsonrpc-client","near-client-primitives",

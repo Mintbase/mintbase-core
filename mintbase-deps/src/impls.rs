@@ -168,12 +168,31 @@ impl Default for MintbaseStoreFactory {
     }
 }
 
-#[cfg(feature="factory-wasm")]
-impl Default for A {
-    fn default() -> Self {
-        env::panic_str("Not initialized yet.");
+#[cfg(feature="helper-wasm")]
+#[cfg_attr(feature="helper-wasm", near_bindgen)]
+impl HelperWasm {
+    pub fn nft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        previous_owner_id: AccountId,
+        token_id: String,
+        msg: String,
+    )->PromiseOrValue<bool> {
+        env::log_str(
+            format!("in nft_on_transfer; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
+                             &sender_id,
+                             &previous_owner_id,
+                             &token_id,
+                             msg).as_str()
+        );
+        match msg.as_str() {
+            "true" => PromiseOrValue::Value(true),
+            "false" => PromiseOrValue::Value(false),
+            _ => env::panic_str("unsupported msg"),
+        }
     }
 }
+
 ////////////////
 // Core Logic //
 ////////////////
@@ -518,6 +537,14 @@ impl TokenMetadata {
 
 
 /// default must be implemented for wasm compilation.
+#[cfg(feature="helper-wasm")]
+impl Default for HelperWasm {
+    fn default() -> Self {
+        Self{
+            count: 0
+        }
+    }
+}
 #[cfg(feature="store-wasm")]
 impl Default for MintbaseStore {
     fn default() -> Self {
@@ -759,14 +786,18 @@ impl MintbaseStore {
     #[private]
     pub fn nft_resolve_transfer(
         &mut self,
+        owner_id: AccountId,
         receiver_id: AccountId,
-        token_id: u64,
-        memo: Option<String>,
+        token_id: String,
+        approved_account_ids: Option<Vec<String>>,
     ) {
-        let old_owner = env::predecessor_account_id().to_string();
-        let mut token = self.nft_token_internal(token_id);
+        let l = format!("owner_id={} receiver_id={} token_id={} approved_ids={:?} pred={}",
+        owner_id,receiver_id,token_id,approved_account_ids,env::predecessor_account_id());
+        env::log_str(l.as_str());
+        let token_id_u64 = token_id.parse::<u64>().unwrap();
+        let mut token = self.nft_token_internal(token_id_u64);
         self.unlock_token(&mut token);
-        assert_eq!(receiver_id.to_string(), token.owner_id.to_string());
+        // assert_eq!(receiver_id.to_string(), token.owner_id.to_string());
         assert_eq!(env::promise_results_count(), 1);
         match env::promise_result(0) {
             near_sdk::PromiseResult::Successful(bb) => {
@@ -774,7 +805,7 @@ impl MintbaseStore {
                 // if b is true, token should be returned to sender id (do nothing).
                 if !b {
                     self.transfer_internal(&mut token, receiver_id.clone(), true);
-                    log_nft_transfer(&receiver_id, token_id, &memo, old_owner);
+                    log_nft_transfer(&receiver_id, token_id_u64, &None, owner_id.to_string());
                 }
             }
             near_sdk::PromiseResult::Failed => {}
@@ -1513,7 +1544,6 @@ impl MintbaseStore {
         receiver_id: AccountId,
         token_id: U64,
         approval_id: Option<u64>,
-        memo: Option<String>,
         msg: String,
     ) -> Promise {
         assert_one_yocto();
@@ -1532,7 +1562,7 @@ impl MintbaseStore {
 
         ext_on_transfer::nft_on_transfer(
             pred.clone(),
-            owner_id,
+            owner_id.clone(),
             token_id,
             msg,
             receiver_id.clone(),
@@ -1540,9 +1570,10 @@ impl MintbaseStore {
             Gas(GAS_NFT_TRANSFER_CALL),
         )
         .then(ext_self::nft_resolve_transfer(
+            owner_id.clone(),
             receiver_id,
-            token_idu64,
-            memo,
+            token_id.0.to_string(),
+            None,
             env::current_account_id(),
             NO_DEPOSIT,
             Gas(GAS_NFT_TRANSFER_CALL),

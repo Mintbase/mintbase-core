@@ -178,7 +178,13 @@ pub trait NonFungibleResolveTransfer {
     ///
     /// Mild modifications from core standard, commented where applicable.
     #[private]
-    fn nft_resolve_transfer(&mut self, receiver_id: AccountId, token_id: u64, memo: Option<String>);
+    fn nft_resolve_transfer(
+        &mut self,
+        owner_id: AccountId,
+        receiver_id: AccountId,
+        token_id: String,
+        approved_account_ids: Option<Vec<String>>,
+    );
 }
 
 /// Non-Fungible Token Approval NEP 178. Ref:

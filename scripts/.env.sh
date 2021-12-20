@@ -20,14 +20,14 @@
 network="testnet";
 top_level_account="testnet"
 root="mintspace2"
-misfits_root="tenk"
-watch_accounts="$root,$misfits_root"
 
 # mainnet
 #network="mainnet";
 #top_level_account="near"
 #root="mintbase1"
 
+misfits_root="tenk"
+watch_accounts="$root,$misfits_root"
 postgres_user=$_postgres_user;
 postgres_password=$_postgres_password;
 postgres_host=$_postgres_host;

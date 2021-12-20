@@ -1,9 +1,11 @@
 question=$(cat <<EOF
 Type number
+(-2.3) init indexer
 (-2.2) run stateful indexer
 (-2.1) init and run indexer
 (-2) run indexer
 (-1) build contracts
+(-1.1) build indexer
 (0) create required accounts
 (1) redeploy contracts.
 (2) deploy contracts
@@ -17,6 +19,7 @@ Type number
 (10) accept offer and transfer nft
 (11) revoke minter permissions
 (12) Batch transfer nft tokens
+(12.1) Nft transfer call
 (13) Batch upgrade stores
 (14) Revoke all approvals
 (15) Update market allow list
@@ -32,8 +35,11 @@ function programa() {
   echo "$question";
   read -r response;
   echo "you chose $response";
-
   case $response in
+   -2.3)
+    init_indexer;
+    programa;
+    ;;
   -2.2)
     echo "are you sure? y/n";
     read -r answer;
@@ -55,6 +61,10 @@ function programa() {
     ;;
   -2)
     run_local_indexer &
+    programa;
+    ;;
+  -1.1)
+    build_indexer;
     programa;
     ;;
   -1)
@@ -123,6 +133,12 @@ function programa() {
     echo "token_id:";
     read -r token_id;
     nft_batch_transfer "$token_id";
+    programa;
+    ;;
+  12.1)
+    echo "token_id:";
+    read -r token_id;
+    nft_transfer_call "$token_id";
     programa;
     ;;
   13)
