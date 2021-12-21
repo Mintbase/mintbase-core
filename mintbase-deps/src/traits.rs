@@ -3,7 +3,7 @@ use near_sdk::*;
 use near_sdk::json_types::{U128, U64};
 
 
-#[cfg_attr(feature = "factory-wasm",ext_contract(ext_self))]
+#[cfg_attr(feature = "factory-wasm",ext_contract(factory_self))]
 #[cfg(feature="factory-wasm")]
 pub trait OnCreateCallback {
     fn on_create(
@@ -147,7 +147,7 @@ pub trait NonFungibleContractCore {
     fn nft_token(&self, token_id: U64) -> Option<Token>;
 }
 
-#[cfg_attr(feature = "store-wasm", ext_contract(ext_self))]
+#[cfg_attr(feature = "store-wasm", ext_contract(store_self))]
 #[cfg(feature = "store-wasm")]
 pub trait NonFungibleResolveTransfer {
     /// Finalize an `nft_transfer_call` chain of cross-contract calls.

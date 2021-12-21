@@ -381,7 +381,7 @@ impl MintbaseStoreFactory {
                     .to_vec(),
             )
             .function_call("new".to_string(), init_args, 0, GAS_CREATE_STORE)
-            .then(ext_self::on_create(
+            .then(factory_self::on_create(
                 env::predecessor_account_id(),
                 metadata,
                 owner_id,
@@ -1575,7 +1575,7 @@ impl MintbaseStore {
             NO_DEPOSIT,
             Gas(GAS_NFT_TRANSFER_CALL),
         )
-        .then(ext_self::nft_resolve_transfer(
+        .then(store_self::nft_resolve_transfer(
             owner_id.clone(),
             receiver_id,
             token_id.0.to_string(),

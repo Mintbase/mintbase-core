@@ -129,7 +129,10 @@ function create_accounts() {
     for i in $minter_account $market_account \
     $store_owner_account $seller1 \
     $buyer1_account $buyer2_account $royalty1_account \
-    $royalty2_account $receiver_account $helper_account; do
+    $royalty2_account $receiver_account $helper_account \
+    $royalty3_account $royalty4_account $royalty5_account \
+    $royalty6_account $royalty7_account $royalty8_account \
+    $royalty9_account $royalty10_account; do
       ((z=z%N)); ((z++==0)) && wait
         str="near create-account $i --masterAccount $root_account --initialBalance 4 --nodeUrl $node_url --keyPath $key_path";
         echo running $str;
@@ -239,6 +242,25 @@ function mint_tokens() {
   str="${str//_store_account_/$store_account}";
   str="${str//_royalty1_account_/$royalty1_account}";
   str="${str//_royalty2_account_/$royalty2_account}";
+  echo running "$str";
+  eval "$str";
+}
+
+function mint_tokens2() {
+  str='near call _store_account_ nft_batch_mint '\''{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 1000,"_royalty2_account_": 1000, "_royalty3_account_": 1000,"_royalty4_account_": 1000,"_royalty5_account_": 1000,"_royalty6_account_": 1000,"_royalty7_account_": 1000,"_royalty8_account_": 1000,"_royalty9_account_": 1000,"_royalty10_account_": 1000}, "percentage": 1000},"num_to_mint":10,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}'\'' --accountId _minter_account_ --deposit 0.000000000000000000000001';
+  str="${str//_minter_account_/$minter_account}";
+  str="${str//_store_owner_account_/$store_owner_account}";
+  str="${str//_store_account_/$store_account}";
+  str="${str//_royalty1_account_/$royalty1_account}";
+  str="${str//_royalty2_account_/$royalty2_account}";
+  str="${str//_royalty3_account_/$royalty3_account}";
+  str="${str//_royalty4_account_/$royalty4_account}";
+  str="${str//_royalty5_account_/$royalty5_account}";
+  str="${str//_royalty6_account_/$royalty6_account}";
+  str="${str//_royalty7_account_/$royalty7_account}";
+  str="${str//_royalty8_account_/$royalty8_account}";
+  str="${str//_royalty9_account_/$royalty9_account}";
+  str="${str//_royalty10_account_/$royalty10_account}";
   echo running "$str";
   eval "$str";
 }
