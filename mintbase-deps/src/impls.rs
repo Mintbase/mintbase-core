@@ -789,28 +789,34 @@ impl MintbaseStore {
         owner_id: AccountId,
         receiver_id: AccountId,
         token_id: String,
-        approved_account_ids: Option<Vec<String>>,
-    ) {
+        approved_account_ids: Option<HashMap<AccountId,u64>>,
+    )->bool {
         let l = format!("owner_id={} receiver_id={} token_id={} approved_ids={:?} pred={}",
         owner_id,receiver_id,token_id,approved_account_ids,env::predecessor_account_id());
         env::log_str(l.as_str());
         let token_id_u64 = token_id.parse::<u64>().unwrap();
         let mut token = self.nft_token_internal(token_id_u64);
         self.unlock_token(&mut token);
-        // assert_eq!(receiver_id.to_string(), token.owner_id.to_string());
         assert_eq!(env::promise_results_count(), 1);
-        match env::promise_result(0) {
-            near_sdk::PromiseResult::Successful(bb) => {
-                let b: bool = near_sdk::serde_json::from_slice(&bb).unwrap();
-                // if b is true, token should be returned to sender id (do nothing).
-                if !b {
-                    self.transfer_internal(&mut token, receiver_id.clone(), true);
-                    log_nft_transfer(&receiver_id, token_id_u64, &None, owner_id.to_string());
+        // Get whether token should be returned
+        let must_revert = match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(value) => {
+                if let Ok(yes_or_no) = near_sdk::serde_json::from_slice::<bool>(&value) {
+                    yes_or_no
+                } else {
+                    true
                 }
             }
-            near_sdk::PromiseResult::Failed => {}
-            near_sdk::PromiseResult::NotReady => {}
+            PromiseResult::Failed => true,
         };
+        if !must_revert {
+            true
+        } else {
+            self.transfer_internal(&mut token, receiver_id.clone(), true);
+            log_nft_transfer(&receiver_id, token_id_u64, &None, owner_id.to_string());
+            false
+        }
     }
 
     /// A non-indexed implementation. `from_index` and `limit are removed, so as
