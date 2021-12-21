@@ -6,3 +6,7 @@
 	path = simple-market-contract
 	url = https://github.com/Mintbase/simple-market-contract
 	branch = master
+[submodule "mintbase-core-docs"]
+	path = mintbase-core-docs
+	url = https://github.com/Mintbase/mintbase-core-docs
+	branch = master
