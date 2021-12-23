@@ -97,7 +97,7 @@ impl TokenListing {
     /// Unique identifier of the Token, which is also unique across
     /// relistings of the Token.
     pub fn get_list_id(&self) -> String {
-        format!("{}:{}", self.approval_id, self.store_id)
+        format!("{}:{}:{}",self.id, self.approval_id, self.store_id)
     }
 
     pub fn assert_not_locked(&self) {

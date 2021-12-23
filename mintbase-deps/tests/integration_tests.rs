@@ -1,12 +1,12 @@
-use near_indexer_test_framework::*;
+// use near_indexer_test_framework::*;
 use mintbase_deps::*;
 
 #[test]
 fn test_deploy_contracts() {
-    while_indexer(|ns:NearState| async move {
-        
-        background_contracts_deployed(&ns).await;
-        as_a_store_owner(&ns,None).await;
+    // while_indexer(|ns:NearState| async move {
+    //
+    //     background_contracts_deployed(&ns).await;
+    //     as_a_store_owner(&ns,None).await;
        
 
             // println!("hello {:?}",p);
@@ -22,5 +22,5 @@ fn test_deploy_contracts() {
             // let v = b.to_vec();
             // let s = String::from_utf8(v).unwrap();
             // println!("{}", s);
-    });
+    // });
 }

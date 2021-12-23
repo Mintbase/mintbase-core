@@ -1,12 +1,12 @@
 use crate::*;
-#[cfg(feature = "test")]
-use near_indexer_test_framework::*;
+// #[cfg(feature = "test")]
+// use near_indexer_test_framework::*;
 #[cfg(feature = "all")]
 use crate::tokio_postgres::NoTls;
 #[cfg(feature = "all")]
 use crate::{tokio, tokio_postgres};
-#[cfg(feature = "test")]
-use near_indexer_test_framework::NearState;
+// #[cfg(feature = "test")]
+// use near_indexer_test_framework::NearState;
 use near_sdk::json_types::{U64,U128};
 use near_sdk::{env, AccountId};
 use serde_json::json;
