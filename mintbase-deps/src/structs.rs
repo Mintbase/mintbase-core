@@ -1,13 +1,22 @@
 use crate::*;
-use near_sdk::json_types::U128;
-use near_sdk::{env, json_types::Base64VecU8, AccountId};
-use near_sdk::collections::{LookupSet, UnorderedSet, LookupMap};
-use near_sdk::near_bindgen;
-use near_sdk::*;
+use near_sdk::{
+    collections::{
+        LookupMap,
+        LookupSet,
+        UnorderedSet,
+    },
+    env,
+    json_types::{
+        Base64VecU8,
+        U128,
+        U64,
+    },
+    near_bindgen,
+    AccountId,
+    *,
+};
 use serde::*;
 use std::collections::HashMap;
-use near_sdk::json_types::U64;
-
 
 // #[cfg(test)]
 // use clap::*;
@@ -24,11 +33,13 @@ use near_sdk::json_types::U64;
 //     pub r: String,
 // }
 
-
-
 pub type SplitBetweenUnparsed = HashMap<near_sdk::AccountId, u32>;
 #[cfg(feature = "wasm")]
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
+use near_sdk::borsh::{
+    self,
+    BorshDeserialize,
+    BorshSerialize,
+};
 
 /// Take the Royalty and SplitOwner information for a token, and return a Vector
 /// of proportional payouts.
@@ -310,14 +321,22 @@ pub struct StoreInitArgs {
     pub owner_id: AccountId,
 }
 
-#[cfg_attr(feature = "helper-wasm",near_sdk::near_bindgen, derive(BorshDeserialize, BorshSerialize))]
-#[cfg(feature="helper-wasm")]
+#[cfg_attr(
+    feature = "helper-wasm",
+    near_sdk::near_bindgen,
+    derive(BorshDeserialize, BorshSerialize)
+)]
+#[cfg(feature = "helper-wasm")]
 pub struct HelperWasm {
     pub count: u64,
 }
 
-#[cfg_attr(feature = "store-wasm",near_sdk::near_bindgen, derive(BorshDeserialize, BorshSerialize))]
-#[cfg(feature="store-wasm")]
+#[cfg_attr(
+    feature = "store-wasm",
+    near_sdk::near_bindgen,
+    derive(BorshDeserialize, BorshSerialize)
+)]
+#[cfg(feature = "store-wasm")]
 pub struct MintbaseStore {
     /// Accounts that are allowed to mint tokens on this Store.
     pub minters: UnorderedSet<AccountId>,
@@ -372,10 +391,9 @@ pub struct MyMakeWriter {
     pub stderr: std::io::Stderr,
 }
 
-
-#[cfg(feature="factory-wasm")]
+#[cfg(feature = "factory-wasm")]
 #[near_bindgen]
-#[cfg(feature="factory-wasm")]
+#[cfg(feature = "factory-wasm")]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct MintbaseStoreFactory {
     /// The `Store`s this `Factory` has produced.
@@ -394,7 +412,6 @@ pub struct MintbaseStoreFactory {
     /// The public key to give a full access key to
     pub admin_public_key: PublicKey,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
@@ -425,7 +442,6 @@ pub struct Nep171Event {
     pub event_kind: Nep171EventLog,
 }
 
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NearJsonEvent {
     pub standard: String,
@@ -454,8 +470,8 @@ pub struct NftOptionStringLog {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftMintLog {
     pub owner_id: String,
-    pub token_ids:Vec<String>,
-    pub memo:Option<String>
+    pub token_ids: Vec<String>,
+    pub memo: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -463,7 +479,7 @@ pub struct NftBurnLog {
     pub owner_id: String,
     pub authorized_id: Option<String>,
     pub token_ids: Vec<String>,
-    pub memo: Option<String>
+    pub memo: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -485,7 +501,7 @@ pub struct NftTransferLog {
     pub old_owner_id: String,
     pub new_owner_id: String,
     pub token_ids: Vec<String>,
-    pub memo: Option<String>
+    pub memo: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -517,8 +533,8 @@ pub struct NftComposeLog {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftUncomposeLog {
-    pub token_ids: Vec<U64>, 
-    pub holder: String
+    pub token_ids: Vec<U64>,
+    pub holder: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -536,74 +552,73 @@ pub struct NftOnComposeLog {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftOnUncomposeLog {
-    pub token_id: U64, 
-    pub holder: String, 
-    pub child_key: String
+    pub token_id: U64,
+    pub holder: String,
+    pub child_key: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftMovedLog {
-    pub token_id: U64, 
-    pub contract_id: String
+    pub token_id: U64,
+    pub contract_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NftOnMoveLog{
-    pub token_id: U64, 
-    pub origin_key: String
+pub struct NftOnMoveLog {
+    pub token_id: U64,
+    pub origin_key: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NftListLog{
+pub struct NftListLog {
     pub list_id: String,
     pub price: String,
     pub token_key: String,
     pub owner_id: String,
     pub autotransfer: bool,
-    pub approval_id:String,
-    pub token_id:String,
-    pub store_id:String
+    pub approval_id: String,
+    pub token_id: String,
+    pub store_id: String,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftMintLogMemo {
     pub royalty: Option<Royalty>,
-    pub split_owners:Option<SplitOwners>,
+    pub split_owners: Option<SplitOwners>,
     pub meta_id: Option<String>,
     pub meta_extra: Option<String>,
-    pub minter: String
+    pub minter: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftUpdateListLog {
     pub auto_transfer: Option<bool>,
-    pub price:Option<String>,
+    pub price: Option<String>,
     pub list_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftOfferLog2 {
     pub offer: TokenOffer,
-    pub list_id:String,
-    pub token_key:String,
-    pub offer_num:u64,
+    pub list_id: String,
+    pub token_key: String,
+    pub offer_num: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftOfferLog {
     pub price: String,
-    pub from:String,
-    pub timeout:String,
-    pub list_id:String,
-    pub token_key:String,
-    pub offer_num:u64,
+    pub from: String,
+    pub timeout: String,
+    pub list_id: String,
+    pub token_key: String,
+    pub offer_num: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftUpdateOfferLog {
-    pub list_id:String,
-    pub offer_num:u64,
+    pub list_id: String,
+    pub offer_num: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -620,15 +635,12 @@ pub struct NftMarketLog {
     pub state: bool,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct NftEventError(pub String);
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
 pub struct NearTime(pub u64);
-
 
 /// ref: https://github.com/near-apps/nft-market/blob/main/contracts/market-simple/src/lib.rs#L54
 #[derive(Serialize, Deserialize)]
@@ -636,8 +648,6 @@ pub struct SaleArgs {
     pub price: U128,
     pub autotransfer: bool,
 }
-
-
 
 /// Type representing an offer for a `Token` the marketplace
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -655,9 +665,6 @@ pub struct TokenOffer {
     /// When the `Offer` will expire.
     pub timeout: NearTime,
 }
-
-
-
 
 /// A Token for sale on the Marketplace.
 #[derive(Deserialize, Serialize, Debug)]

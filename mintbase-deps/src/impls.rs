@@ -1,19 +1,34 @@
+use crate::*;
 #[cfg(feature = "all")]
-use crate::{tokio, tokio_postgres::{self,NoTls}, near_indexer};
+use crate::{
+    near_indexer,
+    tokio,
+    tokio_postgres::{
+        self,
+        NoTls,
+    },
+};
 #[cfg(feature = "wasm")]
 pub use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
+    borsh::{
+        self,
+        BorshDeserialize,
+        BorshSerialize,
+    },
     collections::*,
+    json_types::*,
     *,
-    json_types::*
 };
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::fmt;
-use std::str::FromStr;
-use std::convert::TryInto;
 use serde::*;
-use crate::*;
+use std::{
+    collections::HashMap,
+    convert::{
+        TryFrom,
+        TryInto,
+    },
+    fmt,
+    str::FromStr,
+};
 
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
@@ -97,7 +112,7 @@ impl TokenListing {
     /// Unique identifier of the Token, which is also unique across
     /// relistings of the Token.
     pub fn get_list_id(&self) -> String {
-        format!("{}:{}:{}",self.id, self.approval_id, self.store_id)
+        format!("{}:{}:{}", self.id, self.approval_id, self.store_id)
     }
 
     pub fn assert_not_locked(&self) {
@@ -135,7 +150,7 @@ impl fmt::Display for NftEventError {
     }
 }
 
-#[cfg(feature="factory-wasm")]
+#[cfg(feature = "factory-wasm")]
 impl New for NFTContractMetadata {
     fn new(args: NFTContractMetadata) -> Self {
         // match args.reference {
@@ -161,15 +176,15 @@ impl New for NFTContractMetadata {
     }
 }
 
-#[cfg(feature="factory-wasm")]
+#[cfg(feature = "factory-wasm")]
 impl Default for MintbaseStoreFactory {
     fn default() -> Self {
         env::panic_str("Not initialized yet.");
     }
 }
 
-#[cfg(feature="helper-wasm")]
-#[cfg_attr(feature="helper-wasm", near_bindgen)]
+#[cfg(feature = "helper-wasm")]
+#[cfg_attr(feature = "helper-wasm", near_bindgen)]
 impl HelperWasm {
     pub fn nft_on_transfer(
         &mut self,
@@ -177,13 +192,13 @@ impl HelperWasm {
         previous_owner_id: AccountId,
         token_id: String,
         msg: String,
-    )->PromiseOrValue<bool> {
+    ) -> PromiseOrValue<bool> {
         env::log_str(
-            format!("in nft_on_transfer; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
-                             &sender_id,
-                             &previous_owner_id,
-                             &token_id,
-                             msg).as_str()
+            format!(
+                "in nft_on_transfer; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
+                &sender_id, &previous_owner_id, &token_id, msg
+            )
+            .as_str(),
         );
         match msg.as_str() {
             "true" => PromiseOrValue::Value(true),
@@ -196,8 +211,8 @@ impl HelperWasm {
 ////////////////
 // Core Logic //
 ////////////////
-#[cfg(feature="factory-wasm")]
-#[cfg_attr(feature="factory-wasm", near_bindgen)]
+#[cfg(feature = "factory-wasm")]
+#[cfg_attr(feature = "factory-wasm", near_bindgen)]
 impl MintbaseStoreFactory {
     pub fn assert_only_owner(&self) {
         assert_one_yocto();
@@ -301,7 +316,6 @@ impl MintbaseStoreFactory {
     ) {
         let attached_deposit: u128 = attached_deposit.into();
         if is_promise_success() {
-
             // pay out self and update contract state
             self.stores.insert(&metadata.name);
             let nscl = NftStoreCreateLog {
@@ -318,7 +332,7 @@ impl MintbaseStoreFactory {
             env::log_str(event.near_json_event().as_str());
             Promise::new(self.owner_id.to_string().parse().unwrap())
                 .transfer(attached_deposit - self.store_cost);
-            #[cfg(feature="panic-test")]
+            #[cfg(feature = "panic-test")]
             env::panic_str("event.near_json_event().as_str()");
         } else {
             // Refunding store cost creation to the store creator
@@ -376,10 +390,7 @@ impl MintbaseStoreFactory {
             .create_account()
             .transfer(self.store_cost)
             .add_full_access_key(self.admin_public_key.clone())
-            .deploy_contract(
-                include_bytes!("../../wasm/store.wasm")
-                    .to_vec(),
-            )
+            .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
             .function_call("new".to_string(), init_args, 0, GAS_CREATE_STORE)
             .then(factory_self::on_create(
                 env::predecessor_account_id(),
@@ -393,7 +404,6 @@ impl MintbaseStoreFactory {
             ))
     }
 }
-
 
 impl FromStr for NearJsonEvent {
     type Err = serde_json::error::Error;
@@ -535,23 +545,20 @@ impl TokenMetadata {
     }
 }
 
-
 /// default must be implemented for wasm compilation.
-#[cfg(feature="helper-wasm")]
+#[cfg(feature = "helper-wasm")]
 impl Default for HelperWasm {
     fn default() -> Self {
-        Self{
-            count: 0
-        }
+        Self { count: 0 }
     }
 }
-#[cfg(feature="store-wasm")]
+#[cfg(feature = "store-wasm")]
 impl Default for MintbaseStore {
     fn default() -> Self {
         env::panic(b"no default")
     }
 }
-#[cfg(feature="store-wasm")]
+#[cfg(feature = "store-wasm")]
 impl NewSplitOwner for SplitOwners {
     fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
         assert!(split_between.len() >= 2);
@@ -572,25 +579,22 @@ impl NewSplitOwner for SplitOwners {
     }
 }
 
-#[cfg_attr(feature="store-wasm",near_bindgen)]
-#[cfg(feature="store-wasm")]
+#[cfg_attr(feature = "store-wasm", near_bindgen)]
+#[cfg(feature = "store-wasm")]
 impl NonFungibleContractMetadata for MintbaseStore {
     fn nft_metadata(&self) -> &NFTContractMetadata {
         &self.metadata
     }
 }
 
-
-
 //////////////////////////////
 // Store Owner Only Methods //
 //////////////////////////////
 /// Only the Owner of this `Store` may call these methods.
 
-#[cfg_attr(feature="store-wasm",near_bindgen)]
-#[cfg(feature="store-wasm")]
+#[cfg_attr(feature = "store-wasm", near_bindgen)]
+#[cfg(feature = "store-wasm")]
 impl MintbaseStore {
-
     pub fn nft_tokens(
         &self,
         from_index: Option<String>, // default: "0"
@@ -639,7 +643,7 @@ impl MintbaseStore {
                 env::attached_deposit() - store_approval_storage,
                 GAS_NFT_BATCH_APPROVE,
             )
-                .into()
+            .into()
         } else {
             None
         }
@@ -651,7 +655,7 @@ impl MintbaseStore {
         assert!(!token_ids.is_empty());
         let pred = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&pred).expect("none owned");
-        let (tokens,accounts,old_owners) = token_ids
+        let (tokens, accounts, old_owners) = token_ids
             .into_iter()
             .map(|(token_id, account_id)| {
                 let token_idu64 = token_id.into();
@@ -662,9 +666,9 @@ impl MintbaseStore {
                 assert_ne!(account_id.to_string(), token.owner_id.to_string()); // can't transfer to self
                 self.transfer_internal(&mut token, account_id.clone(), false);
                 set_owned.remove(&token_idu64);
-                (token_id, account_id,old_owner)
+                (token_id, account_id, old_owner)
             })
-            .fold((vec![],vec![],vec![]),|mut acc,(tid,aid,oid)|{
+            .fold((vec![], vec![], vec![]), |mut acc, (tid, aid, oid)| {
                 acc.0.push(tid);
                 acc.1.push(aid);
                 acc.2.push(oid);
@@ -789,10 +793,16 @@ impl MintbaseStore {
         owner_id: AccountId,
         receiver_id: AccountId,
         token_id: String,
-        approved_account_ids: Option<HashMap<AccountId,u64>>,
-    )->bool {
-        let l = format!("owner_id={} receiver_id={} token_id={} approved_ids={:?} pred={}",
-        owner_id,receiver_id,token_id,approved_account_ids,env::predecessor_account_id());
+        approved_account_ids: Option<HashMap<AccountId, u64>>,
+    ) -> bool {
+        let l = format!(
+            "owner_id={} receiver_id={} token_id={} approved_ids={:?} pred={}",
+            owner_id,
+            receiver_id,
+            token_id,
+            approved_account_ids,
+            env::predecessor_account_id()
+        );
         env::log_str(l.as_str());
         let token_id_u64 = token_id.parse::<u64>().unwrap();
         let mut token = self.nft_token_internal(token_id_u64);
@@ -846,7 +856,6 @@ impl MintbaseStore {
             .unwrap_or(0)
             .into()
     }
-
 
     pub fn nft_tokens_for_owner(
         &self,
@@ -1047,7 +1056,7 @@ impl MintbaseStore {
             self.tokens_per_owner.insert(&account_id, &set_owned);
         }
         self.tokens_burned += token_ids.len() as u64;
-        log_nft_batch_burn(&token_ids,account_id.to_string());
+        log_nft_batch_burn(&token_ids, account_id.to_string());
     }
     /// Check if `account_id` is a minter.
     pub fn check_is_minter(&self, account_id: AccountId) -> bool {
@@ -1375,12 +1384,7 @@ impl MintbaseStore {
     ///
     /// If remove prior is true, expect that the token is not composed, and
     /// remove the token owner from self.tokens_per_owner.
-    pub fn transfer_internal(
-        &mut self,
-        token: &mut Token,
-        to: AccountId,
-        remove_prior: bool,
-    ) {
+    pub fn transfer_internal(&mut self, token: &mut Token, to: AccountId, remove_prior: bool) {
         let update_set = if remove_prior {
             Some(AccountId::try_from(token.owner_id.to_string()).unwrap())
         } else {
@@ -1608,7 +1612,7 @@ impl OwnershipFractions {
 
         let mut payout: HashMap<AccountId, MultipliedSafeFraction> = Default::default();
         let percentage_not_taken_by_royalty = match royalty {
-            Some(royalty) => { 
+            Some(royalty) => {
                 let (split_between, percentage) =
                     (royalty.split_between.clone(), royalty.percentage);
                 split_between.iter().for_each(|(receiver, &rel_perc)| {
@@ -1767,7 +1771,6 @@ impl From<String> for TokenKey {
         }
     }
 }
-
 
 impl SafeFraction {
     /// Take a u32 numerator to a 10^4 denominator.

@@ -1,16 +1,23 @@
 #[cfg(feature = "wasm")]
 use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
+    borsh::{
+        self,
+        BorshDeserialize,
+        BorshSerialize,
+    },
     env,
     json_types::Base64VecU8,
-    serde::{Deserialize, Serialize},
+    serde::{
+        Deserialize,
+        Serialize,
+    },
     AccountId,
 };
 
 /// This enum used to support other time denominations, which were dropped
 /// for simplicity.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature="wasm",derive(BorshSerialize, BorshDeserialize,))]
+#[cfg_attr(feature = "wasm", derive(BorshSerialize, BorshDeserialize,))]
 pub enum TimeUnit {
     Hours(u64),
 }
@@ -18,10 +25,10 @@ pub enum TimeUnit {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "event", content = "data")]
 #[serde(rename_all = "snake_case")]
-pub enum Nep171EventLog{
+pub enum Nep171EventLog {
     NftMint(Vec<crate::NftMintLog>),
     NftBurn(Vec<crate::NftBurnLog>),
-    NftTransfer(Vec<crate::NftTransferLog>)
+    NftTransfer(Vec<crate::NftTransferLog>),
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -69,7 +76,6 @@ pub enum StdioLock<'a> {
     Stdout(std::io::StdoutLock<'a>),
     Stderr(std::io::StderrLock<'a>),
 }
-
 
 // #[cfg(feature = "all")]
 // pub enum AppError {

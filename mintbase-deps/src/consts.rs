@@ -1,14 +1,16 @@
 use crate::SafeFraction;
-use near_sdk::{Balance, Gas};
+use near_sdk::{
+    Balance,
+    Gas,
+};
 use std::collections::HashMap;
 
 /// Near denominated units are in 10^24
 pub const fn ntoy(near_amount: Balance) -> Balance {
     near_amount * 10u128.pow(24)
-  }
+}
 
 pub const ONE_YOCTO: Balance = 1;
-
 
 pub const GAS_PAYOUT_RESOLVE: Gas = ntot(Gas(5));
 
@@ -42,7 +44,6 @@ pub const MINIMUM_CUSHION: near_sdk::Balance = 5 * 10u128.pow(23);
 
 //?
 pub const GAS_NFT_BATCH_APPROVE: Gas = ntot(Gas(100));
-
 
 /// The amount of Storage in bytes consumed by a maximal sized Token with NO
 /// metadata and NO Royalty field. Rounded to 360 for extra cushion.

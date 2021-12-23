@@ -1,10 +1,14 @@
 use crate::*;
-use near_sdk::*;
-use near_sdk::json_types::{U128, U64};
+use near_sdk::{
+    json_types::{
+        U128,
+        U64,
+    },
+    *,
+};
 
-
-#[cfg_attr(feature = "factory-wasm",ext_contract(factory_self))]
-#[cfg(feature="factory-wasm")]
+#[cfg_attr(feature = "factory-wasm", ext_contract(factory_self))]
+#[cfg(feature = "factory-wasm")]
 pub trait OnCreateCallback {
     fn on_create(
         &mut self,
@@ -20,8 +24,6 @@ pub trait New {
     fn new(arg: Self) -> Self;
 }
 
-
-
 /// ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Metadata.md
 pub trait NonFungibleContractMetadata {
@@ -33,8 +35,6 @@ pub trait NonFungibleContractMetadata {
 pub trait NewSplitOwner {
     fn new(arg: SplitBetweenUnparsed) -> Self;
 }
-
-
 
 /// Impl of NEP-171 resolve transfer. ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Core.md
@@ -217,12 +217,15 @@ pub trait NonFungibleOnApprove {
     );
 }
 
-
 #[cfg_attr(feature = "market-wasm", ext_contract(ext_self))]
 #[cfg(feature = "market-wasm")]
 pub trait ExtSelf {
-    fn resolve_nft_payout(&mut self, token_key: String, token: TokenListing, others_keep: U128)
-                          -> Promise;
+    fn resolve_nft_payout(
+        &mut self,
+        token_key: String,
+        token: TokenListing,
+        others_keep: U128,
+    ) -> Promise;
 }
 
 /// Impl of NEP-171. Note that the impl makes the assumption that `TokenId` has
