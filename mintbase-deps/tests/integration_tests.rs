@@ -1,5 +1,5 @@
 // use near_indexer_test_framework::*;
-use mintbase_deps::*;
+
 
 #[test]
 fn test_deploy_contracts() {

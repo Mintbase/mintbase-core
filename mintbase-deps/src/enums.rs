@@ -5,8 +5,6 @@ use near_sdk::{
         BorshDeserialize,
         BorshSerialize,
     },
-    env,
-    json_types::Base64VecU8,
     serde::{
         Deserialize,
         Serialize,

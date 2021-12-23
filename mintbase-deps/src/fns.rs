@@ -22,14 +22,9 @@ use near_sdk::{
 };
 use serde_json::{
     self,
-    json,
-    Value,
 };
 use std::{
     collections::HashMap,
-    convert::TryFrom,
-    fs::File,
-    io::BufReader,
 };
 
 #[cfg(feature = "all")]
@@ -805,8 +800,8 @@ pub fn log_listing_created(
     owner_id: &AccountId,
     autotransfer: bool,
 ) {
-    let mut iter = token_key.split(":");
-    let mut iter2 = list_id.split(":");
+    let mut iter = token_key.split(':');
+    let mut iter2 = list_id.split(':');
     let token_id = iter.next();
     let store_id = iter.next();
     let approval_id = iter2.next().unwrap();
@@ -1020,7 +1015,7 @@ pub fn log_sale(list_id: &str, offer_num: u64, token_key: &str, payout: &HashMap
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    let e = r#"few"#;
+    let _e = r#"few"#;
     // env::log(
     //     json!({
     //   "type": "sold".to_string(),

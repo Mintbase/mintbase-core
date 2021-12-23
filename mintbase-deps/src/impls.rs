@@ -19,7 +19,7 @@ pub use near_sdk::{
     json_types::*,
     *,
 };
-use serde::*;
+
 use std::{
     collections::HashMap,
     convert::{
@@ -124,8 +124,8 @@ impl StorageCosts {
     pub fn new(storage_price_per_byte: u128) -> Self {
         Self {
             storage_price_per_byte,
-            common: storage_price_per_byte * near_sdk::StorageUsage::from(80 as u64) as u128,
-            token: storage_price_per_byte * near_sdk::StorageUsage::from(360 as u64) as u128,
+            common: storage_price_per_byte * 80_u64 as u128,
+            token: storage_price_per_byte * 360_u64 as u128,
         }
     }
 }
@@ -408,7 +408,7 @@ impl MintbaseStoreFactory {
 impl FromStr for NearJsonEvent {
     type Err = serde_json::error::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(_s: &str) -> Result<Self, Self::Err> {
         todo!()
     }
 }
@@ -428,9 +428,9 @@ impl From<NftEvent> for NearJsonEvent {
 impl TryFrom<&str> for NftEvent {
     type Error = serde_json::error::Error;
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let ne = serde_json::from_str::<NftEvent>(s);
+        
         // ne.map_err(|x|NftEventError(x.to_string()))
-        ne
+        serde_json::from_str::<NftEvent>(s)
     }
 }
 
@@ -713,7 +713,7 @@ impl MintbaseStore {
             ext_on_approve::nft_on_approve(
                 token_id,
                 env::predecessor_account_id(),
-                approval_id.into(),
+                approval_id,
                 msg,
                 account_id,
                 0,
@@ -781,7 +781,7 @@ impl MintbaseStore {
             tokens_minted: 0,
             tokens_burned: 0,
             num_approved: 0,
-            owner_id: owner_id.into(),
+            owner_id,
             storage_costs: StorageCosts::new(10_000_000_000_000_000_000), // 10^19
             allow_moves: true,
         }
@@ -1148,7 +1148,7 @@ impl MintbaseStore {
     #[payable]
     pub fn grant_minter(&mut self, account_id: AccountId) {
         self.assert_store_owner();
-        let account_id: AccountId = account_id.into();
+        let account_id: AccountId = account_id;
         // does nothing if account_id is already a minter
         if self.minters.insert(&account_id) {
             log_grant_minter(&account_id);
@@ -1179,7 +1179,7 @@ impl MintbaseStore {
     #[payable]
     pub fn transfer_store_ownership(&mut self, new_owner: AccountId, keep_old_minters: bool) {
         self.assert_store_owner();
-        let new_owner = new_owner.into();
+        let new_owner = new_owner;
         assert_ne!(new_owner, self.owner_id, "can't can't transfer to self");
         if !keep_old_minters {
             self.minters.clear();
@@ -1394,7 +1394,7 @@ impl MintbaseStore {
         self.update_tokens_per_owner(token.id, update_set, Some(to.clone()));
         token.owner_id = Owner::Account(to);
         token.approvals.clear();
-        self.tokens.insert(&token.id, &token);
+        self.tokens.insert(&token.id, token);
     }
 
     /// Same as `nft_is_approved`, but uses internal u64 (u64) typing for
@@ -1481,7 +1481,7 @@ impl MintbaseStore {
     /// this store, get that set.
     /// Internal
     pub(crate) fn get_or_make_new_owner_set(&self, account_id: &AccountId) -> UnorderedSet<u64> {
-        self.tokens_per_owner.get(&account_id).unwrap_or_else(|| {
+        self.tokens_per_owner.get(account_id).unwrap_or_else(|| {
             let mut prefix: Vec<u8> = vec![b'j'];
             prefix.extend_from_slice(account_id.as_bytes());
             UnorderedSet::new(prefix)
@@ -1511,14 +1511,14 @@ impl MintbaseStore {
     pub fn lock_token(&mut self, token: &mut Token) {
         if let Owner::Account(ref s) = token.owner_id {
             token.owner_id = Owner::Lock(s.clone());
-            self.tokens.insert(&token.id, &token);
+            self.tokens.insert(&token.id, token);
         }
     }
     /// Internal
     pub fn unlock_token(&mut self, token: &mut Token) {
         if let Owner::Lock(ref s) = token.owner_id {
             token.owner_id = Owner::Account(s.clone());
-            self.tokens.insert(&token.id, &token);
+            self.tokens.insert(&token.id, token);
         }
     }
     #[payable]
@@ -1563,7 +1563,7 @@ impl MintbaseStore {
         let pred = env::predecessor_account_id();
         if !token.is_pred_owner() {
             // check if pred has an approval
-            let approval_id: Option<u64> = approval_id.map(|i| i.into());
+            let approval_id: Option<u64> = approval_id;
             assert!(self.nft_is_approved_internal(&token, pred.clone(), approval_id));
         }
         // prevent race condition, temporarily lock-replace owner
@@ -1571,7 +1571,7 @@ impl MintbaseStore {
         self.lock_token(&mut token);
 
         ext_on_transfer::nft_on_transfer(
-            pred.clone(),
+            pred,
             owner_id.clone(),
             token_id,
             msg,
@@ -1580,7 +1580,7 @@ impl MintbaseStore {
             Gas(GAS_NFT_TRANSFER_CALL),
         )
         .then(store_self::nft_resolve_transfer(
-            owner_id.clone(),
+            owner_id,
             receiver_id,
             token_id.0.to_string(),
             None,
@@ -1681,13 +1681,13 @@ impl Token {
         minter: AccountId,
     ) -> Self {
         Self {
-            owner_id: Owner::Account(owner_id.into()),
+            owner_id: Owner::Account(owner_id),
             id: token_id,
             metadata_id,
             royalty_id,
             split_owners,
             approvals: HashMap::new(),
-            minter: minter.into(),
+            minter,
             loan: None,
             composeable_stats: ComposeableStats::new(),
             origin_key: None,
