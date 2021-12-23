@@ -237,7 +237,7 @@ impl MintbaseStoreFactory {
 
     pub fn assert_no_store_with_id(&self, store_id: String) {
         assert!(
-            !self.check_contains_store(store_id.to_string()),
+            !self.check_contains_store(store_id),
             "Store with that ID already exists"
         );
     }
@@ -282,7 +282,7 @@ impl MintbaseStoreFactory {
     #[payable]
     pub fn set_mintbase_factory_owner(&mut self, account_id: AccountId) {
         self.assert_only_owner();
-        let account_id = account_id.into();
+        let account_id = account_id;
         assert_ne!(account_id, env::predecessor_account_id());
         self.owner_id = account_id;
     }
@@ -377,7 +377,7 @@ impl MintbaseStoreFactory {
         let metadata = NFTContractMetadata::new(metadata);
         let init_args = serde_json::to_vec(&StoreInitArgs {
             metadata: metadata.clone(),
-            owner_id: owner_id.clone().into(),
+            owner_id: owner_id.clone(),
         })
         .unwrap();
         // StoreId is only the subaccount. store_account_id is the full near qualified name.
