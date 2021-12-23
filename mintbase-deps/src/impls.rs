@@ -496,23 +496,6 @@ impl Default for NftStoreCreateLog {
     }
 }
 
-impl Default for TokenMetadata {
-    fn default() -> Self {
-        Self {
-            title: None,
-            description: None,
-            media: None,
-            media_hash: None,
-            copies: None,
-            expires_at: None,
-            starts_at: None,
-            extra: None,
-            reference: None,
-            reference_hash: None,
-        }
-    }
-}
-
 impl TokenMetadata {
     /// Get the metadata and its size in bytes.
     pub fn from_with_size(args: TokenMetadata, copies: u64) -> (Self, u64) {
@@ -555,7 +538,7 @@ impl Default for HelperWasm {
 #[cfg(feature = "store-wasm")]
 impl Default for MintbaseStore {
     fn default() -> Self {
-        env::panic(b"no default")
+        env::panic_str("no default")
     }
 }
 #[cfg(feature = "store-wasm")]
@@ -600,7 +583,7 @@ impl MintbaseStore {
         from_index: Option<String>, // default: "0"
         limit: Option<u64>,         // default: = self.nft_total_supply()
     ) -> Vec<TokenCompliant> {
-        let from_index: u64 = from_index.unwrap_or("0".to_string()).parse().unwrap();
+        let from_index: u64 = from_index.unwrap_or_else(||"0".to_string()).parse().unwrap();
         let limit = limit.unwrap_or(self.nft_total_supply().0);
         (from_index..limit)
             .into_iter()
@@ -867,7 +850,7 @@ impl MintbaseStore {
             .get(&account_id)
             .expect("no tokens")
             .iter()
-            .skip(from_index.unwrap_or(0.to_string()).parse().unwrap())
+            .skip(from_index.unwrap_or_else(||0.to_string()).parse().unwrap())
             .take(limit.unwrap_or(10))
             .map(|x| self.nft_token_compliant_internal(x))
             .collect::<Vec<_>>()
@@ -1115,7 +1098,7 @@ impl MintbaseStore {
                 "Nothing withdrawn. Unused deposit is less than 0.5N: {}",
                 unused_deposit
             );
-            env::log(s.as_bytes());
+            env::log_str(s.as_str());
         }
     }
 
@@ -1165,7 +1148,7 @@ impl MintbaseStore {
         self.assert_store_owner();
         assert_ne!(account_id, self.owner_id, "can't revoke owner");
         if !self.minters.remove(&account_id) {
-            env::panic(b"not a minter")
+            env::panic_str("not a minter")
         } else {
             log_revoke_minter(&account_id);
         }
@@ -1239,7 +1222,7 @@ impl MintbaseStore {
         let token = self.nft_token(token_id).expect("no token");
         match token.owner_id {
             Owner::Account(_) => {}
-            _ => env::panic(b"token is composed"),
+            _ => env::panic_str("token is composed"),
         }
         let payout = OwnershipFractions::new(
             &token.owner_id.to_string(),
@@ -1249,7 +1232,7 @@ impl MintbaseStore {
         .into_payout(balance.into());
         let payout_len = payout.payout.len();
         if max_len_payout < payout_len as u32 {
-            near_sdk::env::panic(format!("payout too long: {}", payout_len).as_bytes());
+            near_sdk::env::panic_str(format!("payout too long: {}", payout_len).as_str());
         }
         payout
     }

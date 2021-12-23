@@ -62,4 +62,5 @@ pub const GAS_NFT_TRANSFER_CALL: u64 = 25_000_000_000_000 + GAS_RESOLVE_TRANSFER
 // 10 locally.
 // 5 on market + 16 on market if market has to discard a token + cushion
 //pub(crate) const GAS_NFT_APPROVE: u64 = mintbase_utils::ntot(40);
+#[cfg(feature = "store-wasm")]
 pub(crate) const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));
