@@ -804,6 +804,7 @@ pub fn log_listing_created(
     let mut iter2 = list_id.split(':');
     let token_id = iter.next();
     let store_id = iter.next();
+    iter2.next();
     let approval_id = iter2.next().unwrap();
     let log = vec![NftListLog {
         list_id: list_id.to_string(),
