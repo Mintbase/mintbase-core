@@ -852,10 +852,11 @@ pub fn log_batch_listing_created(
         .enumerate()
         .map(|(u, x)| {
             let list_id = format!("{}:{}:{}",token_ids[u].0,x.0,store_id);
+            let token_key = format!("{}:{}",token_ids[u].0,store_id);
             NftListLog {
                 list_id,
                 price: price.0.to_string(),
-                token_key: Default::default(),
+                token_key,
                 owner_id: owner_id.to_string(),
                 autotransfer,
                 approval_id: x.0.to_string(),
