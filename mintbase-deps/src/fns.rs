@@ -850,15 +850,18 @@ pub fn log_batch_listing_created(
     let log = approval_ids
         .iter()
         .enumerate()
-        .map(|(u, x)| NftListLog {
-            list_id: Default::default(),
-            price: price.0.to_string(),
-            token_key: Default::default(),
-            owner_id: owner_id.to_string(),
-            autotransfer,
-            approval_id: x.0.to_string(),
-            token_id: token_ids[u].0.to_string(),
-            store_id: store_id.to_string(),
+        .map(|(u, x)| {
+            let list_id = format!("{}:{}:{}",token_ids[u].0,x.0,store_id);
+            NftListLog {
+                list_id,
+                price: price.0.to_string(),
+                token_key: Default::default(),
+                owner_id: owner_id.to_string(),
+                autotransfer,
+                approval_id: x.0.to_string(),
+                token_id: token_ids[u].0.to_string(),
+                store_id: store_id.to_string(),
+            }
         })
         .collect::<Vec<_>>();
     let event = NearJsonEvent {
