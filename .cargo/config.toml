@@ -37,3 +37,4 @@ helper-wasm = "rustc -p mintbase-deps --release --features helper-wasm --target 
 test-deploy-contracts="test deploy_contracts -p mintbase-deps --lib --features test"
 indexer = "rustc -p mintbase-near-indexer --release --bin mintbase-near-indexer -- --emit link=bin/indexer"
 indexer-debug = "rustc -p mintbase-near-indexer --bin mintbase-near-indexer -- --emit link=bin/indexer"
+test-e2e = "test --package mintbase-near-indexer --test integration_tests test_deploy_contracts --features test -- --exact --nocapture"

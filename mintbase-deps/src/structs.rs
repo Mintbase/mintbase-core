@@ -691,3 +691,4 @@ pub struct TokenListing {
     /// further changes may be made on the token.
     pub locked: bool,
 }
+

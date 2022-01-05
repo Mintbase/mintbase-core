@@ -359,7 +359,7 @@ function batch_upgrade_stores() {
   for row in $(jq -r '.[]'); do
     ((i=i%N)); ((i++==0)) && wait
       redeploy_single_store "$row" &
-  done < scripts/arr.json
+  done < scripts/testnet.json
 }
 
 function revoke_all_approvals() {
