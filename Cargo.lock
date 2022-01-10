@@ -2465,7 +2465,7 @@ dependencies = [
  "near-client-primitives 0.0.0 (git+https://github.com/near/nearcore?rev=c0551c84ba9f54509abe05cb1291dbeb33cbd85d)",
  "near-crypto 0.0.0 (git+https://github.com/near/nearcore?rev=c0551c84ba9f54509abe05cb1291dbeb33cbd85d)",
  "near-indexer 0.0.0 (git+https://github.com/near/nearcore?rev=c0551c84ba9f54509abe05cb1291dbeb33cbd85d)",
- "near-indexer-test-framework 0.1.0 (git+https://github.com/evergreen-trading-systems/near-indexer-test-framework)",
+ "near-indexer-test-framework",
  "near-jsonrpc-client 0.1.0",
  "near-jsonrpc-primitives 0.0.0 (git+https://github.com/near/nearcore?rev=c0551c84ba9f54509abe05cb1291dbeb33cbd85d)",
  "near-primitives 0.0.0 (git+https://github.com/near/nearcore?rev=c0551c84ba9f54509abe05cb1291dbeb33cbd85d)",
@@ -2502,7 +2502,7 @@ dependencies = [
  "lettre",
  "lettre_email",
  "mintbase-deps",
- "near-indexer-test-framework 0.1.0",
+ "near-indexer-test-framework",
  "serde",
  "serde_json",
  "uuid 0.8.2",
@@ -3212,33 +3212,6 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing 0.1.29",
-]
-
-[[package]]
-name = "near-indexer-test-framework"
-version = "0.1.0"
-dependencies = [
- "actix",
- "actix-http",
- "actix-rt",
- "actix-tls",
- "actix-web",
- "actix_derive",
- "diesel",
- "diesel_migrations",
- "futures",
- "near-account-id 0.11.0",
- "near-contract-standards",
- "near-crypto 0.11.0",
- "near-indexer 0.0.0 (git+https://github.com/near/nearcore?rev=4807978dd6a952a25b2f304fb15433ea9480b39d)",
- "near-jsonrpc-client 0.2.0",
- "near-jsonrpc-primitives 0.11.0",
- "near-primitives 0.11.0",
- "near-sdk",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
 ]
 
 [[package]]
