@@ -100,7 +100,7 @@ function run_local_indexer() {
 }
 
 function run_stateful_indexer() {
-    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_watch_accounts_ bin/indexer --home-dir _near_dir_ run;';
+    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_watch_accounts_ bin/indexer --home-dir _near_dir_ run > out.log 2> error.log;';
     str="${str//_near_dir_/$near_dir}";
     str="${str//_watch_accounts_/$watch_accounts}";
     str="${str//_network_/$network}";
