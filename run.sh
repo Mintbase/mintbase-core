@@ -87,7 +87,7 @@ function run_local_indexer() {
     sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json;
 
 #    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
-    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
+    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run > out.log 2> error.log;';
     str="${str//_near_dir_/$near_dir}";
     str="${str//_root_/$root}";
     str="${str//_network_/$network}";
