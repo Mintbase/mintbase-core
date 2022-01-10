@@ -38,13 +38,13 @@ futures = {version= "0.3.17", optional = true }
 tokio-stream = {version= "0.1.7" , optional = true}
 
 near-jsonrpc-client = {git="https://github.com/near/near-jsonrpc-client-rs",rev="dd7761b51e1775350be1782370aa22c0b0fe98d7",features=["sandbox"], optional=true}
-near-client-primitives = { git = "https://github.com/near/nearcore", rev = "4807978dd6a952a25b2f304fb15433ea9480b39d" ,optional=true}
-near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "4807978dd6a952a25b2f304fb15433ea9480b39d" ,optional=true}
-near-crypto = { git = "https://github.com/near/nearcore", rev = "4807978dd6a952a25b2f304fb15433ea9480b39d" ,optional=true}
-near-primitives = { git = "https://github.com/near/nearcore", rev = "4807978dd6a952a25b2f304fb15433ea9480b39d" ,optional=true}
-near-account-id = { git = "https://github.com/near/nearcore", rev="4807978dd6a952a25b2f304fb15433ea9480b39d", optional=true}
+near-client-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
+near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
+near-crypto = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
+near-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
+near-account-id = { git = "https://github.com/near/nearcore", rev="c0551c84ba9f54509abe05cb1291dbeb33cbd85d", optional=true}
 # indexer
-near-indexer = { git = "https://github.com/near/nearcore", rev="4807978dd6a952a25b2f304fb15433ea9480b39d", optional=true}
+near-indexer = { git = "https://github.com/near/nearcore", rev="c0551c84ba9f54509abe05cb1291dbeb33cbd85d", optional=true}
 
 [features]
 store-wasm = ["wasm"]

@@ -3,5 +3,5 @@
 members = [
 	"mintbase-deps",
 	"mintbase-near-indexer",
-	"simple-market-contract",
+	"simple-market-contract"
 ]
