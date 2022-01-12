@@ -32,5 +32,5 @@ postgres_user=$_postgres_user;
 postgres_password=$_postgres_password;
 postgres_host=$_postgres_host;
 postgres_database=$_postgres_database;
-echo $postgres_host;
+
 . scripts/.data.sh;

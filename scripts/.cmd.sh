@@ -181,12 +181,15 @@ function programa2() {
     cd simple-market-contract && git checkout localnet && git pull && cd ../;
     ;;
   "e2e")
-      build_indexer &&
-      run_local_indexer &
+      while :
+      do
+        build_indexer &&
+        run_local_indexer &
        build_contracts &&
        create_accounts  >> out.log 2>> error.log &&
        deploy  >> out.log 2>> error.log &&
        create_store  >> out.log 2>> error.log;
+      done
       ;;
   "indexer")
     run_stateful_indexer;
