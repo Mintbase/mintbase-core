@@ -20,7 +20,7 @@ jobs:
           toolchain: stable
       - uses: actions-rs/cargo@v1
         with:
-          command: test test_deploy_contracts --lib --features test
+          command: test-deploy-contracts
 #      - name: run indexer
 #        run: ls -lah && cargo indexer
 #      - uses: appleboy/scp-action@master
