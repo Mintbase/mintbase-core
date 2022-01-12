@@ -8,10 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: clone main repository
-        uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-        run: git submodule update --init --recursive
+        run: git clone "https://${{secrets.GH_TOKEN}}@github.com/Mintbase/mintbase-core.git"
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
