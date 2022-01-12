@@ -10,8 +10,8 @@ jobs:
       - name: clone main repository
         uses: actions/checkout@v2
         with:
-          submodules: 'recursive'
           token: ${{ secrets.GH_TOKEN }}
+        run: git submodule update --init --recursive
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
