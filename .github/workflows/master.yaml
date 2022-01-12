@@ -15,10 +15,12 @@ jobs:
           repository: Mintbase/mintbase-near-indexer
           token: ${{ secrets.GH_TOKEN }}
 #          ssh-key: ${{ secrets.MINTBASE_NEAR_INDEXER_DEPLOY_KEY }}
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test test_deploy_contracts --lib --features test
 #      - name: run indexer
 #        run: ls -lah && cargo indexer
 #      - uses: appleboy/scp-action@master
