@@ -183,6 +183,9 @@ function programa2() {
   "e2e")
       while :
       do
+        git pull;
+        cd mintbase-near-indexer && git checkout localnet && git pull && cd ../;
+        cd simple-market-contract && git checkout localnet && git pull && cd ../;
         build_indexer;
         run_local_indexer &
        build_contracts;
