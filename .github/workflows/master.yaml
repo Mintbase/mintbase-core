@@ -13,7 +13,8 @@ jobs:
         with:
           path: mintbase-near-indexer
           repository: Mintbase/mintbase-near-indexer
-          ssh-key: ${{ secrets.MINTBASE_NEAR_INDEXER_DEPLOY_KEY }}
+          token: ${{ secrets.GH_TOKEN }}
+#          ssh-key: ${{ secrets.MINTBASE_NEAR_INDEXER_DEPLOY_KEY }}
 #      - uses: actions-rs/toolchain@v1
 #        with:
 #          toolchain: stable
