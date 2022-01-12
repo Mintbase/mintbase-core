@@ -175,21 +175,18 @@ function programa() {
 
 function programa2() {
   case $1 in
-  "git-clone")
-    git clone --recurse-submodules https://github.com/Mintbase/mintbase-core;
-    git checkout localnet;
-    ;;
   "git-pull")
     git pull;
     cd mintbase-near-indexer && git checkout localnet && git pull && cd ../;
     cd simple-market-contract && git checkout localnet && git pull && cd ../;
     ;;
   "e2e")
+      build_indexer &&
       run_local_indexer &
        build_contracts &&
-       create_accounts &&
-       deploy &&
-       create_store;
+       create_accounts  >> out.log 2>> error.log &&
+       deploy  >> out.log 2>> error.log &&
+       create_store  >> out.log 2>> error.log;
       ;;
   "indexer")
     run_stateful_indexer;
