@@ -34,7 +34,7 @@ factory-wasm = "rustc -p mintbase-deps --release --features factory-wasm --targe
 store-wasm = "rustc -p mintbase-deps --release --features store-wasm --target wasm32-unknown-unknown --lib -- --emit link=wasm/store.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
 market-wasm = "rustc -p simple-market-contract --release --target wasm32-unknown-unknown --lib -- --emit link=wasm/market.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
 helper-wasm = "rustc -p mintbase-deps --release --features helper-wasm --target wasm32-unknown-unknown --lib -- --emit link=wasm/helper.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
-test-deploy-contracts="test deploy_contracts -p mintbase-deps --lib --features test"
+test-deploy-contracts="test deploy_contracts -p mintbase-near-indexer --lib --features test"
 indexer = "rustc -p mintbase-near-indexer --release --bin mintbase-near-indexer -- --emit link=bin/indexer"
 indexer-debug = "rustc -p mintbase-near-indexer --bin mintbase-near-indexer -- --emit link=bin/indexer"
 test-e2e = "test --package mintbase-near-indexer --test integration_tests test_deploy_contracts --features test -- --exact --nocapture"
