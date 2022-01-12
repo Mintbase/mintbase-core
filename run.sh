@@ -34,25 +34,26 @@ fi
 #done;
 
 
-
-function run_local_indexer() {
-    str='bin/indexer --home-dir _near_dir_ init --chain-id local;';
-    str="${str//_near_dir_/$near_dir}";
-    str="${str//_NEAR_ENV_/$NEAR_ENV}";
-    echo $str;
-    eval $str;
-    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/local/config.json;
-
-    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
-    str="${str//_near_dir_/$near_dir}";
-    str="${str//_root_/$root}";
-    str="${str//_network_/$network}";
-    str="${str//_postgres_password_/$postgres_password}";
-    str="${str//_postgres_user_/$postgres_user}";
-
-    echo $str;
-    eval $str;
-}
+#
+#function run_local_indexer() {
+#    pkill -f indexer;
+#    str='bin/indexer --home-dir _near_dir_ init --chain-id local;';
+#    str="${str//_near_dir_/$near_dir}";
+#    str="${str//_NEAR_ENV_/$NEAR_ENV}";
+#    echo $str;
+#    eval $str;
+#    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/local/config.json;
+#
+#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
+#    str="${str//_near_dir_/$near_dir}";
+#    str="${str//_root_/$root}";
+#    str="${str//_network_/$network}";
+#    str="${str//_postgres_password_/$postgres_password}";
+#    str="${str//_postgres_user_/$postgres_user}";
+#
+#    echo $str;
+#    eval $str;
+#}
 
 
 function build_contracts(){
@@ -73,6 +74,8 @@ function init_indexer() {
 }
 
 function run_local_indexer() {
+      pkill -f indexer;
+
     str='rm -rf _near_dir_';
     str="${str//_near_dir_/$near_dir}";
     echo $str;
@@ -87,7 +90,7 @@ function run_local_indexer() {
     sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json;
 
 #    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
-    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run > out.log 2> error.log;';
+    str='RUST_LOG=info NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run >> out.log 2>> error.log;';
     str="${str//_near_dir_/$near_dir}";
     str="${str//_root_/$root}";
     str="${str//_network_/$network}";
@@ -112,6 +115,7 @@ function run_stateful_indexer() {
     eval $str;
 }
 
+
 function run_indexer2() {
 #    cargo indexer;
     str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
@@ -125,7 +129,7 @@ function run_indexer2() {
 }
 
 function create_accounts() {
-    N=6
+    N=3
     for i in $minter_account $market_account \
     $store_owner_account $seller1 \
     $buyer1_account $buyer2_account $royalty1_account \
@@ -133,11 +137,12 @@ function create_accounts() {
     $royalty3_account $royalty4_account $royalty5_account \
     $royalty6_account $royalty7_account $royalty8_account \
     $royalty9_account $royalty10_account; do
-      ((z=z%N)); ((z++==0)) && wait
+#      ((z=z%N)); ((z++==0)) && wait
         str="near create-account $i --masterAccount $root_account --initialBalance 4 --nodeUrl $node_url --keyPath $key_path";
         echo running $str;
-        eval $str &
+        eval $str;
     done
+#    wait
 }
 
 function deploy() {
@@ -424,8 +429,7 @@ function nft_transfer_call(){
 }
 
 if [ -n "$1" ]; then
-  echo $1;
-  programa $1;
+  programa2 $1;
   else
   programa
 fi

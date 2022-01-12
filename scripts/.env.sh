@@ -12,14 +12,14 @@
 . scripts/.postgres.sh;
 
 # localnet
-#network="local";
-#top_level_account="near"
-#root="test"
+network="local";
+top_level_account="near"
+root="test"
 
 # testnet
-network="testnet";
-top_level_account="testnet"
-root="mintspace2"
+#network="testnet";
+#top_level_account="testnet"
+#root="mintspace2"
 
 # mainnet
 #network="mainnet";

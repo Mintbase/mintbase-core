@@ -171,3 +171,129 @@ function programa() {
     ;;
   esac
 }
+
+
+function programa2() {
+  case $1 in
+  "git-clone-testnet")
+    git clone --recurse-submodules https://github.com/Mintbase/mintbase-core;
+    git checkout testnet;
+    ;;
+  "git-pull-testnet")
+    git pull;
+    cd mintbase-near-indexer && git checkout testnet && git pull && cd ../;
+    cd simple-market-contract && git checkout testnet && git pull && cd ../;
+    ;;
+  "e2e")
+      run_local_indexer &
+       build_contracts &&
+       create_accounts &&
+       deploy &&
+       create_store;
+      ;;
+  "indexer")
+    run_stateful_indexer;
+    ;;
+  "run-indexer")
+    run_local_indexer &
+    ;;
+  "build-indexer")
+    build_indexer;
+    ;;
+  "build-contracts")
+    build_contracts;
+    ;;
+  "create-accounts")
+    create_accounts;
+    ;;
+  "redeploy")
+    redeploy;
+    ;;
+  "deploy")
+    deploy;
+    ;;
+  "create_store")
+    create_store;
+    ;;
+  "grant_minter")
+    grant_minter;
+    ;;
+#  5)
+#    mint_tokens_nr;
+#    echo "remember token_id to list in marketplace";
+#    programa;
+#    ;;
+#  6)
+#    mint_tokens;
+#    echo "remember token_id to list in marketplace";
+#    programa;
+#    ;;
+#  7)
+#    echo "enter token_id:";
+#    read -r token_id;
+#    nft_approve_autotransfer "$token_id";
+#    programa;
+#    ;;
+#  8)
+#    echo "enter token_id:";
+#    read -r token_id;
+#    nft_approve_manual_transfer "$token_id";
+#    programa;
+#    ;;
+#  9)
+#    echo "token_id:";
+#    read -r token_id;
+#    make_offer "$token_id";
+#    programa;
+#    ;;
+#  10)
+#    echo "token_id:";
+#    read -r token_id;
+#    accept_offer_and_transfer "$token_id";
+#    programa;
+#    ;;
+#  11)
+#    revoke_minter;
+#    programa;
+#    ;;
+#  12)
+#    echo "token_id:";
+#    read -r token_id;
+#    nft_batch_transfer "$token_id";
+#    programa;
+#    ;;
+#  12.1)
+#    echo "token_id:";
+#    read -r token_id;
+#    nft_transfer_call "$token_id";
+#    programa;
+#    ;;
+#  13)
+#    batch_upgrade_stores;
+#    programa;
+#    ;;
+#  15)
+#    echo "account_id:";
+#    read -r account_id;
+#    update_list $account_id;
+#    programa;
+#    ;;
+#  16)
+#    get_allow_list;
+#    programa;
+#    ;;
+#  17)
+#    echo "account_id:";
+#    read -r account_id;
+#    update_ban_list $account_id;
+#    programa;
+#    ;;
+#  18)
+#    get_ban_list;
+#    programa;
+#    ;;
+  *)
+    echo not a command;
+    ;;
+  esac
+}
