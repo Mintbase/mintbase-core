@@ -186,6 +186,12 @@ impl Default for MintbaseStoreFactory {
 #[cfg(feature = "helper-wasm")]
 #[cfg_attr(feature = "helper-wasm", near_bindgen)]
 impl HelperWasm {
+    #[init(ignore_state)]
+    pub fn new() -> Self {
+        Self {
+            count: 0
+        }
+    }
     pub fn nft_on_transfer(
         &mut self,
         sender_id: AccountId,

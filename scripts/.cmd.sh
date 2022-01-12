@@ -183,11 +183,11 @@ function programa2() {
   "e2e")
       while :
       do
-        build_indexer &&
+        build_indexer;
         run_local_indexer &
-       build_contracts &&
-       create_accounts  >> out.log 2>> error.log &&
-       deploy  >> out.log 2>> error.log &&
+       build_contracts;
+       create_accounts  >> out.log 2>> error.log;
+       deploy  >> out.log 2>> error.log;
        create_store  >> out.log 2>> error.log;
       done
       ;;
