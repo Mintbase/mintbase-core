@@ -1,7 +1,7 @@
 [submodule "mintbase-near-indexer"]
 	path = mintbase-near-indexer
 	url = https://github.com/Mintbase/mintbase-near-indexer
-	branch = main
+	branch = master
 [submodule "simple-market-contract"]
 	path = simple-market-contract
 	url = https://github.com/Mintbase/simple-market-contract
