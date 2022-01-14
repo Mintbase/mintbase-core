@@ -27,7 +27,8 @@ root="test"
 #root="mintbase1"
 
 misfits_root="tenk"
-watch_accounts="$root,$misfits_root"
+nmkmint="nmkmint"
+watch_accounts="$root,$misfits_root,$nmkmint"
 postgres_user=$_postgres_user;
 postgres_password=$_postgres_password;
 postgres_host=$_postgres_host;
