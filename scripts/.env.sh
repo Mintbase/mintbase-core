@@ -32,5 +32,6 @@ postgres_user=$_postgres_user;
 postgres_password=$_postgres_password;
 postgres_host=$_postgres_host;
 postgres_database=$_postgres_database;
+rust_log="tokio_reactor=info,near=info,near=error,stats=info,telemetry=info,indexer_for_wallet=info,mintbase_near_indexer=info,near_indexer=debug"
 
 . scripts/.data.sh;

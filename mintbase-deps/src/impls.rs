@@ -904,6 +904,7 @@ impl MintbaseStore {
         royalty_args: Option<RoyaltyArgs>,
         split_owners: Option<SplitBetweenUnparsed>,
     ) {
+
         assert!(num_to_mint > 0);
         assert!(num_to_mint <= 125); // upper gas limit
         assert!(env::attached_deposit() >= 1);

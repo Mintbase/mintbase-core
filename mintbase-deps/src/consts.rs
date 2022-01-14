@@ -12,7 +12,7 @@ pub const fn ntoy(near_amount: Balance) -> Balance {
 
 pub const ONE_YOCTO: Balance = 1;
 
-pub const GAS_PAYOUT_RESOLVE: Gas = ntot(Gas(15));
+pub const GAS_PAYOUT_RESOLVE: Gas = ntot(Gas(30));
 
 /// The amount of Storage in bytes consumed by a maximal sized Token with NO
 /// metadata and NO Royalty field. Rounded to 360 for extra cushion.
