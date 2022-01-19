@@ -1,53 +1,132 @@
-. scripts/.env.sh
+#!/bin/bash
 
-export NEAR_ENV=$network
+# SETUP ENV #
+# =====
+# =====
+# =====
 
-near_dir=~/.near/$network
 
-if [ "$network" = "testnet" ]; then
-  node_url="https://rpc.testnet.near.org" #testnet
-elif [ $network == "mainnet" ]; then
-  node_url="https://rpc.mainnet.near.org" #mainnet
-elif [ $network == "local" ]; then
-  node_url="http://127.0.0.1:3030" #local
+if [[ -z "${NETWORK}" ]]; then
+  echo specify NETWORK variable - mainnet,testnet,local
+  exit 1;
 else
-  echo "invalid network $network"
-  exit 1
+  export NEAR_ENV=$NETWORK
+
 fi
 
-if [ $network = "local" ]; then
+if [[ -z "${NEAR_DIR}" ]]; then
+  eval NEAR_DIR="~/.near/$NETWORK"
+else
+  NEAR_DIR="${NEAR_DIR}"
+fi
+  . scripts/.postgres.sh
+
+if [[ -z "${POSTGRES}" ]]; then
+  POSTGRES="postgres://$postgres_user:$postgres_password@$postgres_host:5432/$postgres_database"
+else
+  POSTGRES="$POSTGRES"
+fi
+
+if [ "$NETWORK" = "testnet" ]; then
+  node_url="https://rpc.testnet.near.org" #testnet
+  top_level_account="testnet"
+  root="mintspace2"
+elif [ "$NETWORK" == "mainnet" ]; then
+  node_url="https://rpc.mainnet.near.org" #mainnet
+  top_level_account="near"
+  root="mintbase1"
+elif [ "$NETWORK" == "local" ]; then
+  node_url="http://127.0.0.1:3030" #local
+  top_level_account="near"
+  root="test"
+else
+  echo "invalid network $NETWORK"
+  exit 1;
+fi
+
+if [[ -z "${RUST_LOG}" ]]; then
+  RUST_LOG="tokio_reactor=info,near=info,near=error,stats=info,telemetry=info,indexer_for_wallet=info,mintbase_near_indexer=info,near_indexer=debug"
+else
+  RUST_LOG="${RUST_LOG}"
+fi
+
+if [[ -z "${WATCH_ACCOUNTS}" ]]; then
+  WATCH_ACCOUNTS="$root,tenk,nmkmint"
+else
+  WATCH_ACCOUNTS="${WATCH_ACCOUNTS}"
+fi
+
+if [ "$NETWORK" = "local" ]; then
   key_path="~/.near/local/validator_key.json"
 else
-  key_path="~/.near-credentials/$network/$root_account.json"
+  key_path="~/.near-credentials/$NETWORK/$root_account.json"
 fi
 
-. scripts/.cmd.sh
+# SETUP ENV END #
+# =====
+# =====
+# =====
 
-#near create-account $root_account --masterAccount $top_level_account;
+# ==================== #
 
-# Create all accounts needed to test Mintbase
-#echo creating accounts;
-#for account in $minter_account $store_account $store_owner_account $seller1_account $buyer1_account $buyer2_account; do
-#  echo "running: near create-account $account --masterAccount $root_account --initialBalance 10"
-#  near create-account $account --masterAccount $root_account --initialBalance 10;
-#done;
+# SETUP APPLICATION DATA #
+# =====
+# =====
+# =====
+
+root_account="$root.$top_level_account"; # MUST ALREADY EXIST WITH LOCAL CRED
+minter_account="minter02.$root_account";
+market_account="market.$root_account";
+helper_account="helper.$root_account";
+store_account="store906.$root_account"; #don't create store manually
+store_owner_account="store-owner01.$root_account";
+seller1_account="seller01.$root_account";
+buyer1_account="buyer100.$root_account";
+buyer2_account="buyer200.$root_account";
+royalty1_account="royalty01.$root_account";
+royalty2_account="royalty02.$root_account";
+royalty3_account="royalty03.$root_account";
+royalty4_account="royalty04.$root_account";
+royalty5_account="royalty05.$root_account";
+royalty6_account="royalty06.$root_account";
+royalty7_account="royalty07.$root_account";
+royalty8_account="royalty08.$root_account";
+royalty9_account="royalty09.$root_account";
+royalty10_account="royalty10.$root_account";
+receiver_account="receiver01.$root_account";
+receiver300_account="receiver01.$root_account";
+receiver301_account="receiver01.$root_account";
+
+# SETUP APPLICATION DATA END #
+# =====
+# =====
+# =====
+
+# ==================== #
+
+# FUNCTIONS #
+# =====
+# =====
+# =====
+
+. scripts/switch-cmd.sh
 
 #
 #function run_local_indexer() {
 #    pkill -f indexer;
 #    str='bin/indexer --home-dir _near_dir_ init --chain-id local;';
-#    str="${str//_near_dir_/$near_dir}";
+#    str="${str//_near_dir_/$NEAR_DIR}";
 #    str="${str//_NEAR_ENV_/$NEAR_ENV}";
 #    echo $str;
 #    eval $str;
 #    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/local/config.json;
 #
-#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
-#    str="${str//_near_dir_/$near_dir}";
+#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
+#    str="${str//_near_dir_/$NEAR_DIR}";
 #    str="${str//_root_/$root}";
-#    str="${str//_network_/$network}";
-#    str="${str//_postgres_password_/$postgres_password}";
-#    str="${str//_postgres_user_/$postgres_user}";
+#    str="${str//_network_/$NETWORK}";
+#    str="${str//_postgres_password_/POSTGRES_password}";
+#    str="${str//_postgres_user_/POSTGRES_user}";
 #
 #    echo $str;
 #    eval $str;
@@ -61,41 +140,34 @@ function build_indexer() {
   cargo indexer
 }
 
-function init_indexer() {
-  str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
-  str="${str//_near_dir_/$near_dir}"
-  str="${str//_NEAR_ENV_/$NEAR_ENV}"
-  echo $str
-  eval $str
-  sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json
-}
 
-function run_local_indexer() {
-  pkill -f indexer
+function run_indexer() {
+  if [[ ! -d "$NEAR_DIR/data" ]]
+  then
+      pkill -f indexer
 
-  str='rm -rf _near_dir_'
-  str="${str//_near_dir_/$near_dir}"
-  echo $str
-  eval $str
+        str='rm -rf _near_dir_'
+        str="${str//_near_dir_/$NEAR_DIR}"
+        echo $str
+        eval $str
 
-  str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
-  str="${str//_near_dir_/$near_dir}"
-  str="${str//_NEAR_ENV_/$NEAR_ENV}"
-  echo $str
-  eval $str
 
-  sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/$network/config.json
+        str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
+        str="${str//_near_dir_/$NEAR_DIR}"
+        str="${str//_NEAR_ENV_/$NEAR_ENV}"
+        echo $str
+        eval $str
 
-  #    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;';
-  str='RUST_LOG=_rust_log_ NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run'
-  str="${str//_rust_log_/$rust_log}"
-  str="${str//_near_dir_/$near_dir}"
-  str="${str//_root_/$root}"
-  str="${str//_network_/$network}"
-  str="${str//_postgres_password_/$postgres_password}"
-  str="${str//_postgres_user_/$postgres_user}"
-  str="${str//_postgres_host_/$postgres_host}"
-  str="${str//_postgres_database_/$postgres_database}"
+        sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
+  fi
+echo $POSTGRES
+echo 33344
+  str='RUST_LOG=_rust_log_ NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
+  str="${str//_rust_log_/$RUST_LOG}"
+  str="${str//_near_dir_/$NEAR_DIR}"
+  str="${str//_WATCH_ACCOUNTS_/$WATCH_ACCOUNTS}"
+  str="${str//_network_/$NETWORK}"
+  str="${str//_postgres_/$POSTGRES}"
   if [ "$1" = "log" ]; then
     str="$str  >> out.log 2>> error.log"
   fi
@@ -103,34 +175,6 @@ function run_local_indexer() {
   eval $str
 }
 
-function run_stateful_indexer() {
-  str='RUST_LOG=_rust_log_ NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@_postgres_host_:5432/_postgres_database_ WATCH_ACCOUNTS=_watch_accounts_ bin/indexer --home-dir _near_dir_ run'
-  str="${str//_rust_log_/$rust_log}"
-  str="${str//_near_dir_/$near_dir}"
-  str="${str//_watch_accounts_/$watch_accounts}"
-  str="${str//_network_/$network}"
-  str="${str//_postgres_password_/$postgres_password}"
-  str="${str//_postgres_user_/$postgres_user}"
-  str="${str//_postgres_host_/$postgres_host}"
-  str="${str//_postgres_database_/$postgres_database}"
-  if [ "$1" = "log" ]; then
-    str="$str  >> out.log 2>> error.log"
-  fi
-  echo $str
-  eval $str
-}
-
-function run_indexer2() {
-  #    cargo indexer;
-  str='NETWORK=_network_ POSTGRES=postgres://_postgres_user_:_postgres_password_@localhost:5432/mintlivebase WATCH_ACCOUNTS=_root_ ./indexer --home-dir _near_dir_ run;'
-  str="${str//_near_dir_/$near_dir}"
-  str="${str//_root_/$root}"
-  str="${str//_network_/$network}"
-  str="${str//_postgres_password_/$postgres_password}"
-  str="${str//_postgres_user_/$postgres_user}"
-  echo $str
-  eval $str
-}
 
 function create_accounts() {
   N=3
@@ -197,9 +241,9 @@ function redeploy() {
 }
 
 function redeploy_single_store() {
-  cred=$(cat ~/.near-credentials/$network/$root_account.json)
+  cred=$(cat ~/.near-credentials/$NETWORK/$root_account.json)
   echo creating credentials "$cred"
-  echo "$cred" >~/.near-credentials/"$network"/"$1".json
+  echo "$cred" >~/.near-credentials/"$NETWORK"/"$1".json
   str='near deploy --wasmFile wasm/store.wasm _1_ --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_'
   str="${str//_root_account_/$root_account}"
   str="${str//_1_/$1}"
@@ -363,9 +407,6 @@ function revoke_minter() {
   eval "$str"
 }
 
-#  pub fn nft_batch_transfer(&mut self, token_ids: Vec<(U64, AccountId)>) {
-# [[112, "_receiver_account_]]
-
 function nft_batch_transfer() {
   str='near call _store_account_ nft_transfer '\''{"token_ids":[["_1_", "_receiver_account_"]]}'\'' --accountId _buyer1_account_ --deposit 0.000000000000000000000001 --gas 200000000000000'
   str="${str//_receiver_account_/$receiver_account}"
@@ -458,7 +499,3 @@ if [ -n "$1" ]; then
 else
   programa
 fi
-
-#echo "Hello, who am I talking to?"
-#read varname
-#echo "It\'s nice to meet you $varname"

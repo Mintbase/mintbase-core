@@ -59,7 +59,7 @@ function programa() {
     programa
     ;;
   -2)
-    run_local_indexer &
+    run_indexer;
     programa
     ;;
   -1.1)
@@ -79,7 +79,7 @@ function programa() {
     programa
     ;;
   2)
-    #    deploy;
+    deploy;
     programa
     ;;
   3)
@@ -197,7 +197,7 @@ function programa2() {
     run_stateful_indexer $2
     ;;
   "run-indexer")
-    run_local_indexer $2
+    run_indexer;
     ;;
   "build-indexer")
     build_indexer

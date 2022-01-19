@@ -9,7 +9,7 @@ authors = ["evergreen-trading-systems <4870868+evergreen-trading-systems@users.n
 crate-type = ["rlib","cdylib"]
 
 [dev-dependencies]
-near-indexer-test-framework = {git="https://github.com/evergreen-trading-systems/near-indexer-test-framework"}
+#near-indexer-test-framework = {git="https://github.com/evergreen-trading-systems/near-indexer-test-framework"}
 anyhow="1.0.51"
 
 [dependencies]
