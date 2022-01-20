@@ -144,12 +144,12 @@ function build_indexer() {
 function run_indexer() {
   if [[ ! -d "$NEAR_DIR/data" ]]
   then
-      pkill -f indexer
-
-        str='rm -rf _near_dir_'
-        str="${str//_near_dir_/$NEAR_DIR}"
-        echo $str
-        eval $str
+#      pkill -f indexer
+#
+#        str='rm -rf _near_dir_'
+#        str="${str//_near_dir_/$NEAR_DIR}"
+#        echo $str
+#        eval $str
 
 
         str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
@@ -451,10 +451,12 @@ function revoke_all_approvals() {
 }
 
 function update_list() {
-  str='near call _market_account_ update_allowlist '\''{"account_id":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000'
+  str='near call _market_account_ update_allowlist '\''{"account_id":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_'
   str="${str//_1_/$1}"
   str="${str//_market_account_/$market_account}"
   str="${str//_root_account_/$root_account}"
+  str="${str//_node_url_/$node_url}"
+  str="${str//_key_path_/$key_path}"
   echo running "$str"
   eval "$str"
 }
@@ -467,10 +469,12 @@ function get_allow_list() {
 }
 
 function update_ban_list() {
-  str='near call _market_account_ update_banlist '\''{"account_id":"_1_", "state":false}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000'
+  str='near call _market_account_ update_banlist '\''{"account":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_'
   str="${str//_1_/$1}"
   str="${str//_market_account_/$market_account}"
   str="${str//_root_account_/$root_account}"
+  str="${str//_node_url_/$node_url}"
+  str="${str//_key_path_/$key_path}"
   echo running "$str"
   eval "$str"
 }
