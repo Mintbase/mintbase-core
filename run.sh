@@ -469,7 +469,7 @@ function get_allow_list() {
 }
 
 function update_ban_list() {
-  str='near call _market_account_ update_banlist '\''{"account":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_'
+  str='near call _market_account_ update_banlist '\''{"account_id":"_1_", "state":true}'\'' --accountId _market_account_ --deposit 0.000000000000000000000001 --gas 200000000000000 --nodeUrl _node_url_ --keyPath _key_path_'
   str="${str//_1_/$1}"
   str="${str//_market_account_/$market_account}"
   str="${str//_root_account_/$root_account}"
