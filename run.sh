@@ -45,7 +45,7 @@ else
 fi
 
 if [[ -z "${RUST_LOG}" ]]; then
-  RUST_LOG="tokio_reactor=info,near=info,near=error,stats=info,telemetry=info,indexer_for_wallet=info,mintbase_near_indexer=info,near_indexer=debug"
+  RUST_LOG="indexer=info,genesis=info,chain=info,client=info,stats=info,mintbase_near_indexer=info,near=error,mintbase_near_indexer=error"
 else
   RUST_LOG="${RUST_LOG}"
 fi
@@ -144,12 +144,12 @@ function build_indexer() {
 function run_indexer() {
   if [[ ! -d "$NEAR_DIR/data" ]]
   then
-#      pkill -f indexer
-#
-#        str='rm -rf _near_dir_'
-#        str="${str//_near_dir_/$NEAR_DIR}"
-#        echo $str
-#        eval $str
+      pkill -f indexer
+
+        str='rm -rf _near_dir_'
+        str="${str//_near_dir_/$NEAR_DIR}"
+        echo $str
+        eval $str
 
 
         str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
@@ -160,8 +160,6 @@ function run_indexer() {
 
         sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
   fi
-echo $POSTGRES
-echo 33344
   str='RUST_LOG=_rust_log_ NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
   str="${str//_rust_log_/$RUST_LOG}"
   str="${str//_near_dir_/$NEAR_DIR}"
