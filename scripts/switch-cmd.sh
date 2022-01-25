@@ -179,14 +179,34 @@ function programa2() {
     cd simple-market-contract && git checkout localnet && git pull && cd ../
     ;;
   "e2e")
-    build_indexer
-    build_contracts
-    run_local_indexer &
+#    build_indexer
+#    build_contracts
+
+    rm -rf $NEAR_DIR/data
+
+    echo "clearing database";
+
+    diesel migration revert --migration-dir mintbase-near-indexer/migrations
+    diesel migration revert --migration-dir mintbase-near-indexer/migrations
+    diesel migration revert --migration-dir mintbase-near-indexer/migrations
+    diesel migration revert --migration-dir mintbase-near-indexer/migrations
+
+
+    RUST_LOG=""
+    run_indexer &
+    echo "creating accounts";
     create_accounts >>out.log 2>>error.log
+    echo "deploying";
     deploy >>out.log 2>>error.log
     create_store >>out.log 2>>error.log
-    grant_minter
-    mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":50,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}'
+    grant_minter >>out.log 2>>error.log
+    echo "minting 50 tokens with 2 owners and royalty accounts"
+    mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":50,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}' >>out.log 2>>error.log
+    echo "listing token-id 1 on market"
+    nft_approve_autotransfer 1
+    echo "buying token-id off market"
+    make_offer 1
+    pkill -f indexer
     ;;
   "e2e-loop")
     while :; do
@@ -226,6 +246,10 @@ function programa2() {
   "mint-tokens")
     mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":100,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}'
     echo "remember token_id to list in marketplace"
+    ;;
+ "top-stores")
+    export -f top_stores;
+    watch -n60 -x bash -c top_stores
     ;;
     #  6)
     #    mint_tokens;

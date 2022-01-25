@@ -8,3 +8,4 @@ scripts/.postgres.sh
 wasm/*.wasm
 error.log
 out.log
+bin

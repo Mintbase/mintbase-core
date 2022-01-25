@@ -5,6 +5,7 @@
 # =====
 # =====
 
+mkdir -p out
 
 if [[ -z "${NETWORK}" ]]; then
   echo specify NETWORK variable - mainnet,testnet,local
@@ -22,10 +23,12 @@ fi
   . scripts/.postgres.sh
 
 if [[ -z "${POSTGRES}" ]]; then
-  POSTGRES="postgres://$postgres_user:$postgres_password@$postgres_host:5432/$postgres_database"
+  export POSTGRES="postgres://$postgres_user:$postgres_password@$postgres_host:5432/$postgres_database"
 else
-  POSTGRES="$POSTGRES"
+  export POSTGRES="$POSTGRES"
 fi
+# diesel cli
+export DATABASE_URL=$POSTGRES
 
 if [ "$NETWORK" = "testnet" ]; then
   node_url="https://rpc.testnet.near.org" #testnet
@@ -45,9 +48,9 @@ else
 fi
 
 if [[ -z "${RUST_LOG}" ]]; then
-  RUST_LOG="indexer=info,genesis=info,chain=info,client=info,stats=info,mintbase_near_indexer=info,near=error,mintbase_near_indexer=error"
+  export RUST_LOG="indexer=info,genesis=info,chain=info,client=info,stats=info,mintbase_near_indexer=info,near=error,mintbase_near_indexer=error"
 else
-  RUST_LOG="${RUST_LOG}"
+  export RUST_LOG="${RUST_LOG}"
 fi
 
 if [[ -z "${WATCH_ACCOUNTS}" ]]; then
@@ -109,7 +112,6 @@ receiver301_account="receiver01.$root_account";
 # =====
 # =====
 
-. scripts/switch-cmd.sh
 
 #
 #function run_local_indexer() {
@@ -160,7 +162,7 @@ function run_indexer() {
 
         sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
   fi
-  str='RUST_LOG=_rust_log_ NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
+  str='NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
   str="${str//_rust_log_/$RUST_LOG}"
   str="${str//_near_dir_/$NEAR_DIR}"
   str="${str//_WATCH_ACCOUNTS_/$WATCH_ACCOUNTS}"
@@ -495,6 +497,14 @@ function nft_transfer_call() {
   echo running "$str"
   eval "$str"
 }
+
+function top_stores() {
+  str='./bin/stats --stat top-stores'
+  echo running "$str"
+  eval "$str"
+}
+
+. scripts/switch-cmd.sh
 
 if [ -n "$1" ]; then
   programa2 $1 $2
