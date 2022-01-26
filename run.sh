@@ -162,7 +162,7 @@ function run_indexer() {
 
         sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
   fi
-  str='NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
+  str='NETWORK=_network_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
   str="${str//_rust_log_/$RUST_LOG}"
   str="${str//_near_dir_/$NEAR_DIR}"
   str="${str//_WATCH_ACCOUNTS_/$WATCH_ACCOUNTS}"

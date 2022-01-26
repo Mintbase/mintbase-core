@@ -59,7 +59,7 @@ function programa() {
     programa
     ;;
   -2)
-    run_indexer;
+    run_indexer
     programa
     ;;
   -1.1)
@@ -79,7 +79,7 @@ function programa() {
     programa
     ;;
   2)
-    deploy;
+    deploy
     programa
     ;;
   3)
@@ -179,24 +179,24 @@ function programa2() {
     cd simple-market-contract && git checkout localnet && git pull && cd ../
     ;;
   "e2e")
-#    build_indexer
-#    build_contracts
+    if [ "$NETWORK" == "mainnet" ] || [ "$NETWORK" == "testnet" ]; then
+      echo "prevented dangerous command"
+      exit 1
+    fi
 
+    RUST_LOG="stats=info,mintbase_near_indexer=info"
     rm -rf $NEAR_DIR/data
 
-    echo "clearing database";
+    #    build_indexer
+    #    build_contracts
 
-    diesel migration revert --migration-dir mintbase-near-indexer/migrations
-    diesel migration revert --migration-dir mintbase-near-indexer/migrations
-    diesel migration revert --migration-dir mintbase-near-indexer/migrations
-    diesel migration revert --migration-dir mintbase-near-indexer/migrations
-
-
-    RUST_LOG=""
-    run_indexer &
-    echo "creating accounts";
+    echo "clearing database"
+    PGPASSWORD=postgres psql -U $postgres_user -d $postgres_database -h $postgres_host -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+    echo "running indexer"
+    run_indexer >> logs/out.log 2>> logs/error.log &
+    echo "creating accounts"
     create_accounts >>out.log 2>>error.log
-    echo "deploying";
+    echo "deploying"
     deploy >>out.log 2>>error.log
     create_store >>out.log 2>>error.log
     grant_minter >>out.log 2>>error.log
@@ -217,7 +217,7 @@ function programa2() {
     run_stateful_indexer $2
     ;;
   "run-indexer")
-    run_indexer;
+    run_indexer
     ;;
   "build-indexer")
     build_indexer
@@ -241,14 +241,14 @@ function programa2() {
     grant_minter
     ;;
   "send-store")
-      send_to_store;
-      ;;
+    send_to_store
+    ;;
   "mint-tokens")
     mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":100,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}'
     echo "remember token_id to list in marketplace"
     ;;
- "top-stores")
-    export -f top_stores;
+  "top-stores")
+    export -f top_stores
     watch -n60 -x bash -c top_stores
     ;;
     #  6)

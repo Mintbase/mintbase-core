@@ -5503,6 +5503,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-serde"
+version = "0.2.0"
+source = "git+https://github.com/tokio-rs/tracing#84bbbea2726d2ba5ea84eb4aad4666ab1439832c"
+dependencies = [
+ "serde",
+ "tracing-core 0.2.0",
+]
+
+[[package]]
 name = "tracing-subscriber"
 version = "0.3.0"
 source = "git+https://github.com/tokio-rs/tracing#84bbbea2726d2ba5ea84eb4aad4666ab1439832c"
@@ -5511,12 +5520,15 @@ dependencies = [
  "lazy_static",
  "matchers",
  "regex",
+ "serde",
+ "serde_json",
  "sharded-slab",
  "smallvec",
  "thread_local",
  "tracing 0.2.0",
  "tracing-core 0.2.0",
  "tracing-log",
+ "tracing-serde",
 ]
 
 [[package]]
