@@ -46,11 +46,11 @@ function programa() {
     programa
     ;;
   -2)
-    build_indexer
+    build_contracts
     programa
     ;;
   -1)
-    build_contracts
+    build_indexer
     programa
     ;;
   0)
