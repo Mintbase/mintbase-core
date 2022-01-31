@@ -1,15 +1,17 @@
-use crate::*;
+use std::collections::HashMap;
+
+use near_sdk::json_types::{
+    Base64VecU8,
+    U128,
+    U64,
+};
 use near_sdk::{
-    json_types::{
-        Base64VecU8,
-        U128,
-        U64,
-    },
     AccountId,
     *,
 };
 use serde::*;
-use std::collections::HashMap;
+
+use crate::*;
 
 // #[cfg(test)]
 // use clap::*;
@@ -691,4 +693,3 @@ pub struct TokenListing {
     /// further changes may be made on the token.
     pub locked: bool,
 }
-

@@ -9,3 +9,4 @@ wasm/*.wasm
 error.log
 out.log
 bin
+*.log

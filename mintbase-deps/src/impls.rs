@@ -1,13 +1,11 @@
-use crate::*;
-#[cfg(feature = "all")]
-use crate::{
-    near_indexer,
-    tokio,
-    tokio_postgres::{
-        self,
-        NoTls,
-    },
+use std::collections::HashMap;
+use std::convert::{
+    TryFrom,
+    TryInto,
 };
+use std::fmt;
+use std::str::FromStr;
+
 #[cfg(feature = "wasm")]
 pub use near_sdk::{
     borsh::{
@@ -20,14 +18,15 @@ pub use near_sdk::{
     *,
 };
 
-use std::{
-    collections::HashMap,
-    convert::{
-        TryFrom,
-        TryInto,
+use crate::*;
+#[cfg(feature = "all")]
+use crate::{
+    near_indexer,
+    tokio,
+    tokio_postgres::{
+        self,
+        NoTls,
     },
-    fmt,
-    str::FromStr,
 };
 
 impl NearTime {
@@ -40,6 +39,7 @@ impl NearTime {
             TimeUnit::Hours(n) => Self::now_plus_n_hours(n),
         }
     }
+
     fn now_plus_n_hours(n: u64) -> Self {
         assert!(n > 0);
         assert!(
@@ -63,7 +63,11 @@ impl StorageCostsMarket {
 
 impl TokenOffer {
     /// Timeout is in days.
-    pub fn new(price: u128, timeout: TimeUnit, id: u64) -> Self {
+    pub fn new(
+        price: u128,
+        timeout: TimeUnit,
+        id: u64,
+    ) -> Self {
         let timeout = NearTime::new(timeout);
         Self {
             id,
@@ -109,6 +113,7 @@ impl TokenListing {
     pub fn get_token_key(&self) -> TokenKey {
         TokenKey::new(self.id, self.store_id.to_string().try_into().unwrap())
     }
+
     /// Unique identifier of the Token, which is also unique across
     /// relistings of the Token.
     pub fn get_list_id(&self) -> String {
@@ -145,7 +150,10 @@ impl Nep171Event {
 }
 
 impl fmt::Display for NftEventError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -188,10 +196,9 @@ impl Default for MintbaseStoreFactory {
 impl HelperWasm {
     #[init(ignore_state)]
     pub fn new() -> Self {
-        Self {
-            count: 0
-        }
+        Self { count: 0 }
     }
+
     pub fn nft_on_transfer(
         &mut self,
         sender_id: AccountId,
@@ -241,7 +248,10 @@ impl MintbaseStoreFactory {
         );
     }
 
-    pub fn assert_no_store_with_id(&self, store_id: String) {
+    pub fn assert_no_store_with_id(
+        &self,
+        store_id: String,
+    ) {
         assert!(
             !self.check_contains_store(store_id),
             "Store with that ID already exists"
@@ -249,21 +259,28 @@ impl MintbaseStoreFactory {
     }
 
     /// If a `Store` with `store_id` has been produced by this `Factory`, return `true`.
-    pub fn check_contains_store(&self, store_id: String) -> bool {
+    pub fn check_contains_store(
+        &self,
+        store_id: String,
+    ) -> bool {
         self.stores.contains(&store_id)
     }
+
     /// Get the `owner_id` of this `Factory`.
     pub fn get_owner(&self) -> &AccountId {
         &self.owner_id
     }
+
     /// Get the `mintbase_fee` of this `Factory`.
     pub fn get_mintbase_fee(&self) -> U128 {
         self.mintbase_fee.into()
     }
+
     /// The sum of `mintbase_fee` and `STORE_STORAGE`.
     pub fn get_minimum_attached_balance(&self) -> U128 {
         (STORE_STORAGE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
     }
+
     /// The sum of `mintbase_fee` and `STORE_STORAGE`.
     pub fn get_admin_public_key(&self) -> &PublicKey {
         &self.admin_public_key
@@ -272,41 +289,56 @@ impl MintbaseStoreFactory {
     /// The Near Storage price per byte has changed in the past, and may change in
     /// the future. This method may never be used.
     #[payable]
-    pub fn set_storage_price_per_byte(&mut self, new_price: U128) {
+    pub fn set_storage_price_per_byte(
+        &mut self,
+        new_price: U128,
+    ) {
         self.assert_only_owner();
         self.storage_price_per_byte = new_price.into();
         self.store_cost = self.storage_price_per_byte * STORE_STORAGE as u128;
     }
+
     /// Set amount of Near tokens taken by Mintbase for making `Store`s. Provide an
     /// amount denominated in units of yoctoNear, ie. 1 = 10^-24 Near.
     #[payable]
-    pub fn set_mintbase_factory_fee(&mut self, amount: U128) {
+    pub fn set_mintbase_factory_fee(
+        &mut self,
+        amount: U128,
+    ) {
         self.assert_only_owner();
         self.mintbase_fee = amount.into()
     }
+
     /// Set a new `owner_id` for `Factory`.
     #[payable]
-    pub fn set_mintbase_factory_owner(&mut self, account_id: AccountId) {
+    pub fn set_mintbase_factory_owner(
+        &mut self,
+        account_id: AccountId,
+    ) {
         self.assert_only_owner();
         let account_id = account_id;
         assert_ne!(account_id, env::predecessor_account_id());
         self.owner_id = account_id;
     }
+
     /// Set the admin public key. If `public_key` is None, use the signer's
     /// public key.
     #[payable]
-    pub fn set_admin_public_key(&mut self, public_key: Option<String>) {
+    pub fn set_admin_public_key(
+        &mut self,
+        public_key: Option<String>,
+    ) {
         self.assert_only_owner();
         match public_key {
             None => {
                 assert_ne!(env::signer_account_pk(), self.admin_public_key);
                 self.admin_public_key = env::signer_account_pk();
-            }
+            },
             Some(public_key) => {
                 let public_key = public_key.as_bytes().to_vec();
                 assert_ne!(public_key, self.admin_public_key.as_bytes());
                 self.admin_public_key = PublicKey::try_from(public_key).unwrap();
-            }
+            },
         }
     }
 
@@ -375,7 +407,11 @@ impl MintbaseStoreFactory {
     /// parsing the given store_id, validating no such store subaccount exists yet
     /// and generates a new store from the store metadata.
     #[payable]
-    pub fn create_store(&mut self, metadata: NFTContractMetadata, owner_id: AccountId) -> Promise {
+    pub fn create_store(
+        &mut self,
+        metadata: NFTContractMetadata,
+        owner_id: AccountId,
+    ) -> Promise {
         self.assert_sufficient_attached_deposit();
         self.assert_no_store_with_id(metadata.name.clone());
         assert_ne!(&metadata.name, "market"); // marketplace lives here
@@ -433,8 +469,8 @@ impl From<NftEvent> for NearJsonEvent {
 
 impl TryFrom<&str> for NftEvent {
     type Error = serde_json::error::Error;
+
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        
         // ne.map_err(|x|NftEventError(x.to_string()))
         serde_json::from_str::<NftEvent>(s)
     }
@@ -504,7 +540,10 @@ impl Default for NftStoreCreateLog {
 
 impl TokenMetadata {
     /// Get the metadata and its size in bytes.
-    pub fn from_with_size(args: TokenMetadata, copies: u64) -> (Self, u64) {
+    pub fn from_with_size(
+        args: TokenMetadata,
+        copies: u64,
+    ) -> (Self, u64) {
         if args.media_hash.is_some() {
             assert!(args.media.is_some());
         }
@@ -589,7 +628,10 @@ impl MintbaseStore {
         from_index: Option<String>, // default: "0"
         limit: Option<u64>,         // default: = self.nft_total_supply()
     ) -> Vec<TokenCompliant> {
-        let from_index: u64 = from_index.unwrap_or_else(||"0".to_string()).parse().unwrap();
+        let from_index: u64 = from_index
+            .unwrap_or_else(|| "0".to_string())
+            .parse()
+            .unwrap();
         let limit = limit.unwrap_or(self.nft_total_supply().0);
         (from_index..limit)
             .into_iter()
@@ -639,7 +681,10 @@ impl MintbaseStore {
     }
 
     #[payable]
-    pub fn nft_batch_transfer(&mut self, token_ids: Vec<(U64, AccountId)>) {
+    pub fn nft_batch_transfer(
+        &mut self,
+        token_ids: Vec<(U64, AccountId)>,
+    ) {
         near_sdk::assert_one_yocto();
         assert!(!token_ids.is_empty());
         let pred = env::predecessor_account_id();
@@ -673,7 +718,10 @@ impl MintbaseStore {
     /// - a token on this contract: recursively search for the root token and
     /// return its owner
     /// - a token on another contract. Return: "PARENT_TOKEN_ID:CONTRACT_ID".
-    pub fn nft_holder(&self, token_id: U64) -> String {
+    pub fn nft_holder(
+        &self,
+        token_id: U64,
+    ) -> String {
         let token = self.nft_token_internal(token_id.into());
         match token.get_owner_or_loaner() {
             Owner::Account(owner) => owner.to_string(),
@@ -714,7 +762,11 @@ impl MintbaseStore {
         }
     }
 
-    pub fn nft_revoke(&mut self, token_id: U64, account_id: AccountId) {
+    pub fn nft_revoke(
+        &mut self,
+        token_id: U64,
+        account_id: AccountId,
+    ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
@@ -726,7 +778,10 @@ impl MintbaseStore {
         }
     }
 
-    pub fn nft_revoke_all(&mut self, token_id: U64) {
+    pub fn nft_revoke_all(
+        &mut self,
+        token_id: U64,
+    ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
@@ -738,6 +793,7 @@ impl MintbaseStore {
             log_revoke_all(token_idu64);
         }
     }
+
     pub fn nft_is_approved(
         &self,
         token_id: U64,
@@ -750,11 +806,15 @@ impl MintbaseStore {
             approval_id,
         )
     }
+
     /// Create a new `Store`. `new` validates the `store_description`.
     ///
     /// The `Store` is initialized with the owner as a `minter`.
     #[init]
-    pub fn new(metadata: NFTContractMetadata, owner_id: AccountId) -> Self {
+    pub fn new(
+        metadata: NFTContractMetadata,
+        owner_id: AccountId,
+    ) -> Self {
         assert!(!env::state_exists(), "Already, initialized");
         let mut minters = UnorderedSet::new(b"a".to_vec());
         minters.insert(&owner_id);
@@ -806,7 +866,7 @@ impl MintbaseStore {
                 } else {
                     true
                 }
-            }
+            },
             PromiseResult::Failed => true,
         };
         if !must_revert {
@@ -826,7 +886,10 @@ impl MintbaseStore {
     /// type. They may be used in an implementation if the type is instead:
     ///
     /// `tokens_per_owner: LookupMap<AccountId, Vector<TokenId>>`
-    pub fn nft_tokens_for_owner_set(&self, account_id: AccountId) -> Vec<u64> {
+    pub fn nft_tokens_for_owner_set(
+        &self,
+        account_id: AccountId,
+    ) -> Vec<u64> {
         self.tokens_per_owner
             .get(&account_id)
             .expect("no tokens")
@@ -838,7 +901,10 @@ impl MintbaseStore {
         self.tokens_minted.into()
     }
 
-    pub fn nft_supply_for_owner(&self, account_id: AccountId) -> U64 {
+    pub fn nft_supply_for_owner(
+        &self,
+        account_id: AccountId,
+    ) -> U64 {
         self.tokens_per_owner
             .get(&account_id)
             .map(|v| v.len())
@@ -856,7 +922,7 @@ impl MintbaseStore {
             .get(&account_id)
             .expect("no tokens")
             .iter()
-            .skip(from_index.unwrap_or_else(||0.to_string()).parse().unwrap())
+            .skip(from_index.unwrap_or_else(|| 0.to_string()).parse().unwrap())
             .take(limit.unwrap_or(10))
             .map(|x| self.nft_token_compliant_internal(x))
             .collect::<Vec<_>>()
@@ -867,7 +933,10 @@ impl MintbaseStore {
     /// can be retrieved by calling `get_token_uri`. The metadata structure is not
     /// stored on the token, as this would lead to duplication of Metadata across
     /// tokens. Instead, the Metadata is stored in a Contract `LookupMap`.
-    pub fn nft_token_metadata(&self, token_id: U64) -> TokenMetadata {
+    pub fn nft_token_metadata(
+        &self,
+        token_id: U64,
+    ) -> TokenMetadata {
         self.token_metadata
             .get(&self.nft_token_internal(token_id.into()).metadata_id)
             .expect("bad metadata_id")
@@ -875,7 +944,10 @@ impl MintbaseStore {
     }
 
     /// Get the number of unburned copies of the token in existance.
-    pub fn get_token_remaining_copies(&self, token_id: U64) -> u16 {
+    pub fn get_token_remaining_copies(
+        &self,
+        token_id: U64,
+    ) -> u16 {
         self.token_metadata
             .get(&self.nft_token_internal(token_id.into()).metadata_id)
             .expect("bad metadata_id")
@@ -904,7 +976,6 @@ impl MintbaseStore {
         royalty_args: Option<RoyaltyArgs>,
         split_owners: Option<SplitBetweenUnparsed>,
     ) {
-
         assert!(num_to_mint > 0);
         assert!(num_to_mint <= 125); // upper gas limit
         assert!(env::attached_deposit() >= 1);
@@ -999,16 +1070,24 @@ impl MintbaseStore {
     ///
     /// Only the tokens' owner may call this function.
     #[payable]
-    pub fn nft_batch_burn(&mut self, token_ids: Vec<U64>) {
+    pub fn nft_batch_burn(
+        &mut self,
+        token_ids: Vec<U64>,
+    ) {
         near_sdk::assert_one_yocto();
         assert!(!token_ids.is_empty());
         self.burn_triaged(token_ids, env::predecessor_account_id());
     }
+
     /// A helper to burn tokens. Necessary to satisfy the `nft_move` method,
     /// where the callback prevents the use of
     /// `env::predecessor_account_id()` to determine whether the owner is the
     /// method caller.
-    pub fn burn_triaged(&mut self, token_ids: Vec<U64>, account_id: AccountId) {
+    pub fn burn_triaged(
+        &mut self,
+        token_ids: Vec<U64>,
+        account_id: AccountId,
+    ) {
         let mut set_owned = self.tokens_per_owner.get(&account_id).expect("none owned");
 
         token_ids.iter().for_each(|&token_id| {
@@ -1048,10 +1127,15 @@ impl MintbaseStore {
         self.tokens_burned += token_ids.len() as u64;
         log_nft_batch_burn(&token_ids, account_id.to_string());
     }
+
     /// Check if `account_id` is a minter.
-    pub fn check_is_minter(&self, account_id: AccountId) -> bool {
+    pub fn check_is_minter(
+        &self,
+        account_id: AccountId,
+    ) -> bool {
         self.minters.contains(&account_id)
     }
+
     /// Get info about the store.
     pub fn get_info(&self) {
         let s = format!("owner: {}", self.owner_id);
@@ -1065,10 +1149,14 @@ impl MintbaseStore {
         let s = format!("allow_moves: {}", self.allow_moves);
         env::log_str(s.as_str());
     }
+
     /// The Token URI is generated to index the token on whatever distributed
     /// storage platform this `Store` uses. Mintbase publishes token data on
     /// Arweave. `Store` owners may opt to use their own storage platform.
-    pub fn nft_token_uri(&self, token_id: U64) -> String {
+    pub fn nft_token_uri(
+        &self,
+        token_id: U64,
+    ) -> String {
         let base = &self.metadata.base_uri.as_ref().expect("no base_uri");
         let metadata_reference = self
             .nft_token_metadata(token_id)
@@ -1082,10 +1170,14 @@ impl MintbaseStore {
     /// and the `Store` address (unique across all contracts). The String is
     /// unique across `Store`s. The String is used by other Mintbase
     /// contracts as a permanent unique identifier for tokens.
-    pub fn nft_token_key(&self, token_id: U64) -> String {
+    pub fn nft_token_key(
+        &self,
+        token_id: U64,
+    ) -> String {
         let id: u64 = token_id.into();
         format!("{}:{}", id, env::current_account_id())
     }
+
     /// Owner of this `Store` may call to withdraw Near deposited onto
     /// contract for storage. Contract storage deposit must maintain a
     /// cushion of at least 50kB (0.5 Near) beyond that necessary for storage
@@ -1114,7 +1206,10 @@ impl MintbaseStore {
     /// contract. `nft_move` allows the user to burn a token they own on one
     /// contract, and re-mint it on another contract.
     #[payable]
-    pub fn set_allow_moves(&mut self, state: bool) {
+    pub fn set_allow_moves(
+        &mut self,
+        state: bool,
+    ) {
         self.assert_store_owner();
         self.allow_moves = state;
     }
@@ -1124,7 +1219,10 @@ impl MintbaseStore {
     ///
     /// Only the store owner may call this function.
     #[payable]
-    pub fn set_storage_price_per_byte(&mut self, new_price: U128) {
+    pub fn set_storage_price_per_byte(
+        &mut self,
+        new_price: U128,
+    ) {
         self.assert_store_owner();
         self.storage_costs = StorageCosts::new(new_price.into())
     }
@@ -1136,7 +1234,10 @@ impl MintbaseStore {
     ///
     /// This method increases storage costs of the contract.
     #[payable]
-    pub fn grant_minter(&mut self, account_id: AccountId) {
+    pub fn grant_minter(
+        &mut self,
+        account_id: AccountId,
+    ) {
         self.assert_store_owner();
         let account_id: AccountId = account_id;
         // does nothing if account_id is already a minter
@@ -1151,7 +1252,10 @@ impl MintbaseStore {
     ///
     /// Only the store owner may call this function.
     #[payable]
-    pub fn revoke_minter(&mut self, account_id: AccountId) {
+    pub fn revoke_minter(
+        &mut self,
+        account_id: AccountId,
+    ) {
         self.assert_store_owner();
         assert_ne!(account_id, self.owner_id, "can't revoke owner");
         if !self.minters.remove(&account_id) {
@@ -1167,7 +1271,11 @@ impl MintbaseStore {
     ///
     /// Only the store owner may call this function.
     #[payable]
-    pub fn transfer_store_ownership(&mut self, new_owner: AccountId, keep_old_minters: bool) {
+    pub fn transfer_store_ownership(
+        &mut self,
+        new_owner: AccountId,
+        keep_old_minters: bool,
+    ) {
         self.assert_store_owner();
         let new_owner = new_owner;
         assert_ne!(new_owner, self.owner_id, "can't can't transfer to self");
@@ -1184,7 +1292,10 @@ impl MintbaseStore {
     ///
     /// Only the store owner may call this function.
     #[payable]
-    pub fn set_icon_base64(&mut self, icon: Option<String>) {
+    pub fn set_icon_base64(
+        &mut self,
+        icon: Option<String>,
+    ) {
         self.assert_store_owner();
         assert!(icon.as_ref().map(|b| b.len() <= 100).unwrap_or(true));
         log_set_icon_base64(&icon);
@@ -1198,12 +1309,16 @@ impl MintbaseStore {
     ///
     /// Only the `Store` owner may call this function.
     #[payable]
-    pub fn set_base_uri(&mut self, base_uri: String) {
+    pub fn set_base_uri(
+        &mut self,
+        base_uri: String,
+    ) {
         self.assert_store_owner();
         assert!(base_uri.len() <= 100);
         log_set_base_uri(&base_uri);
         self.metadata.base_uri = Some(base_uri);
     }
+
     /// Validate the caller of this method matches the owner of this `Store`.
     fn assert_store_owner(&self) {
         assert_one_yocto();
@@ -1213,6 +1328,7 @@ impl MintbaseStore {
             "caller not the owner"
         );
     }
+
     /// Contract metadata and methods in the API may be updated. All other
     /// elements of the state should be copied over. This method may only be
     /// called by the holder of the Store public key, in this case the
@@ -1223,12 +1339,18 @@ impl MintbaseStore {
         let old = env::state_read().expect("ohno ohno state");
         Self { metadata, ..old }
     }
+
     /// Financial contracts may query the NFT contract for the address(es) to pay
     /// out.
-    pub fn nft_payout(&self, token_id: U64, balance: U128, max_len_payout: u32) -> Payout {
+    pub fn nft_payout(
+        &self,
+        token_id: U64,
+        balance: U128,
+        max_len_payout: u32,
+    ) -> Payout {
         let token = self.nft_token(token_id).expect("no token");
         match token.owner_id {
-            Owner::Account(_) => {}
+            Owner::Account(_) => {},
             _ => env::panic_str("token is composed"),
         }
         let payout = OwnershipFractions::new(
@@ -1267,7 +1389,11 @@ impl MintbaseStore {
     ///
     /// Only the token owner may call this function.
     #[payable]
-    pub fn set_split_owners(&mut self, token_ids: Vec<U64>, split_between: SplitBetweenUnparsed) {
+    pub fn set_split_owners(
+        &mut self,
+        token_ids: Vec<U64>,
+        split_between: SplitBetweenUnparsed,
+    ) {
         assert!(!token_ids.is_empty());
         assert!(split_between.len() >= 2, "split len must be >= 2");
         let storage_cost =
@@ -1305,7 +1431,10 @@ impl MintbaseStore {
     /// Get the Royalty for a Token. The `Royalty` structure is not stored on the
     /// token, as this would lead to duplication of `Royalty`s across tokens.
     /// Instead, the `Royalty` is stored in a Contract `LookupMap`.
-    pub fn get_token_royalty(&self, token_id: U64) -> Option<Royalty> {
+    pub fn get_token_royalty(
+        &self,
+        token_id: U64,
+    ) -> Option<Royalty> {
         let royalty_id = self.nft_token_internal(token_id.into()).royalty_id;
         match royalty_id {
             Some(id) => self.token_royalty.get(&id).map(|(_, r)| r),
@@ -1314,7 +1443,11 @@ impl MintbaseStore {
     }
 
     /// Called from nft_approve and nft_batch_approve.
-    pub fn approve_internal(&mut self, token_idu64: u64, account_id: &AccountId) -> u64 {
+    pub fn approve_internal(
+        &mut self,
+        token_idu64: u64,
+        account_id: &AccountId,
+    ) -> u64 {
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
         assert!(token.is_pred_owner());
@@ -1325,13 +1458,19 @@ impl MintbaseStore {
         approval_id
     }
 
-    pub fn nft_token_internal(&self, token_id: u64) -> Token {
+    pub fn nft_token_internal(
+        &self,
+        token_id: u64,
+    ) -> Token {
         self.tokens
             .get(&token_id)
             .unwrap_or_else(|| panic!("token: {} doesn't exist", token_id))
     }
 
-    pub fn nft_token_compliant_internal(&self, token_id: u64) -> TokenCompliant {
+    pub fn nft_token_compliant_internal(
+        &self,
+        token_id: u64,
+    ) -> TokenCompliant {
         self.tokens
             .get(&token_id)
             .map(|x| {
@@ -1374,7 +1513,12 @@ impl MintbaseStore {
     ///
     /// If remove prior is true, expect that the token is not composed, and
     /// remove the token owner from self.tokens_per_owner.
-    pub fn transfer_internal(&mut self, token: &mut Token, to: AccountId, remove_prior: bool) {
+    pub fn transfer_internal(
+        &mut self,
+        token: &mut Token,
+        to: AccountId,
+        remove_prior: bool,
+    ) {
         let update_set = if remove_prior {
             Some(AccountId::try_from(token.owner_id.to_string()).unwrap())
         } else {
@@ -1438,10 +1582,16 @@ impl MintbaseStore {
             self.tokens_per_owner.insert(&to, &new_owner_owned_set);
         }
     }
+
     /// Internal
     /// update the set of tokens composed underneath parent. If insert is
     /// true, insert token_id; if false, try to remove it.
-    pub fn update_composed_sets(&mut self, child: String, parent: String, insert: bool) {
+    pub fn update_composed_sets(
+        &mut self,
+        child: String,
+        parent: String,
+        insert: bool,
+    ) {
         let mut set = self.get_or_new_composed(parent.to_string());
         if insert {
             set.insert(&child);
@@ -1458,7 +1608,10 @@ impl MintbaseStore {
     /// Internal
     /// update the set of tokens composed underneath parent. If insert is
     /// true, insert token_id; if false, try to remove it.
-    pub(crate) fn get_or_new_composed(&mut self, parent: String) -> UnorderedSet<String> {
+    pub(crate) fn get_or_new_composed(
+        &mut self,
+        parent: String,
+    ) -> UnorderedSet<String> {
         self.composeables.get(&parent).unwrap_or_else(|| {
             let mut prefix: Vec<u8> = vec![b'h'];
             prefix.extend_from_slice(parent.to_string().as_bytes());
@@ -1470,7 +1623,10 @@ impl MintbaseStore {
     /// construct an `UnorderedSet` for them. If they have owned tokens on
     /// this store, get that set.
     /// Internal
-    pub(crate) fn get_or_make_new_owner_set(&self, account_id: &AccountId) -> UnorderedSet<u64> {
+    pub(crate) fn get_or_make_new_owner_set(
+        &self,
+        account_id: &AccountId,
+    ) -> UnorderedSet<u64> {
         self.tokens_per_owner.get(account_id).unwrap_or_else(|| {
             let mut prefix: Vec<u8> = vec![b'j'];
             prefix.extend_from_slice(account_id.as_bytes());
@@ -1497,20 +1653,29 @@ impl MintbaseStore {
             // create n tokens each with splits stored on-token
             + num_tokens as u128 * (self.storage_costs.token + num_splits as u128 * self.storage_costs.common)
     }
+
     /// Internal
-    pub fn lock_token(&mut self, token: &mut Token) {
+    pub fn lock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
         if let Owner::Account(ref s) = token.owner_id {
             token.owner_id = Owner::Lock(s.clone());
             self.tokens.insert(&token.id, token);
         }
     }
+
     /// Internal
-    pub fn unlock_token(&mut self, token: &mut Token) {
+    pub fn unlock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
         if let Owner::Lock(ref s) = token.owner_id {
             token.owner_id = Owner::Account(s.clone());
             self.tokens.insert(&token.id, token);
         }
     }
+
     #[payable]
     pub fn nft_transfer(
         &mut self,
@@ -1580,7 +1745,10 @@ impl MintbaseStore {
         ))
     }
 
-    pub fn nft_token(&self, token_id: U64) -> Option<TokenCompliant> {
+    pub fn nft_token(
+        &self,
+        token_id: U64,
+    ) -> Option<TokenCompliant> {
         Some(self.nft_token_compliant_internal(token_id.0))
     }
 }
@@ -1610,7 +1778,7 @@ impl OwnershipFractions {
                     payout.insert(receiver.to_string().parse().unwrap(), abs_perc);
                 });
                 SafeFraction::new(10_000 - percentage.numerator)
-            }
+            },
             None => SafeFraction::new(10_000u32),
         };
 
@@ -1629,7 +1797,7 @@ impl OwnershipFractions {
                             payout.insert(receiver.clone(), abs_perc);
                         }
                     });
-            }
+            },
             None => {
                 if let Some(&roy_perc) = payout.get(&AccountId::new_unchecked(owner_id.to_string()))
                 {
@@ -1643,12 +1811,15 @@ impl OwnershipFractions {
                         MultipliedSafeFraction::from(percentage_not_taken_by_royalty),
                     );
                 }
-            }
+            },
         };
         Self { fractions: payout }
     }
 
-    pub fn into_payout(self, balance: Balance) -> Payout {
+    pub fn into_payout(
+        self,
+        balance: Balance,
+    ) -> Payout {
         Payout {
             payout: self
                 .fractions
@@ -1683,6 +1854,7 @@ impl Token {
             origin_key: None,
         }
     }
+
     // if the token is owned by a normal account, get that account.
     // pub fn owner_acct(&self) -> AccountId {
     //   match &self.owner_id {
@@ -1698,6 +1870,7 @@ impl Token {
             .map(|l| Owner::Account(l.holder.clone()))
             .unwrap_or_else(|| self.owner_id.clone())
     }
+
     pub fn is_pred_owner(&self) -> bool {
         self.owner_id.to_string() == near_sdk::env::predecessor_account_id().to_string()
     }
@@ -1708,7 +1881,10 @@ impl Token {
 }
 
 impl fmt::Display for Owner {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         match self {
             Owner::Account(s) => write!(f, "{}", s),
             Owner::TokenId(n) => write!(f, "{}", n),
@@ -1719,7 +1895,10 @@ impl fmt::Display for Owner {
 }
 
 impl Loan {
-    pub fn new(holder: AccountId, loan_contract: AccountId) -> Self {
+    pub fn new(
+        holder: AccountId,
+        loan_contract: AccountId,
+    ) -> Self {
         Self {
             holder,
             loan_contract,
@@ -1737,18 +1916,25 @@ impl ComposeableStats {
 }
 
 impl TokenKey {
-    pub fn new(n: u64, account_id: AccountId) -> Self {
+    pub fn new(
+        n: u64,
+        account_id: AccountId,
+    ) -> Self {
         Self {
             token_id: n,
             account_id: account_id.into(),
         }
     }
+
     pub fn split(self) -> (u64, String) {
         (self.token_id, self.account_id)
     }
 }
 impl fmt::Display for TokenKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
         write!(f, "{}:{}", self.token_id, self.account_id)
     }
 }
@@ -1776,14 +1962,21 @@ impl SafeFraction {
     }
 
     /// Fractionalize a balance.
-    pub fn multiply_balance(&self, value: Balance) -> Balance {
+    pub fn multiply_balance(
+        &self,
+        value: Balance,
+    ) -> Balance {
         value / 10_000u128 * self.numerator as u128
     }
 }
 
 impl std::ops::Sub for SafeFraction {
     type Output = SafeFraction;
-    fn sub(self, rhs: Self) -> Self::Output {
+
+    fn sub(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
         assert!(self.numerator >= rhs.numerator);
         Self {
             numerator: self.numerator - rhs.numerator,
@@ -1792,7 +1985,10 @@ impl std::ops::Sub for SafeFraction {
 }
 
 impl std::ops::SubAssign for SafeFraction {
-    fn sub_assign(&mut self, rhs: Self) {
+    fn sub_assign(
+        &mut self,
+        rhs: Self,
+    ) {
         assert!(self.numerator >= rhs.numerator);
         self.numerator -= rhs.numerator;
     }
@@ -1800,7 +1996,11 @@ impl std::ops::SubAssign for SafeFraction {
 
 impl std::ops::Mul for SafeFraction {
     type Output = MultipliedSafeFraction;
-    fn mul(self, rhs: Self) -> Self::Output {
+
+    fn mul(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
         MultipliedSafeFraction {
             numerator: self.numerator * rhs.numerator,
         }
@@ -1817,7 +2017,11 @@ impl From<SafeFraction> for MultipliedSafeFraction {
 
 impl std::ops::Add for MultipliedSafeFraction {
     type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
+
+    fn add(
+        self,
+        rhs: Self,
+    ) -> Self::Output {
         MultipliedSafeFraction {
             numerator: self.numerator + rhs.numerator,
         }
@@ -1826,14 +2030,20 @@ impl std::ops::Add for MultipliedSafeFraction {
 
 impl MultipliedSafeFraction {
     /// Fractionalize a balance.
-    pub fn multiply_balance(&self, value: Balance) -> Balance {
+    pub fn multiply_balance(
+        &self,
+        value: Balance,
+    ) -> Balance {
         value / 100_000_000u128 * self.numerator as u128
     }
 }
 
 #[cfg(feature = "all")]
 impl<'a> std::io::Write for StdioLock<'a> {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+    fn write(
+        &mut self,
+        buf: &[u8],
+    ) -> std::io::Result<usize> {
         match self {
             StdioLock::Stdout(lock) => lock.write(buf),
             StdioLock::Stderr(lock) => lock.write(buf),
@@ -1847,7 +2057,10 @@ impl<'a> std::io::Write for StdioLock<'a> {
         }
     }
 
-    fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
+    fn write_all(
+        &mut self,
+        buf: &[u8],
+    ) -> std::io::Result<()> {
         match self {
             StdioLock::Stdout(lock) => lock.write_all(buf),
             StdioLock::Stderr(lock) => lock.write_all(buf),
@@ -1866,7 +2079,10 @@ impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for MyMakeWriter {
         StdioLock::Stdout(self.stdout.lock())
     }
 
-    fn make_writer_for(&'a self, meta: &tracing::Metadata<'_>) -> Self::Writer {
+    fn make_writer_for(
+        &'a self,
+        meta: &tracing::Metadata<'_>,
+    ) -> Self::Writer {
         // Here's where we can implement our special behavior. We'll
         // check if the metadata's verbosity level is WARN or ERROR,
         // and return stderr in that case.

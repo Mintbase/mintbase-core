@@ -1,30 +1,28 @@
-use crate::*;
-// #[cfg(feature = "test")]
-// use near_indexer_test_framework::*;
-#[cfg(feature = "all")]
-use crate::tokio_postgres::NoTls;
-#[cfg(feature = "all")]
-use crate::{
-    tokio,
-    tokio_postgres,
+use std::collections::HashMap;
+
+use near_sdk::json_types::{
+    U128,
+    U64,
 };
+use near_sdk::{
+    env,
+    AccountId,
+};
+use serde_json::{self,};
+
 // #[cfg(feature = "test")]
 // use near_indexer_test_framework::NearState;
 #[cfg(feature = "all")]
 use crate::near_indexer::IndexerExecutionOutcomeWithReceipt;
-use near_sdk::{
-    env,
-    json_types::{
-        U128,
-        U64,
-    },
-    AccountId,
-};
-use serde_json::{
-    self,
-};
-use std::{
-    collections::HashMap,
+// #[cfg(feature = "test")]
+// use near_indexer_test_framework::*;
+#[cfg(feature = "all")]
+use crate::tokio_postgres::NoTls;
+use crate::*;
+#[cfg(feature = "all")]
+use crate::{
+    tokio,
+    tokio_postgres,
 };
 
 #[cfg(feature = "all")]
@@ -82,7 +80,11 @@ pub fn clear_dir() {
 }
 
 #[cfg(feature = "factory-wasm")]
-pub fn log_factory_new(store: &NFTContractMetadata, store_account_id: &str, owner_id: &str) {
+pub fn log_factory_new(
+    store: &NFTContractMetadata,
+    store_account_id: &str,
+    owner_id: &str,
+) {
     let nscl = NftStoreCreateLog {
         contract_metadata: store.clone(),
         owner_id: owner_id.to_string(),
@@ -357,7 +359,10 @@ pub fn log_nft_batch_mint(
     // );
 }
 
-pub fn log_nft_batch_burn(token_ids: &[U64], owner_id: String) {
+pub fn log_nft_batch_burn(
+    token_ids: &[U64],
+    owner_id: String,
+) {
     // env::log_str(
     //     json!({
     //       "type": "nft_batch_burn".to_string(),
@@ -391,7 +396,11 @@ pub fn log_nft_batch_burn(token_ids: &[U64], owner_id: String) {
 //////////
 
 // Approval
-pub fn log_approve(token_id: u64, approval_id: u64, account_id: &AccountId) {
+pub fn log_approve(
+    token_id: u64,
+    approval_id: u64,
+    account_id: &AccountId,
+) {
     let log = vec![NftApproveLog {
         token_id,
         approval_id,
@@ -418,7 +427,11 @@ pub fn log_approve(token_id: u64, approval_id: u64, account_id: &AccountId) {
     // );
 }
 
-pub fn log_batch_approve(tokens: &[U64], approvals: &[U64], account_id: &AccountId) {
+pub fn log_batch_approve(
+    tokens: &[U64],
+    approvals: &[U64],
+    account_id: &AccountId,
+) {
     let log = approvals
         .iter()
         .enumerate()
@@ -449,7 +462,10 @@ pub fn log_batch_approve(tokens: &[U64], approvals: &[U64], account_id: &Account
     // );
 }
 
-pub fn log_revoke(token_id: u64, account_id: &AccountId) {
+pub fn log_revoke(
+    token_id: u64,
+    account_id: &AccountId,
+) {
     let log = NftRevokeLog {
         token_id,
         account_id: account_id.to_string(),
@@ -498,7 +514,12 @@ pub fn log_revoke_all(token_id: u64) {
 }
 
 // Core
-pub fn log_nft_transfer(to: &AccountId, token_id: u64, memo: &Option<String>, old_owner: String) {
+pub fn log_nft_transfer(
+    to: &AccountId,
+    token_id: u64,
+    memo: &Option<String>,
+    old_owner: String,
+) {
     let log = vec![NftTransferLog {
         authorized_id: None,
         old_owner_id: old_owner,
@@ -525,7 +546,11 @@ pub fn log_nft_transfer(to: &AccountId, token_id: u64, memo: &Option<String>, ol
     // );
 }
 
-pub fn log_nft_batch_transfer(tokens: &[U64], accounts: &[AccountId], old_owners: Vec<String>) {
+pub fn log_nft_batch_transfer(
+    tokens: &[U64],
+    accounts: &[AccountId],
+    old_owners: Vec<String>,
+) {
     let log = accounts
         .iter()
         .enumerate()
@@ -555,7 +580,10 @@ pub fn log_nft_batch_transfer(tokens: &[U64], accounts: &[AccountId], old_owners
 }
 
 // payout
-pub fn log_set_split_owners(token_ids: &[U64], split_owners: &SplitOwners) {
+pub fn log_set_split_owners(
+    token_ids: &[U64],
+    split_owners: &SplitOwners,
+) {
     let token_ids = token_ids
         .iter()
         .map(|x| x.0.to_string())
@@ -577,7 +605,10 @@ pub fn log_set_split_owners(token_ids: &[U64], split_owners: &SplitOwners) {
     // );
 }
 
-pub fn log_nft_loan_set(token_id: u64, account_id: &Option<AccountId>) {
+pub fn log_nft_loan_set(
+    token_id: u64,
+    account_id: &Option<AccountId>,
+) {
     let log = NftLoanSetLog {
         account_id: account_id.as_ref().map(|x| x.to_string()),
         token_id,
@@ -641,7 +672,10 @@ pub fn log_nfts_compose(
     // );
 }
 
-pub fn log_nfts_uncompose(token_ids: &[U64], holder: AccountId) {
+pub fn log_nfts_uncompose(
+    token_ids: &[U64],
+    holder: AccountId,
+) {
     let log = NftUncomposeLog {
         token_ids: token_ids.to_vec(),
         holder: holder.to_string(),
@@ -709,7 +743,11 @@ pub fn log_on_compose(
     // );
 }
 
-pub fn log_on_uncompose(token_id: U64, holder: &str, child_key: String) {
+pub fn log_on_uncompose(
+    token_id: U64,
+    holder: &str,
+    child_key: String,
+) {
     let log = NftOnUncomposeLog {
         token_id,
         holder: holder.to_string(),
@@ -736,7 +774,10 @@ pub fn log_on_uncompose(token_id: U64, holder: &str, child_key: String) {
     // );
 }
 
-pub fn log_on_move(token_id: U64, origin_key: &str) {
+pub fn log_on_move(
+    token_id: U64,
+    origin_key: &str,
+) {
     let log = NftOnMoveLog {
         token_id,
         origin_key: origin_key.to_string(),
@@ -761,7 +802,10 @@ pub fn log_on_move(token_id: U64, origin_key: &str) {
     // );
 }
 
-pub fn log_nft_moved(token_id: U64, contract_id: String) {
+pub fn log_nft_moved(
+    token_id: U64,
+    contract_id: String,
+) {
     let log = NftMovedLog {
         token_id,
         contract_id,
@@ -851,8 +895,8 @@ pub fn log_batch_listing_created(
         .iter()
         .enumerate()
         .map(|(u, x)| {
-            let list_id = format!("{}:{}:{}",token_ids[u].0,x.0,store_id);
-            let token_key = format!("{}:{}",token_ids[u].0,store_id);
+            let list_id = format!("{}:{}:{}", token_ids[u].0, x.0, store_id);
+            let token_key = format!("{}:{}", token_ids[u].0, store_id);
             NftListLog {
                 list_id,
                 price: price.0.to_string(),
@@ -889,7 +933,10 @@ pub fn log_batch_listing_created(
     // );
 }
 
-pub fn log_set_token_autotransfer(auto_transfer: bool, list_id: &str) {
+pub fn log_set_token_autotransfer(
+    auto_transfer: bool,
+    list_id: &str,
+) {
     let log = vec![NftUpdateListLog {
         auto_transfer: Option::from(auto_transfer),
         price: None,
@@ -915,7 +962,10 @@ pub fn log_set_token_autotransfer(auto_transfer: bool, list_id: &str) {
     // );
 }
 
-pub fn log_set_token_asking_price(price: &U128, list_id: &str) {
+pub fn log_set_token_asking_price(
+    price: &U128,
+    list_id: &str,
+) {
     let log = vec![NftUpdateListLog {
         auto_transfer: None,
         price: Option::from(price.0.to_string()),
@@ -981,7 +1031,10 @@ pub fn log_make_offer(
     // );
 }
 
-pub fn log_withdraw_token_offer(list_id: &str, offer_num: u64) {
+pub fn log_withdraw_token_offer(
+    list_id: &str,
+    offer_num: u64,
+) {
     let log = NftUpdateOfferLog {
         offer_num,
         list_id: list_id.to_string(),
@@ -1006,7 +1059,12 @@ pub fn log_withdraw_token_offer(list_id: &str, offer_num: u64) {
     // );
 }
 
-pub fn log_sale(list_id: &str, offer_num: u64, token_key: &str, payout: &HashMap<AccountId, U128>) {
+pub fn log_sale(
+    list_id: &str,
+    offer_num: u64,
+    token_key: &str,
+    payout: &HashMap<AccountId, U128>,
+) {
     let log = NftSaleLog {
         list_id: list_id.to_string(),
         offer_num,
@@ -1062,7 +1120,10 @@ pub fn log_token_removed(list_id: &str) {
 //////////////////
 // Market owner //
 //////////////////
-pub fn log_allowlist_update(account_id: &AccountId, state: bool) {
+pub fn log_allowlist_update(
+    account_id: &AccountId,
+    state: bool,
+) {
     let log = vec![NftMarketLog {
         account_id: account_id.to_string(),
         state,
@@ -1086,7 +1147,10 @@ pub fn log_allowlist_update(account_id: &AccountId, state: bool) {
     //         .as_bytes(),
     // );
 }
-pub fn log_banlist_update(account_id: &AccountId, state: bool) {
+pub fn log_banlist_update(
+    account_id: &AccountId,
+    state: bool,
+) {
     let log = vec![NftMarketLog {
         account_id: account_id.to_string(),
         state,
@@ -1114,5 +1178,3 @@ pub fn log_banlist_update(account_id: &AccountId, state: bool) {
 pub fn to_near(n: u128) -> u128 {
     n * 10u128.pow(24)
 }
-
-

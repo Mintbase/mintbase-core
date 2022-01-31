@@ -5,11 +5,13 @@
 # =====
 # =====
 
-mkdir -p out
+mkdir -p bin
+mkdir -p wasm
+touch -a scripts/.postgres.sh
 
 if [[ -z "${NETWORK}" ]]; then
   echo specify NETWORK variable - mainnet,testnet,local
-  exit 1;
+  exit 1
 else
   export NEAR_ENV=$NETWORK
 
@@ -20,7 +22,7 @@ if [[ -z "${NEAR_DIR}" ]]; then
 else
   NEAR_DIR="${NEAR_DIR}"
 fi
-  . scripts/.postgres.sh
+. scripts/.postgres.sh
 
 if [[ -z "${POSTGRES}" ]]; then
   export POSTGRES="postgres://$postgres_user:$postgres_password@$postgres_host:5432/$postgres_database"
@@ -44,7 +46,7 @@ elif [ "$NETWORK" == "local" ]; then
   root="test"
 else
   echo "invalid network $NETWORK"
-  exit 1;
+  exit 1
 fi
 
 if [[ -z "${RUST_LOG}" ]]; then
@@ -77,28 +79,28 @@ fi
 # =====
 # =====
 
-root_account="$root.$top_level_account"; # MUST ALREADY EXIST WITH LOCAL CRED
-minter_account="minter02.$root_account";
-market_account="market.$root_account";
-helper_account="helper.$root_account";
-store_account="store906.$root_account"; #don't create store manually
-store_owner_account="store-owner01.$root_account";
-seller1_account="seller01.$root_account";
-buyer1_account="buyer100.$root_account";
-buyer2_account="buyer200.$root_account";
-royalty1_account="royalty01.$root_account";
-royalty2_account="royalty02.$root_account";
-royalty3_account="royalty03.$root_account";
-royalty4_account="royalty04.$root_account";
-royalty5_account="royalty05.$root_account";
-royalty6_account="royalty06.$root_account";
-royalty7_account="royalty07.$root_account";
-royalty8_account="royalty08.$root_account";
-royalty9_account="royalty09.$root_account";
-royalty10_account="royalty10.$root_account";
-receiver_account="receiver01.$root_account";
-receiver300_account="receiver01.$root_account";
-receiver301_account="receiver01.$root_account";
+root_account="$root.$top_level_account" # MUST ALREADY EXIST WITH LOCAL CRED
+minter_account="minter02.$root_account"
+market_account="market.$root_account"
+helper_account="helper.$root_account"
+store_account="store906.$root_account" #don't create store manually
+store_owner_account="store-owner01.$root_account"
+seller1_account="seller01.$root_account"
+buyer1_account="buyer100.$root_account"
+buyer2_account="buyer200.$root_account"
+royalty1_account="royalty01.$root_account"
+royalty2_account="royalty02.$root_account"
+royalty3_account="royalty03.$root_account"
+royalty4_account="royalty04.$root_account"
+royalty5_account="royalty05.$root_account"
+royalty6_account="royalty06.$root_account"
+royalty7_account="royalty07.$root_account"
+royalty8_account="royalty08.$root_account"
+royalty9_account="royalty09.$root_account"
+royalty10_account="royalty10.$root_account"
+receiver_account="receiver01.$root_account"
+receiver300_account="receiver01.$root_account"
+receiver301_account="receiver01.$root_account"
 
 # SETUP APPLICATION DATA END #
 # =====
@@ -111,7 +113,6 @@ receiver301_account="receiver01.$root_account";
 # =====
 # =====
 # =====
-
 
 #
 #function run_local_indexer() {
@@ -134,6 +135,16 @@ receiver301_account="receiver01.$root_account";
 #    eval $str;
 #}
 
+function tail_indexer_error_logs() {
+  while read line; do
+    case "$line" in
+    *)
+      gcloud logging write indexer-error-log "$line"
+      ;;
+    esac
+  done < <(tail -f mintbase-core.error.log)
+}
+
 function build_contracts() {
   cd mintbase-deps && cargo market-wasm && cargo store-wasm && cargo factory-wasm && cargo helper-wasm && cd ../
 }
@@ -142,25 +153,20 @@ function build_indexer() {
   cargo indexer
 }
 
-
 function run_indexer() {
-  if [[ ! -d "$NEAR_DIR/data" ]]
-  then
-      pkill -f indexer
+  if [[ ! -d "$NEAR_DIR/data" ]]; then
+    str='rm -rf _near_dir_'
+    str="${str//_near_dir_/$NEAR_DIR}"
+    echo $str
+    eval $str
 
-        str='rm -rf _near_dir_'
-        str="${str//_near_dir_/$NEAR_DIR}"
-        echo $str
-        eval $str
+    str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
+    str="${str//_near_dir_/$NEAR_DIR}"
+    str="${str//_NEAR_ENV_/$NEAR_ENV}"
+    echo $str
+    eval $str
 
-
-        str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
-        str="${str//_near_dir_/$NEAR_DIR}"
-        str="${str//_NEAR_ENV_/$NEAR_ENV}"
-        echo $str
-        eval $str
-
-        sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
+    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' $NEAR_DIR/config.json
   fi
   str='NETWORK=_network_ WATCH_ACCOUNTS=_WATCH_ACCOUNTS_ bin/indexer --home-dir _near_dir_ run'
   str="${str//_rust_log_/$RUST_LOG}"
@@ -174,7 +180,6 @@ function run_indexer() {
   echo $str
   eval $str
 }
-
 
 function create_accounts() {
   N=3

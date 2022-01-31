@@ -1,12 +1,10 @@
 question=$(
   cat <<EOF
 Type number
-(-2.3) init indexer
-(-2.2) run stateful indexer
-(-2.1) init and run indexer
-(-2) run indexer
-(-1) build contracts
-(-1.1) build indexer
+(-4) run indexer (from scratch)
+(-3) run indexer
+(-2) build contracts
+(-1) build indexer
 (0) create required accounts
 (1) redeploy contracts.
 (2) deploy contracts
@@ -35,11 +33,7 @@ function programa() {
   read -r response
   echo "you chose $response"
   case $response in
-  -2.3)
-    init_indexer
-    programa
-    ;;
-  -2.2)
+  -4)
     echo "are you sure? y/n"
     read -r answer
     if [ $answer = 'y' ]; then
@@ -47,22 +41,11 @@ function programa() {
     fi
     programa
     ;;
-  -2.1)
-    if [ $network = 'mainnet' ]; then
-      echo 'we stopped you from doing something dangerous'
-    elif [ $network = 'testnet' ]; then
-      echo 'we stopped you from doing something dangerous'
-    else
-      init_and_run_indexer
-    fi
-    #    init_and_run_indexer & (sleep 2 && create_accounts && deploy);
-    programa
-    ;;
-  -2)
+  -3)
     run_indexer
     programa
     ;;
-  -1.1)
+  -2)
     build_indexer
     programa
     ;;
@@ -184,8 +167,8 @@ function programa2() {
       exit 1
     fi
 
-    RUST_LOG="stats=info,mintbase_near_indexer=info"
-    rm -rf $NEAR_DIR/data
+    RUST_LOG="mintbase_near_indexer=info,error"
+    #    rm -rf $NEAR_DIR/data
 
     #    build_indexer
     #    build_contracts
@@ -193,28 +176,29 @@ function programa2() {
     echo "clearing database"
     PGPASSWORD=postgres psql -U $postgres_user -d $postgres_database -h $postgres_host -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
     echo "running indexer"
-    run_indexer >> logs/out.log 2>> logs/error.log &
+    run_indexer 2>mintbase-core.error.log 1>mintbase-core.log &
+    #    tail_indexer_error_logs &
     echo "creating accounts"
-    create_accounts >>out.log 2>>error.log
+    create_accounts &>>mintbase-core.e2e.log
     echo "deploying"
-    deploy >>out.log 2>>error.log
-    create_store >>out.log 2>>error.log
-    grant_minter >>out.log 2>>error.log
+    deploy &>>mintbase-core.e2e.log
+    echo "creating store"
+    create_store >>mintbase-core.e2e.log
+    echo "granting permission to mint"
+    grant_minter >>mintbase-core.e2e.log
     echo "minting 50 tokens with 2 owners and royalty accounts"
-    mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":50,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}' >>out.log 2>>error.log
+    mint_tokens_custom '{"owner_id":"_minter_account_", "metadata":{"spec":"","name":"","symbol":"","icon":null,"base_uri":null,"reference":null,"reference_hash":null},"royalty_args":{"split_between": {"_royalty1_account_": 8000,"_royalty2_account_": 2000}, "percentage": 1000},"num_to_mint":50,"split_owners":{"_minter_account_": 8000,"_store_owner_account_": 2000}}' &>>mintbase-core.e2e.log
     echo "listing token-id 1 on market"
-    nft_approve_autotransfer 1
+    nft_approve_autotransfer 1 &>>mintbase-core.e2e.log
     echo "buying token-id off market"
-    make_offer 1
+    make_offer 1 &>>mintbase-core.e2e.log
     pkill -f indexer
+    pkill -f tail
     ;;
   "e2e-loop")
     while :; do
       e2e $2
     done
-    ;;
-  "indexer")
-    run_stateful_indexer $2
     ;;
   "run-indexer")
     run_indexer

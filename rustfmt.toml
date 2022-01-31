@@ -1,0 +1,9 @@
+reorder_imports = true
+brace_style = "PreferSameLine"
+edition = "2021"
+fn_args_layout = "Vertical"
+imports_layout = "Vertical"
+match_block_trailing_comma = true
+imports_granularity = "Module"
+reorder_impl_items = true
+group_imports = "StdExternalCrate"

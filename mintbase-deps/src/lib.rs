@@ -5,9 +5,9 @@ mod impls;
 mod structs;
 mod traits;
 
-use std::str::FromStr;
 use std::convert::TryFrom;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 pub use consts::*;
 pub use enums::*;
@@ -18,34 +18,35 @@ pub use traits::*;
 
 #[cfg(feature = "all")]
 mod mintbase_std {
-    pub use bigdecimal;
-    pub use chrono;
-    pub use dotenv;
-    pub use futures;
-    pub use hyper;
-    pub use near_account_id;
-    pub use near_client_primitives;
-    pub use near_crypto;
-    pub use near_indexer;
-    pub use near_jsonrpc_client;
-    pub use near_jsonrpc_primitives;
-    pub use near_primitives;
-    pub use near_sdk;
-    pub use openssl_probe;
-    pub use rayon;
-    pub use reqwest;
-    pub use tokio;
-    pub use tokio_postgres;
-    pub use tokio_stream;
-    pub use tower;
-    pub use tracing;
-    pub use tracing_appender;
-    pub use tracing_subscriber;
-    pub use uuid;
+    pub use {
+        bigdecimal,
+        chrono,
+        dotenv,
+        futures,
+        hyper,
+        near_account_id,
+        near_client_primitives,
+        near_crypto,
+        near_indexer,
+        near_jsonrpc_client,
+        near_jsonrpc_primitives,
+        near_primitives,
+        near_sdk,
+        openssl_probe,
+        rayon,
+        reqwest,
+        tokio,
+        tokio_postgres,
+        tokio_stream,
+        tower,
+        tracing,
+        tracing_appender,
+        tracing_subscriber,
+        uuid,
+    };
 }
 #[cfg(feature = "all")]
 pub use mintbase_std::*;
-
 #[cfg(feature = "wasm")]
 pub use near_sdk;
 

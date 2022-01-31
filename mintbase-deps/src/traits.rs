@@ -1,10 +1,7 @@
+use near_sdk::json_types::U64;
+use near_sdk::*;
+
 use crate::*;
-use near_sdk::{
-    json_types::{
-        U64,
-    },
-    *,
-};
 
 #[cfg_attr(feature = "factory-wasm", ext_contract(factory_self))]
 #[cfg(feature = "factory-wasm")]
@@ -143,7 +140,10 @@ pub trait NonFungibleContractCore {
     ) -> Promise;
 
     /// Returns the token with the given `token_id` or `None` if no such token.
-    fn nft_token(&self, token_id: U64) -> Option<Token>;
+    fn nft_token(
+        &self,
+        token_id: U64,
+    ) -> Option<Token>;
 }
 
 #[cfg_attr(feature = "store-wasm", ext_contract(store_self))]
@@ -206,7 +206,13 @@ pub trait NonFungibleOnApprove {
     /// * `msg`: specifies information needed by the approved contract in order to
     ///    handle the approval. Can indicate both a fn to call and the
     ///    parameters to pass to that fn.
-    fn nft_on_approve(&mut self, token_id: U64, owner_id: AccountId, approval_id: u64, msg: String);
+    fn nft_on_approve(
+        &mut self,
+        token_id: U64,
+        owner_id: AccountId,
+        approval_id: u64,
+        msg: String,
+    );
     fn nft_on_batch_approve(
         &mut self,
         tokens: Vec<U64>,

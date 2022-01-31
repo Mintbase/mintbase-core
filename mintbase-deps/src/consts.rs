@@ -1,9 +1,11 @@
-use crate::SafeFraction;
+use std::collections::HashMap;
+
 use near_sdk::{
     Balance,
     Gas,
 };
-use std::collections::HashMap;
+
+use crate::SafeFraction;
 
 /// Near denominated units are in 10^24
 pub const fn ntoy(near_amount: Balance) -> Balance {
