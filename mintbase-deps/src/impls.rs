@@ -19,7 +19,6 @@ pub use near_sdk::{
 
 use crate::*;
 
-
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
         now().0 < self.0
