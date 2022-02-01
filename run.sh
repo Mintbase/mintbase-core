@@ -114,27 +114,6 @@ receiver301_account="receiver01.$root_account"
 # =====
 # =====
 
-#
-#function run_local_indexer() {
-#    pkill -f indexer;
-#    str='bin/indexer --home-dir _near_dir_ init --chain-id local;';
-#    str="${str//_near_dir_/$NEAR_DIR}";
-#    str="${str//_NEAR_ENV_/$NEAR_ENV}";
-#    echo $str;
-#    eval $str;
-#    sed -i 's/"tracked_shards": \[\],/"tracked_shards": [0],/g' ~/.near/local/config.json;
-#
-#    str='MALLOC_CONF=prof_leak:true,lg_prof_sample:0,prof_final:true NETWORK=_network_ POSTGRES=_postgres_ WATCH_ACCOUNTS=_root_ bin/indexer --home-dir _near_dir_ run;';
-#    str="${str//_near_dir_/$NEAR_DIR}";
-#    str="${str//_root_/$root}";
-#    str="${str//_network_/$NETWORK}";
-#    str="${str//_postgres_password_/POSTGRES_password}";
-#    str="${str//_postgres_user_/POSTGRES_user}";
-#
-#    echo $str;
-#    eval $str;
-#}
-
 function tail_indexer_error_logs() {
   while read line; do
     case "$line" in
@@ -160,7 +139,13 @@ function run_indexer() {
     echo $str
     eval $str
 
-    str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
+    if [ "$NETWORK" = "testnet" ]; then
+      str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_ --download-genesis;'
+    elif [ "$NETWORK" = "mainnet" ]; then
+      echo 22
+    else
+      str='bin/indexer --home-dir _near_dir_ init --chain-id _NEAR_ENV_;'
+    fi
     str="${str//_near_dir_/$NEAR_DIR}"
     str="${str//_NEAR_ENV_/$NEAR_ENV}"
     echo $str
