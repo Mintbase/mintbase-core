@@ -4,8 +4,8 @@
 *leak*
 indexer
 _scripts
-scripts/.postgres.sh
-wasm/*.wasm
+.postgres.sh
+wasm
 error.log
 out.log
 bin

@@ -7,7 +7,7 @@
 
 mkdir -p bin
 mkdir -p wasm
-touch -a scripts/.postgres.sh
+touch -a .postgres.sh
 
 if [[ -z "${NETWORK}" ]]; then
   echo specify NETWORK variable - mainnet,testnet,local
@@ -519,7 +519,7 @@ function top_stores() {
   eval "$str"
 }
 
-. scripts/switch-cmd.sh
+. switch-cmd.sh
 
 if [ -n "$1" ]; then
   programa2 $1 $2
