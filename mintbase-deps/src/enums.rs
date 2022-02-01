@@ -75,9 +75,4 @@ pub enum StdioLock<'a> {
     Stderr(std::io::StderrLock<'a>),
 }
 
-// #[cfg(feature = "all")]
-// pub enum AppError {
-//     IndexerError,
-// }
-
 pub type DynamicError = Box<dyn std::error::Error>;

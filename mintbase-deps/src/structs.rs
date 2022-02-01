@@ -13,21 +13,6 @@ use serde::*;
 
 use crate::*;
 
-// #[cfg(test)]
-// use clap::*;
-
-// #[cfg(test)]
-// #[derive(Clap, Debug, Clone)]
-// #[cfg(test)]
-// pub struct CallCmd {
-//     #[clap(short)]
-//     pub func: String,
-//     #[clap(long,short)]
-//     pub args: String,
-//     #[clap(long,short,default_value = "mintbase.test.near")]
-//     pub r: String,
-// }
-
 pub type SplitBetweenUnparsed = HashMap<near_sdk::AccountId, u32>;
 #[cfg(feature = "wasm")]
 use near_sdk::borsh::{
@@ -514,14 +499,14 @@ pub struct NftLoanSetLog {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NftComposeLog {
     pub token_ids: Vec<U64>,
-    // direct parent of token_ids
+    /// direct parent of token_ids
     pub parent: String,
-    // - "t": owned directly by a token on this contract
-    // - "k": owned directly by a token on another contract
+    /// - "t": owned directly by a token on this contract
+    /// - "k": owned directly by a token on another contract
     pub ttype: String,
-    // local root of chain of token_ids
+    /// local root of chain of token_ids
     pub lroot: Option<u64>,
-    // holder of local root
+    /// holder of local root
     pub holder: String,
     pub depth: u8,
 }
@@ -536,11 +521,11 @@ pub struct NftUncomposeLog {
 pub struct NftOnComposeLog {
     pub predecessor: String,
     pub token_id: U64,
-    // direct parent of token_ids
+    /// direct parent of token_ids
     pub cross_child_id: U64,
-    // local root of chain of token_ids
+    /// local root of chain of token_ids
     pub lroot: Option<u64>,
-    // holder of local root
+    /// holder of local root
     pub holder: String,
     pub depth: u8,
 }

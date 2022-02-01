@@ -4,7 +4,6 @@ use std::convert::{
     TryInto,
 };
 use std::fmt;
-use std::str::FromStr;
 
 #[cfg(feature = "wasm")]
 pub use near_sdk::{
@@ -19,15 +18,7 @@ pub use near_sdk::{
 };
 
 use crate::*;
-#[cfg(feature = "all")]
-use crate::{
-    near_indexer,
-    tokio,
-    tokio_postgres::{
-        self,
-        NoTls,
-    },
-};
+
 
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
@@ -161,10 +152,6 @@ impl fmt::Display for NftEventError {
 #[cfg(feature = "factory-wasm")]
 impl New for NFTContractMetadata {
     fn new(args: NFTContractMetadata) -> Self {
-        // match args.reference {
-        //   Some(_) => assert!(args.reference_hash.is_some()),
-        //   None => assert!(args.reference_hash.is_none()),
-        // }
         let store_account = format!("{}.{}", args.name, env::current_account_id());
         assert!(
             env::is_valid_account_id(store_account.as_bytes()),
@@ -1690,8 +1677,6 @@ impl MintbaseStore {
         let old_owner = token.owner_id.to_string();
         assert!(!token.is_loaned());
         if !token.is_pred_owner() {
-            // check if pred has an approval
-            let approval_id: Option<u64> = approval_id.map(|i| i.into());
             assert!(self.nft_is_approved_internal(
                 &token,
                 env::predecessor_account_id(),
@@ -1854,14 +1839,6 @@ impl Token {
             origin_key: None,
         }
     }
-
-    // if the token is owned by a normal account, get that account.
-    // pub fn owner_acct(&self) -> AccountId {
-    //   match &self.owner_id {
-    //     Owner::Account(o) => o.to_string(),
-    //     _ => near_sdk::env::panic(format!("token {} is composed", self.id).as_bytes()),
-    //   }
-    // }
 
     /// If the token is loaned, return the loaner as the owner.
     pub fn get_owner_or_loaner(&self) -> Owner {

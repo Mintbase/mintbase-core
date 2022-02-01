@@ -5,7 +5,6 @@ mod impls;
 mod structs;
 mod traits;
 
-use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -49,16 +48,3 @@ mod mintbase_std {
 pub use mintbase_std::*;
 #[cfg(feature = "wasm")]
 pub use near_sdk;
-
-// use clap::*;
-
-// #[cfg_attr(not(feature = "smart-contracts"), derive(Clap))]
-// // #[clap(
-// //     version = "0.1.0",
-// //     author = "evergreen trading systems <4870868+evergreen-trading-systems@users.noreply.github.com>"
-// // )]
-// // #[clap(setting = AppSettings::ColoredHelp)]
-// pub struct LeaderboardClap {
-//     #[cfg_attr(not(feature = "smart-contracts"), clap(long))]
-//     pub top_stores: bool,
-// }

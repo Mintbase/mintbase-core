@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use near_sdk::json_types::U64;
 use near_sdk::*;
 
@@ -238,7 +240,7 @@ pub trait ExtSelf {
 /// efficient. ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Core.md
 #[cfg(feature = "market-wasm")]
-#[cfg_attr(feature = "market-wasm", ext_contract(nft_contract))]
+#[cfg_attr(feature = "market-wasm", ext_contract(nft_contract), allow(clippy::too_many_arguments))]
 pub trait NFTContract {
     /// Transfer the token and get the payout data.
     fn nft_transfer_payout(

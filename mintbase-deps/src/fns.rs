@@ -1,21 +1,10 @@
 use std::collections::HashMap;
-
-use near_sdk::json_types::{
-    U128,
-    U64,
-};
 use near_sdk::{
     env,
     AccountId,
 };
 use serde_json::{self,};
 
-// #[cfg(feature = "test")]
-// use near_indexer_test_framework::NearState;
-#[cfg(feature = "all")]
-use crate::near_indexer::IndexerExecutionOutcomeWithReceipt;
-// #[cfg(feature = "test")]
-// use near_indexer_test_framework::*;
 #[cfg(feature = "all")]
 use crate::tokio_postgres::NoTls;
 use crate::*;
@@ -63,7 +52,7 @@ pub fn near_nep171_event_from_str(s: &str) -> Result<Nep171Event, serde_json::Er
 
 #[cfg(feature = "all")]
 pub fn indexer_home_dir() -> PathBuf {
-    std::path::PathBuf::from(near_indexer::get_default_home())
+    near_indexer::get_default_home()
 }
 
 #[cfg(feature = "all")]
@@ -99,90 +88,6 @@ pub fn log_factory_new(
     env::log_str(event.near_json_event().as_str());
 }
 
-// todo - change to testd, use better editor to highlight
-// #[cfg(feature = "all")]
-// pub async fn latest_nonce(s:near_account_id::AccountId) ->u64{
-//
-//     let signer = root_signer();
-//     let near_cli = near_jsonrpc_client::JsonRpcClient::connect("http://localhost:3030");
-//
-//     let rbreq = near_jsonrpc_client::methods::query::RpcQueryRequest {
-//         block_reference: near_primitives::types::BlockReference::latest(),
-//         request: near_primitives::views::QueryRequest::ViewAccessKey {
-//             account_id: s.clone(),
-//             public_key: signer.public_key.clone(),
-//         },
-//     };
-//
-//     let rbres = near_cli.call(rbreq).await.unwrap();
-//     match rbres.kind {
-//         near_jsonrpc_primitives::types::query::QueryResponseKind::AccessKey(v) => v.nonce + 1,
-//         _ => unreachable!(),
-//     }
-// }
-
-// todo - change to testd, use better editor to highlight
-#[cfg(feature = "all")]
-pub fn root_signer() -> near_crypto::InMemorySigner {
-    let root_account = std::env::var("INDEXER_ACCOUNT_ID").unwrap();
-    let root_p = std::env::var("NEAR_ROOT_PUBLIC").unwrap();
-    let root_s = std::env::var("NEAR_ROOT_SECRET").unwrap();
-    let account = near_account_id::AccountId::from_str("test.near").unwrap();
-    near_crypto::InMemorySigner::from_secret_key(
-        account,
-        near_crypto::SecretKey::from_str(root_s.as_str()).unwrap(),
-    )
-}
-
-#[cfg(feature = "all")]
-pub async fn process_event(outcome: &IndexerExecutionOutcomeWithReceipt) {
-    println!("yoo");
-    let event = &outcome.execution_outcome.outcome.logs[0];
-    println!("hello {}", event);
-
-    let event = serde_json::from_str::<NearJsonEvent>(event.as_str()).unwrap();
-
-    let event_data = NftEvent::try_from(event.data.as_str());
-
-    // match event_data {
-    //     Ok(v) => {
-    //         v.handle_nft_event(outcome.receipt.receipt_id).await;
-    //     }
-    //     Err(v) => {
-    //         println!("sorry");
-    //         eprintln!("{} {:?}", v, event)
-    //     }
-    // };
-
-    // let json:Value =  serde_json::from_str(event.as_str()).unwrap();
-    // let event_name = json.get("type");
-    // match event_name {
-    //     None => {
-    //         println!("error: {}",json);
-    //     }
-    //     Some(v) => {
-    //         let event_name = v.as_str().unwrap();
-    //         let params = json.get("params").unwrap();
-    //         let contract_account = outcome.execution_outcome.outcome.executor_id.to_string();
-    //         println!("type: {:?} args: {:?}", v, params);
-    //         match event_name {
-    //             "store_creation" => Event::StoreCreation.event_handler(params),
-    //             x => {
-    //                 println!("{}",x);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // execute_log2(
-    //   &client,
-    //   &json["type"],
-    //   &json["params"],
-    //   contract_account,
-    //   x.receipt.receipt_id.to_string(),
-    // )
-}
-
 /// Split a &str around a dash char
 pub fn split_colon(string: &str) -> (&str, &str) {
     let pos = string.find(':').expect("no colon");
@@ -215,16 +120,6 @@ pub fn log_grant_minter(account_id: &AccountId) {
 }
 
 pub fn log_revoke_minter(account_id: &AccountId) {
-    // env::log_str(
-    //     json!({
-    //       "type": "revoke_minter".to_string(),
-    //       "params": {
-    //         "account": account_id,
-    //       }
-    //     })
-    //     .to_string()
-    //     .as_str(),
-    // );
     let log = NftStringLog {
         data: account_id.to_string(),
     };
@@ -238,16 +133,6 @@ pub fn log_revoke_minter(account_id: &AccountId) {
 }
 
 pub fn log_transfer_store(to: &AccountId) {
-    // env::log_str(
-    //     json!({
-    //       "type": "transfer_store".to_string(),
-    //       "params": {
-    //         "account": to
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
     let log = NftStringLog {
         data: to.to_string(),
     };
@@ -261,16 +146,6 @@ pub fn log_transfer_store(to: &AccountId) {
 }
 
 pub fn log_set_icon_base64(base64: &Option<String>) {
-    // env::log_str(
-    //     json!({
-    //       "type": "set_icon_base64".to_string(),
-    //       "params": {
-    //         "base64": base64,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
     let log = NftOptionStringLog {
         data: base64.clone(),
     };
@@ -284,16 +159,6 @@ pub fn log_set_icon_base64(base64: &Option<String>) {
 }
 
 pub fn log_set_base_uri(base_uri: &str) {
-    // env::log_str(
-    //     json!({
-    //       "type": "set_base_uri".to_string(),
-    //       "params": {
-    //         "uri": base_uri,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
     let log = NftStringLog {
         data: base_uri.to_string(),
     };
@@ -340,39 +205,12 @@ pub fn log_nft_batch_mint(
     };
 
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "nft_batch_mint".to_string(),
-    //       "params": {
-    //         "minter": minter,
-    //         "owner_id": owner,
-    //         "first_token_id": first_token_id,
-    //         "last_token_id": last_token_id,
-    //         "royalty": royalty,
-    //         "split_owners": split_owners,
-    //         "meta_id": meta_ref,
-    //         "meta_extra": meta_extra,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_nft_batch_burn(
     token_ids: &[U64],
     owner_id: String,
 ) {
-    // env::log_str(
-    //     json!({
-    //       "type": "nft_batch_burn".to_string(),
-    //       "params": {
-    //         "token_ids": token_ids,
-    //       }
-    //     })
-    //     .to_string()
-    //     .as_str(),
-    // );
     let token_ids = token_ids
         .iter()
         .map(|x| x.0.to_string())
@@ -413,18 +251,6 @@ pub fn log_approve(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "1_approve".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //         "approval_id": approval_id,
-    //         "account": account_id,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_batch_approve(
@@ -448,18 +274,6 @@ pub fn log_batch_approve(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "batch_approve".to_string(),
-    //       "params": {
-    //         "tokens": tokens,
-    //         "approvals": approvals,
-    //         "account": account_id,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_revoke(
@@ -477,17 +291,6 @@ pub fn log_revoke(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "revoke".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //         "account": account_id,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_revoke_all(token_id: u64) {
@@ -501,16 +304,6 @@ pub fn log_revoke_all(token_id: u64) {
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "revoke_all".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 // Core
@@ -533,17 +326,6 @@ pub fn log_nft_transfer(
         event_kind: Nep171EventLog::NftTransfer(log),
     };
     env::log_str(event.near_json_event().as_str());
-    //     json!({
-    //       "type": "nft_transfer".to_string(),
-    //       "params": {
-    //         "to": to,
-    //         "token_id": token_id,
-    //         "memo": memo,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_nft_batch_transfer(
@@ -568,15 +350,6 @@ pub fn log_nft_batch_transfer(
         event_kind: Nep171EventLog::NftTransfer(log),
     };
     env::log_str(event.near_json_event().as_str());
-    //       "type": "nft_batch_transfer".to_string(),
-    //       "params": {
-    //         "tokens": tokens,
-    //         "accounts": accounts,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 // payout
@@ -620,12 +393,8 @@ pub fn log_nft_loan_set(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
+
 // compose
 pub fn log_nfts_compose(
     token_ids: &[U64],
@@ -655,21 +424,6 @@ pub fn log_nfts_compose(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "nfts_compose".to_string(),
-    //       "params": {
-    //         "token_ids": token_ids,
-    //         "parent": parent,
-    //         "type": ttype,
-    //         "lroot": lroot,
-    //         "holder": holder,
-    //         "depth": depth,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_nfts_uncompose(
@@ -687,17 +441,6 @@ pub fn log_nfts_uncompose(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "nfts_uncompose".to_string(),
-    //       "params": {
-    //         "token_ids": token_ids,
-    //         "holder": holder,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_on_compose(
@@ -726,21 +469,6 @@ pub fn log_on_compose(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "on_compose".to_string(),
-    //       "params": {
-    //         "predecessor": predecessor,
-    //         "token_id": token_id,
-    //         "cross_child_id": cross_child_id,
-    //         "lroot": lroot,
-    //         "holder": holder,
-    //         "depth": depth,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_on_uncompose(
@@ -760,18 +488,6 @@ pub fn log_on_uncompose(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "on_uncompose".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //         "holder": holder,
-    //         "child_key": child_key
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_on_move(
@@ -789,17 +505,6 @@ pub fn log_on_move(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "nft_on_move".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //         "origin_key": origin_key,
-    //       }
-    //     })
-    //         .to_string()
-    //         .as_str(),
-    // );
 }
 
 pub fn log_nft_moved(
@@ -817,17 +522,6 @@ pub fn log_nft_moved(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log_str(
-    //     json!({
-    //       "type": "4".to_string(),
-    //       "params": {
-    //         "token_id": token_id,
-    //         "contract_id": contract_id,
-    //       }
-    //     })
-    //     .to_string()
-    //     .as_str(),
-    // );
 }
 
 /// An alias for env::block_timestamp. Note that block_timestamp returns
@@ -867,20 +561,6 @@ pub fn log_listing_created(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "1_list".to_string(),
-    //   "params": {
-    //     "list_id": list_id,
-    //     "price": price,
-    //     "token_key": token_key,
-    //     "owner_id": owner_id,
-    //     "autotransfer": autotransfer,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_batch_listing_created(
@@ -916,21 +596,6 @@ pub fn log_batch_listing_created(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "batch_list".to_string(),
-    //   "params": {
-    //     "approval_ids": approval_ids,
-    //     "price": price,
-    //     "token_ids": token_ids,
-    //     "owner_id": owner_id,
-    //     "store_id": store_id,
-    //     "autotransfer": autotransfer,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_set_token_autotransfer(
@@ -949,17 +614,6 @@ pub fn log_set_token_autotransfer(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "set_autotransfer".to_string(),
-    //   "params": {
-    //     "autotransfer": autotransfer,
-    //     "list_id": list_id,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_set_token_asking_price(
@@ -978,17 +632,6 @@ pub fn log_set_token_asking_price(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "set_price".to_string(),
-    //   "params": {
-    //     "price": price,
-    //     "list_id": list_id,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_make_offer(
@@ -1014,21 +657,6 @@ pub fn log_make_offer(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "make_offer".to_string(),
-    //   "params": {
-    //     "price": offer.price.to_string(),
-    //     "from": offer.from,
-    //     "timeout": offer.timeout,
-    //     "list_id": list_id,
-    //     "token_key": token_key,
-    //     "offer_num": offer_num,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_withdraw_token_offer(
@@ -1046,17 +674,6 @@ pub fn log_withdraw_token_offer(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "withdraw_offer".to_string(),
-    //   "params": {
-    //     "list_id": list_id,
-    //     "offer_num": offer_num,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_sale(
@@ -1078,20 +695,6 @@ pub fn log_sale(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    let _e = r#"few"#;
-    // env::log(
-    //     json!({
-    //   "type": "sold".to_string(),
-    //   "params": {
-    //     "list_id": list_id,
-    //     "offer_num": offer_num,
-    //     "payout": payout,
-    //     "token_key": token_key
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn log_token_removed(list_id: &str) {
@@ -1105,16 +708,6 @@ pub fn log_token_removed(list_id: &str) {
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "removed".to_string(),
-    //   "params": {
-    //     "list_id": list_id,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 //////////////////
@@ -1135,18 +728,8 @@ pub fn log_allowlist_update(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "allowlist".to_string(),
-    //   "params": {
-    //     "account": account_id,
-    //     "state": state,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
+
 pub fn log_banlist_update(
     account_id: &AccountId,
     state: bool,
@@ -1162,17 +745,6 @@ pub fn log_banlist_update(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
-    // env::log(
-    //     json!({
-    //   "type": "banlist".to_string(),
-    //   "params": {
-    //     "account": account_id,
-    //     "state": state,
-    //   }
-    // })
-    //         .to_string()
-    //         .as_bytes(),
-    // );
 }
 
 pub fn to_near(n: u128) -> u128 {
