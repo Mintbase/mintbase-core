@@ -503,6 +503,16 @@ function nft_transfer_call() {
   eval "$str"
 }
 
+function nft_token() {
+  str='near view _store_account_ nft_token '\''{"token_id":"_1_"}'\'' --keyPath _key_path_ --nodeUrl _node_url_'
+  str="${str//_1_/$1}"
+  str="${str//_store_account_/$store_account}"
+  str="${str//_key_path_/$key_path}"
+  str="${str//_node_url_/$node_url}"
+  echo running "$str"
+  eval "$str"
+}
+
 function top_stores() {
   str='./bin/stats --stat top-stores'
   echo running "$str"

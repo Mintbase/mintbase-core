@@ -235,6 +235,9 @@ function programa2() {
     export -f top_stores
     watch -n60 -x bash -c top_stores
     ;;
+  "nft-token")
+    nft_token $2
+    ;;
     #  6)
     #    mint_tokens;
     #    echo "remember token_id to list in marketplace";
