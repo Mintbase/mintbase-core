@@ -3,17 +3,11 @@ name = "mintbase-deps"
 version = "0.1.0"
 edition = "2018"
 authors = ["evergreen-trading-systems <4870868+evergreen-trading-systems@users.noreply.github.com>"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["rlib","cdylib"]
 
-[dev-dependencies]
-#near-indexer-test-framework = {git="https://github.com/evergreen-trading-systems/near-indexer-test-framework"}
-anyhow="1.0.51"
-
 [dependencies]
-# near-indexer-test-framework={path="../../smart-fruit-dew/near-indexer-test-framework", features=["postgres"], optional=true}
 clap = {version="3.0.0-beta.2",optional=true}
 near-sdk = {git="https://github.com/evergreen-trading-systems/near-sdk-rs", optional = true}
 serde = "1"
@@ -35,15 +29,13 @@ tower = {version="0.4", features=["full"], optional = true}
 tokio-postgres = {version="0.7.3",features=["with-serde_json-1","with-chrono-0_4"], optional = true}
 futures = {version= "0.3.17", optional = true }
 tokio-stream = {version= "0.1.7" , optional = true}
-
 near-jsonrpc-client = {git="https://github.com/near/near-jsonrpc-client-rs",rev="dd7761b51e1775350be1782370aa22c0b0fe98d7",features=["sandbox"], optional=true}
-near-client-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
-near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
-near-crypto = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
-near-primitives = { git = "https://github.com/near/nearcore", rev = "c0551c84ba9f54509abe05cb1291dbeb33cbd85d" ,optional=true}
-near-account-id = { git = "https://github.com/near/nearcore", rev="c0551c84ba9f54509abe05cb1291dbeb33cbd85d", optional=true}
-# indexer
-near-indexer = { git = "https://github.com/near/nearcore", rev="c0551c84ba9f54509abe05cb1291dbeb33cbd85d", optional=true}
+near-client-primitives = { git = "https://github.com/near/nearcore", rev = "6c5199f3b8b72ea8065e25cdd0bd3661ef95f878" ,optional=true}
+near-jsonrpc-primitives = { git = "https://github.com/near/nearcore", rev = "6c5199f3b8b72ea8065e25cdd0bd3661ef95f878" ,optional=true}
+near-crypto = { git = "https://github.com/near/nearcore", rev = "6c5199f3b8b72ea8065e25cdd0bd3661ef95f878" ,optional=true}
+near-primitives = { git = "https://github.com/near/nearcore", rev = "6c5199f3b8b72ea8065e25cdd0bd3661ef95f878" ,optional=true}
+near-account-id = { git = "https://github.com/near/nearcore", rev="6c5199f3b8b72ea8065e25cdd0bd3661ef95f878", optional=true}
+near-indexer = { git = "https://github.com/near/nearcore", rev="6c5199f3b8b72ea8065e25cdd0bd3661ef95f878", optional=true}
 
 [features]
 store-wasm = ["wasm"]
