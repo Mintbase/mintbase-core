@@ -1,17 +1,10 @@
 use std::collections::HashMap;
-use std::convert::{
-    TryFrom,
-    TryInto,
-};
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
 #[cfg(feature = "wasm")]
 pub use near_sdk::{
-    borsh::{
-        self,
-        BorshDeserialize,
-        BorshSerialize,
-    },
+    borsh::{self, BorshDeserialize, BorshSerialize},
     collections::*,
     json_types::*,
     *,
@@ -1429,7 +1422,7 @@ impl MintbaseStore {
     }
 
     /// Called from nft_approve and nft_batch_approve.
-    pub fn approve_internal(
+    fn approve_internal(
         &mut self,
         token_idu64: u64,
         account_id: &AccountId,
@@ -1444,7 +1437,7 @@ impl MintbaseStore {
         approval_id
     }
 
-    pub fn nft_token_internal(
+    fn nft_token_internal(
         &self,
         token_id: u64,
     ) -> Token {
@@ -1453,7 +1446,7 @@ impl MintbaseStore {
             .unwrap_or_else(|| panic!("token: {} doesn't exist", token_id))
     }
 
-    pub fn nft_token_compliant_internal(
+    fn nft_token_compliant_internal(
         &self,
         token_id: u64,
     ) -> TokenCompliant {
@@ -1499,7 +1492,7 @@ impl MintbaseStore {
     ///
     /// If remove prior is true, expect that the token is not composed, and
     /// remove the token owner from self.tokens_per_owner.
-    pub fn transfer_internal(
+    fn transfer_internal(
         &mut self,
         token: &mut Token,
         to: AccountId,
@@ -1519,7 +1512,7 @@ impl MintbaseStore {
 
     /// Same as `nft_is_approved`, but uses internal u64 (u64) typing for
     /// Copy-efficiency.
-    pub fn nft_is_approved_internal(
+    fn nft_is_approved_internal(
         &self,
         token: &Token,
         approved_account_id: AccountId,
@@ -1547,7 +1540,7 @@ impl MintbaseStore {
     /// If `from` is None, the tokens are being uncomposed.
     ///
     /// If neither are None, the tokens are being transferred.
-    pub fn update_tokens_per_owner(
+    fn update_tokens_per_owner(
         &mut self,
         token_id: u64,
         from: Option<AccountId>,
@@ -1572,7 +1565,7 @@ impl MintbaseStore {
     /// Internal
     /// update the set of tokens composed underneath parent. If insert is
     /// true, insert token_id; if false, try to remove it.
-    pub fn update_composed_sets(
+    fn update_composed_sets(
         &mut self,
         child: String,
         parent: String,
@@ -1641,7 +1634,7 @@ impl MintbaseStore {
     }
 
     /// Internal
-    pub fn lock_token(
+    fn lock_token(
         &mut self,
         token: &mut Token,
     ) {
@@ -1652,7 +1645,7 @@ impl MintbaseStore {
     }
 
     /// Internal
-    pub fn unlock_token(
+    fn unlock_token(
         &mut self,
         token: &mut Token,
     ) {
