@@ -1,10 +1,17 @@
 use std::collections::HashMap;
-use std::convert::{TryFrom, TryInto};
+use std::convert::{
+    TryFrom,
+    TryInto,
+};
 use std::fmt;
 
 #[cfg(feature = "wasm")]
 pub use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
+    borsh::{
+        self,
+        BorshDeserialize,
+        BorshSerialize,
+    },
     collections::*,
     json_types::*,
     *,
