@@ -19,6 +19,23 @@ pub use near_sdk::{
 
 use crate::*;
 
+impl TokenCompliantInternal {
+    pub fn to_external(&self) -> TokenCompliantExternal {
+        TokenCompliantExternal {
+            id: self.id,
+            owner_id: self.owner_id.to_string(),
+            approvals: self.approvals.clone(),
+            metadata: self.metadata.clone(),
+            royalty: self.royalty.clone(),
+            split_owners: self.split_owners.clone(),
+            minter: self.minter.clone(),
+            loan: self.loan.clone(),
+            composeable_stats: self.composeable_stats.clone(),
+            origin_key: self.origin_key.clone(),
+        }
+    }
+}
+
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
         now().0 < self.0
@@ -613,7 +630,7 @@ impl MintbaseStore {
         &self,
         from_index: Option<String>, // default: "0"
         limit: Option<u64>,         // default: = self.nft_total_supply()
-    ) -> Vec<TokenCompliant> {
+    ) -> Vec<TokenCompliantExternal> {
         let from_index: u64 = from_index
             .unwrap_or_else(|| "0".to_string())
             .parse()
@@ -621,7 +638,7 @@ impl MintbaseStore {
         let limit = limit.unwrap_or(self.nft_total_supply().0);
         (from_index..limit)
             .into_iter()
-            .map(|token_id| self.nft_token_compliant_internal(token_id))
+            .map(|token_id| self.nft_token_compliant_internal(token_id).to_external())
             .collect()
     }
 
@@ -903,7 +920,7 @@ impl MintbaseStore {
         account_id: AccountId,
         from_index: Option<String>,
         limit: Option<usize>,
-    ) -> Vec<TokenCompliant> {
+    ) -> Vec<TokenCompliantInternal> {
         self.tokens_per_owner
             .get(&account_id)
             .expect("no tokens")
@@ -1334,7 +1351,7 @@ impl MintbaseStore {
         balance: U128,
         max_len_payout: u32,
     ) -> Payout {
-        let token = self.nft_token(token_id).expect("no token");
+        let token = self.nft_token_compliant_internal(token_id.0);
         match token.owner_id {
             Owner::Account(_) => {},
             _ => env::panic_str("token is composed"),
@@ -1456,7 +1473,7 @@ impl MintbaseStore {
     fn nft_token_compliant_internal(
         &self,
         token_id: u64,
-    ) -> TokenCompliant {
+    ) -> TokenCompliantInternal {
         self.tokens
             .get(&token_id)
             .map(|x| {
@@ -1476,7 +1493,7 @@ impl MintbaseStore {
                     reference: metadata.reference,
                     reference_hash: metadata.reference_hash,
                 };
-                TokenCompliant {
+                TokenCompliantInternal {
                     id: x.id,
                     owner_id: x.owner_id,
                     approvals: x.approvals,
@@ -1732,8 +1749,8 @@ impl MintbaseStore {
     pub fn nft_token(
         &self,
         token_id: U64,
-    ) -> Option<TokenCompliant> {
-        Some(self.nft_token_compliant_internal(token_id.0))
+    ) -> Option<TokenCompliantExternal> {
+        Some(self.nft_token_compliant_internal(token_id.0).to_external())
     }
 }
 
