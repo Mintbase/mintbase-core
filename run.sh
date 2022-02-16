@@ -22,7 +22,7 @@ if [[ -z "${NEAR_DIR}" ]]; then
 else
   NEAR_DIR="${NEAR_DIR}"
 fi
-. scripts/.postgres.sh
+. .postgres.sh
 
 if [[ -z "${POSTGRES}" ]]; then
   export POSTGRES="postgres://$postgres_user:$postgres_password@$postgres_host:5432/$postgres_database"
@@ -32,6 +32,21 @@ fi
 # diesel cli
 export DATABASE_URL=$POSTGRES
 
+# rust log
+if [[ -z "${RUST_LOG}" ]]; then
+  export RUST_LOG="indexer=info,genesis=info,chain=info,client=info,stats=info,mintbase_near_indexer=info,near=error,mintbase_near_indexer=error"
+else
+  export RUST_LOG="${RUST_LOG}"
+fi
+
+# watch accounts
+if [[ -z "${WATCH_ACCOUNTS}" ]]; then
+  WATCH_ACCOUNTS="$root,tenk,nmkmint"
+else
+  WATCH_ACCOUNTS="${WATCH_ACCOUNTS}"
+fi
+
+# node_url, root, top_level_account
 if [ "$NETWORK" = "testnet" ]; then
   node_url="https://rpc.testnet.near.org" #testnet
   top_level_account="testnet"
@@ -49,23 +64,6 @@ else
   exit 1
 fi
 
-if [[ -z "${RUST_LOG}" ]]; then
-  export RUST_LOG="indexer=info,genesis=info,chain=info,client=info,stats=info,mintbase_near_indexer=info,near=error,mintbase_near_indexer=error"
-else
-  export RUST_LOG="${RUST_LOG}"
-fi
-
-if [[ -z "${WATCH_ACCOUNTS}" ]]; then
-  WATCH_ACCOUNTS="$root,tenk,nmkmint"
-else
-  WATCH_ACCOUNTS="${WATCH_ACCOUNTS}"
-fi
-
-if [ "$NETWORK" = "local" ]; then
-  key_path="~/.near/local/validator_key.json"
-else
-  key_path="~/.near-credentials/$NETWORK/$root_account.json"
-fi
 
 # SETUP ENV END #
 # =====
@@ -101,6 +99,15 @@ royalty10_account="royalty10.$root_account"
 receiver_account="receiver01.$root_account"
 receiver300_account="receiver01.$root_account"
 receiver301_account="receiver01.$root_account"
+
+# key path
+if [ "$NETWORK" = "local" ]; then
+  key_path="~/.near/local/validator_key.json"
+else
+  key_path="~/.near-credentials/$NETWORK/$root_account.json"
+fi
+
+
 
 # SETUP APPLICATION DATA END #
 # =====
@@ -232,7 +239,6 @@ function redeploy() {
 
 function redeploy_single_store() {
   cred=$(cat ~/.near-credentials/$NETWORK/$root_account.json)
-  echo creating credentials "$cred"
   echo "$cred" >~/.near-credentials/"$NETWORK"/"$1".json
   str='near deploy --wasmFile wasm/store.wasm _1_ --masterAccount _root_account_ --nodeUrl _node_url_ --keyPath _key_path_'
   str="${str//_root_account_/$root_account}"
