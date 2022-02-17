@@ -9,4 +9,4 @@
 [submodule "mintbase-core-docs"]
 	path = mintbase-core-docs
 	url = https://github.com/Mintbase/mintbase-core-docs
-	branch = master
+	branch = dev
