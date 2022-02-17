@@ -9,11 +9,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
       - name: Git Sumbodule Update
         run: |
-          git submodule update --remote --recursive
+          git submodule foreach git checkout dev
+          cd mintbase-near-indexer && git branch
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
