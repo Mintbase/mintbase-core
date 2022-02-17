@@ -1,6 +1,7 @@
 name: Build binary
 'on':
   push:
+  pull_request:
     branches:
       - '**'
 jobs:
@@ -15,6 +16,9 @@ jobs:
         run: |
           git pull --recurse-submodules
           git submodule update --remote --recursive
+          echo ${{ github.event.pull_request.base.ref }}
+          echo $(git rev-parse --abbrev-ref HEAD)
+          if [ "$(git rev-parse --abbrev-ref HEAD)" = "master" ]; then echo "12345"; fi
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
