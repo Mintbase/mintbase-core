@@ -1,0 +1,29 @@
+name: Build binary
+'on':
+  pull_request:
+    branches:
+      - '**'
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          token: ${{ secrets.GH_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Git Sumbodule Update
+        run: |
+          git pull --recurse-submodules
+          git submodule update --remote --recursive
+          echo 123
+          if [ "${{ github.event.pull_request.base.ref }}" = "master" ]; then cd mintbase-near-indexer && git pull && git branch -a && git checkout origin/dev; fi
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - run: cargo +nightly fmt -- --check && cargo lint
