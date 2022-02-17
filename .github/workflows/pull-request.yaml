@@ -9,15 +9,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
           ref: ${{ github.event.pull_request.head.ref }}
-      - name: Git Sumbodule Update
+      - name: Checkout dev or master
         run: |
-          git pull --recurse-submodules
-          git submodule update --remote --recursive
-          echo 123
-          if [ "${{ github.event.pull_request.base.ref }}" = "master" ]; then cd mintbase-near-indexer && git pull && git branch -a && git checkout origin/dev; fi
+          git submodule foreach git checkout ${{ github.event.pull_request.base.ref }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
