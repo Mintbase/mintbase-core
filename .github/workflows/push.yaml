@@ -9,12 +9,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
-      - name: Git Sumbodule Update
-        run: |
-          git pull --recurse-submodules
-          git submodule update --remote --recursive
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
