@@ -1,6 +1,6 @@
 name: Build binary
 'on':
-  push:
+  pull_request:
     branches:
       - '**'
 jobs:
@@ -9,12 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
-      - name: Git Sumbodule Update
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout dev or master
         run: |
-          git pull --recurse-submodules
-          git submodule update --remote --recursive
+          echo ${{ github.event.pull_request.base.ref }}
+          git submodule foreach git checkout ${{ github.event.pull_request.base.ref }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
