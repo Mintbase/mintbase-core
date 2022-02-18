@@ -1,0 +1,27 @@
+name: Build binary
+'on':
+  pull_request:
+    branches:
+      - '**'
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout dev or master
+        run: |
+          git submodule foreach git checkout ${{ github.event.pull_request.base.ref }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - run: cargo +nightly fmt -- --check && cargo lint
