@@ -1266,8 +1266,12 @@ impl MintbaseStore {
         let new_owner = new_owner;
         assert_ne!(new_owner, self.owner_id, "can't can't transfer to self");
         if !keep_old_minters {
+            for minter in self.minters.iter() {
+                log_revoke_minter(&minter);
+            }
             self.minters.clear();
         }
+        log_grant_minter(&new_owner);
         // add the new_owner to the minter set (insert does nothing if they already are a minter).
         self.minters.insert(&new_owner);
         log_transfer_store(&new_owner);
