@@ -12,4 +12,5 @@ bin
 *.log
 
 tills-notes.md
-testing
+testing/node_modules
+testing/TODO
