@@ -59,6 +59,3 @@ pub const COMMON_STORAGE: near_sdk::StorageUsage = 80;
 // ref: https://github.com/near-apps/nft-market/blob/main/contracts/nft-simple/src/nft_core.rs
 pub const GAS_RESOLVE_TRANSFER: u64 = 10_000_000_000_000;
 pub const GAS_NFT_TRANSFER_CALL: u64 = 25_000_000_000_000 + GAS_RESOLVE_TRANSFER;
-
-#[cfg(feature = "store-wasm")]
-pub(crate) const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));

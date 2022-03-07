@@ -20,42 +20,6 @@ pub enum TimeUnit {
     Hours(u64),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "event", content = "data")]
-#[serde(rename_all = "snake_case")]
-pub enum Nep171EventLog {
-    NftMint(Vec<crate::NftMintLog>),
-    NftBurn(Vec<crate::NftBurnLog>),
-    NftTransfer(Vec<crate::NftTransferLog>),
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(untagged)]
-pub enum NftEvent {
-    NftCreateStore(crate::NftStoreCreateLog),
-    NftStringEvent(crate::NftStringLog),
-    NftCreate(Vec<crate::NftMintLog>),
-    NftDelete(Vec<crate::NftBurnLog>),
-    NftCreateApproval(Vec<crate::NftApproveLog>),
-    NftRevoke(crate::NftRevokeLog),
-    NftUpdate(Vec<crate::NftTransferLog>),
-    NftUpdateSplitOwner(crate::NftSetSplitOwnerLog),
-    NftUpdateLoan(crate::NftLoanSetLog),
-    NftCreateCompose(crate::NftComposeLog),
-    NftDeleteCompose(crate::NftUncomposeLog),
-    NftOnCreateCompose(crate::NftOnComposeLog),
-    NftOnDeleteCompose(crate::NftOnUncomposeLog),
-    NftOnMove(crate::NftOnMoveLog),
-    NftMoved(crate::NftMovedLog),
-    NftCreateList(Vec<crate::NftListLog>),
-    NftCreateOffer(crate::NftOfferLog),
-    NftUpdateOffer(crate::NftUpdateOfferLog),
-    NftCreateSale(crate::NftSaleLog),
-    NftUpdateMarket(crate::NftMarketLog),
-    NftUpdateIcon(crate::NftOptionStringLog),
-    NftUpdateList(crate::NftUpdateListLog),
-}
-
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Owner {
