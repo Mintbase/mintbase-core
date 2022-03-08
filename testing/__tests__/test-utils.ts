@@ -1,4 +1,4 @@
-import { BN, NearAccount, Workspace } from "near-workspaces-ava";
+import { BN, Gas, NearAccount, Workspace } from "near-workspaces-ava";
 import * as ava from "near-workspaces-ava";
 import { ExecutionContext } from "ava";
 
@@ -9,40 +9,40 @@ import { ExecutionContext } from "ava";
  * Interprets a float as NEAR and builds the corresponding string.
  * Rounded to closest milliNEAR.
  */
-export function NEAR(x: number): string {
-  return mNEAR(x) + "000";
+export function NEAR(x: number): ava.NEAR {
+  return mNEAR(x).mul(new ava.NEAR(1e3));
 }
 
 /**
  * Interprets a float as milliNEAR and builds the corresponding string.
  * Rounded to closest microNEAR.
  */
-export function mNEAR(x: number): string {
-  return uNEAR(x) + "000";
+export function mNEAR(x: number): ava.NEAR {
+  return uNEAR(x).mul(new ava.NEAR(1e3));
 }
 
 /**
  * Interprets a float as microNEAR and builds the corresponding string.
  * Rounded to closest nanoNEAR.
  */
-export function uNEAR(x: number): string {
-  return nNEAR(x) + "000";
+export function uNEAR(x: number): ava.NEAR {
+  return nNEAR(x).mul(new ava.NEAR(1e3));
 }
 
 /**
  * Interprets a float as nanoNEAR and builds the corresponding string.
  * Rounded to closest picoNEAR.
  */
-export function nNEAR(x: number): string {
-  return (x * 1e3).toString() + "0".repeat(12);
+export function nNEAR(x: number): ava.NEAR {
+  return new ava.NEAR((x * 1e3).toString() + "0".repeat(12));
 }
 
 /**
  * Interprets a float as Teragas and builds the corresponding string.
  * Rounded to closest Gigagas.
  */
-export function Tgas(x: number): string {
-  return (x * 1e3).toString() + "0".repeat(9);
+export function Tgas(x: number): ava.Gas {
+  return new ava.Gas((x * 1e3).toString() + "0".repeat(9));
 }
 
 /**
@@ -131,8 +131,8 @@ export function assertContractPanicMsg(
       0,
       expectedPanicMsg.length
     );
-    // log full error message in case anything goes wrong
-    test.log(error.kind.ExecutionError);
+    // // log full error message in case anything goes wrong
+    // test.log(error.kind.ExecutionError);
 
     test.is(
       error.type,
@@ -154,9 +154,9 @@ async function createAccounts(root: NearAccount): Promise<NearAccount[]> {
   // const carol = await root.createAccount("carol", { initialBalance: NEAR(20) });
   // return [alice, bob, carol];
   return Promise.all([
-    root.createAccount("alice", { initialBalance: NEAR(20) }),
-    root.createAccount("bob", { initialBalance: NEAR(20) }),
-    root.createAccount("carol", { initialBalance: NEAR(20) }),
+    root.createAccount("alice", { initialBalance: NEAR(20).toString() }),
+    root.createAccount("bob", { initialBalance: NEAR(20).toString() }),
+    root.createAccount("carol", { initialBalance: NEAR(20).toString() }),
   ]);
 }
 
@@ -451,16 +451,16 @@ export function assertEventLog(
 ) {
   const baseMsg = `Bad event log for ${msg}`;
   const event = parseEvent(test, actual, baseMsg);
-  test.log("Expected:", expected);
+  // test.log("Expected:", expected);
   test.deepEqual(event, expected, baseMsg);
 }
 
 function parseEvent(test: ExecutionContext, log: string, msg: string) {
   // FIXME::contracts::medium: standard has no space between colon and JSON
   test.is(log.slice(0, 12), "EVENT_JSON: ", `${msg}: Not an event log`);
-  test.log("Sliced:", log.slice(12));
+  // test.log("Sliced:", log.slice(12));
   const event = JSON.parse(log.slice(12));
-  test.log("Parsed:", event);
+  // test.log("Parsed:", event);
   return event;
 }
 
@@ -543,7 +543,7 @@ export async function getBalance(account: NearAccount): Promise<ava.NEAR> {
 /** Asserts balance changes for multiple accounts in parallel */
 export async function assertBalanceChanges(
   test: ExecutionContext,
-  specs: { account: NearAccount; ref: ava.NEAR; diff: string }[],
+  specs: { account: NearAccount; ref: ava.NEAR; diff: ava.NEAR }[],
   msg: string
 ) {
   await Promise.all(specs.map((spec) => assertBalanceChange(test, spec, msg)));
@@ -556,44 +556,93 @@ export async function assertBalanceChanges(
  */
 export async function assertBalanceChange(
   test: ExecutionContext,
-  { account, ref, diff }: { account: NearAccount; ref: ava.NEAR; diff: string },
+  params: { account: NearAccount; ref: ava.NEAR; diff: ava.NEAR; gas?: Gas },
   msg: string
 ) {
-  const now = await getBalance(account);
-  await assertBalanceDiff(
-    test,
-    { account: account.accountId, now, old: ref, diff },
-    msg
-  );
+  const now = await getBalance(params.account);
+  if (params.gas) {
+    const { gas } = params;
+    assertBalanceDiffExact(test, { ...params, now, gas }, msg);
+  } else {
+    const maxGas = NEAR(0.04).toString(); // allow 40 mNEAR of gas costs
+    assertBalanceDiffRange(test, { ...params, now, maxGas }, msg);
+  }
 }
 
-// TODO::testing::low: optional `maxGas` param
-/**
- * Asserts that the difference between two balances is in a certain range.
- * The assertion is not for equality to account for gas costs. The range is
- * currently hardcoded as `(old + diff - 50 mNEAR) <= now <= (old + diff)`
- */
-export async function assertBalanceDiff(
+function assertBalanceDiffExact(
   test: ExecutionContext,
   {
     account,
     now,
-    old,
+    ref,
     diff,
-  }: { account: string; now: ava.NEAR; old: ava.NEAR; diff: string },
+    gas,
+  }: {
+    account: NearAccount;
+    now: ava.NEAR;
+    ref: ava.NEAR;
+    diff: ava.NEAR;
+    gas: Gas;
+  },
   msg: string
 ) {
-  const maxGas = NEAR(0.04); // allow 50 mNEAR of gas costs
+  const nearGas = new ava.NEAR(gas.mul(new BN(100e6)).toString());
+  const expected = ref.add(diff).sub(nearGas);
+  test.log({
+    account: account.accountId,
+    expected: expected.toString(),
+    now: now.toString(),
+    ref: ref.toString(),
+    diff: diff.toString(),
+    nearGas: nearGas.toString(),
+  });
 
-  const max = old.add(new BN(diff));
+  test.true(
+    now.eq(expected),
+    [
+      `${msg}: wrong balance for ${account.accountId}`,
+      `\texpected: ${expected.toHuman()}`,
+      `\tactual:   ${now.toHuman()}`,
+    ].join("\n")
+  );
+
+  test.fail(
+    [
+      `${msg}: balance for ${account.accountId}`,
+      `\texpected: ${expected.toHuman()}`,
+      `\tactual:   ${now.toHuman()}`,
+    ].join("\n")
+  );
+}
+
+// TODO::testing::low: deprecate this (blocked until gas stuff becomes more sound)
+function assertBalanceDiffRange(
+  test: ExecutionContext,
+  {
+    account,
+    now,
+    ref,
+    diff,
+    maxGas,
+  }: {
+    account: NearAccount;
+    now: ava.NEAR;
+    ref: ava.NEAR;
+    diff: ava.NEAR;
+    maxGas: string;
+  },
+  msg: string
+) {
+  test.log("entering assertBalanceDiffRange");
+  const max = ref.add(new BN(diff));
   const min = max.sub(new BN(maxGas));
   test.log({
-    account,
-    now: now.toHuman(),
-    ref: old.toHuman(),
-    diff: diff,
-    min: min.toHuman(),
-    max: max.toHuman(),
+    account: account.accountId,
+    now: now.toString(),
+    ref: ref.toString(),
+    diff: diff.toString(), // cannot use toHuman on negative diff!
+    min: min.toString(),
+    max: max.toString(),
   });
   test.true(now.lte(max), `${msg}: balance too high for ${account}`);
   test.true(now.gte(min), `${msg}: balance too low for ${account}`);

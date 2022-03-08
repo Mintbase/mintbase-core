@@ -65,24 +65,24 @@ MARKET_WORKSPACE.test(
       "Bob tried attaching less than claimed"
     );
     // try to set price below ask
-    // await assertContractPanic(test,
-    //   // FIXME::market::medium: this succeeds, but doesn't change token
-    //   //  ownership
-    //     async () => {
-    //       await bob.call(
-    //         market,
-    //         "make_offer",
-    //         {
-    //           token_key: [token0Key],
-    //           price: [NEAR(0.95)],
-    //           timeout: [{ Hours: 1 }],
-    //         },
-    //         { attachedDeposit: NEAR(0.95) }
-    //       );
-    //     },
-    //     " ".repeat(180),
-    //     "Bob tried setting the price below the asking price",
-    //   );
+    await assertContractPanic(
+      test,
+      //  ownership
+      async () => {
+        await bob.call(
+          market,
+          "make_offer",
+          {
+            token_key: [token0Key, token1Key],
+            price: [NEAR(0.95), NEAR(1.05)],
+            timeout: [{ Hours: 1 }, { Hours: 1 }],
+          },
+          { attachedDeposit: NEAR(2) }
+        );
+      },
+      "panicked at 'Offer is below ask!'",
+      "Bob tried setting the price below the asking price"
+    );
     // try to set instant expiry
     await assertContractPanic(
       test,
@@ -116,29 +116,29 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(1), gas: Tgas(200) }
         );
       },
-      // TODO::market::low: shouldn't these checks be optimized away?
-      "panicked at 'index out of bounds: the len is 1 but the index is 1',",
+      // TODO::testing::low: comment at the end of panic msg
+      "panicked at 'assertion failed: `(left == right)`",
       "Bob tried fuzzing by omitting arguments"
     );
-    // // FIXME::market::medium: this succeeds
-    // // fuzzing: to many arguments
-    // await assertContractPanic(
-    //   test,
-    //   async () => {
-    //     await bob.call(
-    //       market,
-    //       "make_offer",
-    //       {
-    //         token_key: [token0Key, token1Key],
-    //         price: [NEAR(1), NEAR(1.5), NEAR(0.5)],
-    //         timeout: [{ Hours: 1 }, { Hours: 1 }, { Hours: 1 }],
-    //       },
-    //       { attachedDeposit: NEAR(3), gas: Tgas(200) }
-    //     );
-    //   },
-    //   " ".repeat(180),
-    //   "Bob tried fuzzing by adding arguments"
-    // );
+    // fuzzing: to many arguments
+    await assertContractPanic(
+      test,
+      async () => {
+        await bob.call(
+          market,
+          "make_offer",
+          {
+            token_key: [token0Key, token1Key],
+            price: [NEAR(1), NEAR(1.5), NEAR(0.5)],
+            timeout: [{ Hours: 1 }, { Hours: 1 }, { Hours: 1 }],
+          },
+          { attachedDeposit: NEAR(3), gas: Tgas(200) }
+        );
+      },
+      // TODO::testing::low: comment at the end of panic msg
+      "panicked at 'assertion failed: `(left == right)`",
+      "Bob tried fuzzing by adding arguments"
+    );
 
     const aliceBalance0 = await getBalance(alice);
     const bobBalance0 = await getBalance(bob);
@@ -167,11 +167,16 @@ MARKET_WORKSPACE.test(
         store: store,
         maker: bob,
         specs: [
-          { token_id: "0", approval_id: 0, price: NEAR(1), timeout: hours(1) },
+          {
+            token_id: "0",
+            approval_id: 0,
+            price: NEAR(1).toString(),
+            timeout: hours(1),
+          },
           {
             token_id: "1",
             approval_id: 1,
-            price: NEAR(1.5),
+            price: NEAR(1.5).toString(),
             timeout: hours(1),
           },
         ],
@@ -205,7 +210,7 @@ MARKET_WORKSPACE.test(
             list_id: `0:0:${store.accountId}`,
             offer_num: 1,
             token_key: `0:${store.accountId}`,
-            payout: createPayout([[alice, NEAR(0.975)]]),
+            payout: createPayout([[alice, NEAR(0.975).toString()]]),
           }),
         },
         {
@@ -231,7 +236,7 @@ MARKET_WORKSPACE.test(
             list_id: `1:1:${store.accountId}`,
             offer_num: 1,
             token_key: `1:${store.accountId}`,
-            payout: createPayout([[alice, mNEAR(1462.5)]]),
+            payout: createPayout([[alice, mNEAR(1462.5).toString()]]),
           }),
         },
       ],
@@ -241,6 +246,11 @@ MARKET_WORKSPACE.test(
     await assertContractTokenOwner(
       { test, store },
       { id: "0", owner_id: bob.accountId },
+      "After transfers"
+    ).catch(failPromiseRejection(test, "checking token ownership"));
+    await assertContractTokenOwner(
+      { test, store },
+      { id: "1", owner_id: bob.accountId },
       "After transfers"
     ).catch(failPromiseRejection(test, "checking token ownership"));
 

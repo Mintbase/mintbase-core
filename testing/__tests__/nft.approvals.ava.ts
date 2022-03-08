@@ -1,15 +1,18 @@
-import { TransactionResult } from "near-workspaces-ava";
+import { BN, TransactionResult } from "near-workspaces-ava";
 import {
   assertApprovals,
   assertNoApprovals,
   assertContractPanics,
   assertEventLogs,
+  assertBalanceChange,
   batchMint,
   STORE_WORKSPACE,
   mNEAR,
+  getBalance,
   assertContractTokenOwners,
   assertNoApproval,
 } from "./test-utils";
+// import * as ava from "near-workspaces-ava";
 
 STORE_WORKSPACE.test(
   "approvals::core",
@@ -195,8 +198,7 @@ STORE_WORKSPACE.test(
 
     // -------------------------------- revoke ---------------------------------
     // get bob's balance to check the refunding
-    const aliceBalance1 = (await alice.balance()).total;
-
+    const aliceBalance1 = await getBalance(alice);
     const revokeCall = await alice
       .call_raw(
         store,
@@ -204,11 +206,22 @@ STORE_WORKSPACE.test(
         {
           token_id: "2",
           account_id: bob.accountId,
-        }
-        // FIXME::store::medium: doesn't behave like spec
-        // { attachedDeposit: "1" }
+        },
+        { attachedDeposit: "1" }
       )
       .catch(failPromiseRejection("revoking"));
+    // const aliceBalance2 = await getBalance(alice);
+    // const balanceDiff = aliceBalance1.sub(aliceBalance2);
+    // const gas = (revokeCall as TransactionResult).gas_burnt;
+    // const nearGasBN = new BN(gas.toString()).mul(new BN(100e6)).toString();
+    // const nearGas = new ava.NEAR(nearGasBN);
+    // test.log(`Alice's balance before revoking: ${aliceBalance1.toHuman()}`);
+    // test.log(`Alice's balance after revoking:  ${aliceBalance2.toHuman()}`);
+    // test.log(`Difference:                      ${balanceDiff.toHuman()}`);
+    // test.log(`Gas costs (1 Tgas = 0.3 mNEAR):  ${nearGas.toHuman()}`);
+    // test.log(`Gas costs (gas units):           ${gas.toHuman()}`);
+    // test.fail();
+
     // check event logs
     assertEventLogs(
       test,
@@ -227,26 +240,45 @@ STORE_WORKSPACE.test(
       "revoking"
     );
     // check if revoking refunds the storage deposit
-    const aliceBalance2 = (await alice.balance()).total;
-    // FIXME::store::medium: according to spec, the deposit needs to be
-    //  refunded
-    // test.log("Alices prior balance:", aliceBalance1.toHuman());
-    // test.log("Alices posterior balance:", aliceBalance2.toHuman());
-    // test.true(aliceBalance2.gt(aliceBalance1.add(mNEARbn(0.39))));
+    // TODO::idk::medium: 6 mNEAR gone missing -> create issue on github
+    // await assertBalanceChange(
+    //   test,
+    //   {
+    //     account: alice,
+    //     // subtract the yoctoNEAR deposit
+    //     ref: aliceBalance1.sub(new BN("1")),
+    //     diff: mNEAR(0.8),
+    //     gas: (revokeCall as TransactionResult).gas_burnt,
+    //   },
+    //   "Revoking"
+    // );
 
     await assertContractPanics(test, [
       // try revoking when not owning token
       [
         async () =>
-          bob.call(store, "nft_revoke", {
-            token_id: "1",
-            account_id: bob.accountId,
-          }), // FIXME::store::medium: should require yoctoNEAR deposit
+          bob.call(
+            store,
+            "nft_revoke",
+            {
+              token_id: "1",
+              account_id: bob.accountId,
+            },
+            { attachedDeposit: "1" }
+          ),
         "panicked at 'assertion failed: token.is_pred_owner()',",
         "Bob tried revoking on unowned token",
       ],
-      // // TODO::testing::medium: require at least one yoctoNEAR to revoke
-      // [async () => {}, " ".repeat(180), "Alice tried revoking without yoctoNEAR deposit"],
+      // require at least one yoctoNEAR to revoke
+      [
+        async () =>
+          alice.call(store, "nft_revoke", {
+            token_id: "0",
+            account_id: bob.accountId,
+          }),
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+        "Alice tried revoking without yoctoNEAR deposit",
+      ],
     ]);
 
     // assert correctness of current approvals
@@ -285,14 +317,13 @@ STORE_WORKSPACE.test(
     );
 
     // actual call
-    const aliceBalance3 = (await alice.balance()).total; // for checking refund
+    // const aliceBalance2 = await getBalance(alice);
     const revokeAllCall = await alice
       .call_raw(
         store,
         "nft_revoke_all",
-        { token_id: "1" }
-        // FIXME::store::medium: doesn't behave like spec
-        // { attachedDeposit: "1" }
+        { token_id: "1" },
+        { attachedDeposit: "1" }
       )
       .catch(failPromiseRejection("revoking all"));
     // check event logs
@@ -310,20 +341,34 @@ STORE_WORKSPACE.test(
       ],
       "revoking all"
     );
-    //check if revoking all refunds the required security deposit
-    const aliceBalance4 = (await alice.balance()).total;
-    // FIXME::store::medium: should be refunded
-    // test.true(aliceBalance3.gt(aliceBalance4.add(mNEARbn(0.8))));
+    // // check if revoking all refunds the required security deposit
+    // // FIXME::testing::low: this cannot test properly because the cost is so low
+    // // -> use TransactionResult::gas_burnt()
+    // await assertBalanceChange(
+    //   test,
+    //   { account: alice, ref: aliceBalance2, diff: mNEAR(1.6) },
+    //   "Revoking all"
+    // );
 
     await assertContractPanics(test, [
       // try revoking all when not owning token
       [
-        async () => bob.call(store, "nft_revoke_all", { token_id: "0" }),
+        async () =>
+          bob.call(
+            store,
+            "nft_revoke_all",
+            { token_id: "0" },
+            { attachedDeposit: "1" }
+          ),
         "panicked at 'assertion failed: token.is_pred_owner()',",
         "Bob tried revoking all on unowned token",
       ],
-      // // TODO::testing::medium: require at least one yoctoNEAR to revoke all
-      // [async () => {}, " ".repeat(180), "Alice tried revoking all without yoctoNEAR deposit"],
+      // require at least one yoctoNEAR to revoke all
+      [
+        async () => alice.call(store, "nft_revoke_all", { token_id: "0" }),
+        "Requires attached deposit of exactly 1 yoctoNEAR",
+        "Alice tried revoking all without yoctoNEAR deposit",
+      ],
     ]);
 
     // // assert correctness of current approvals

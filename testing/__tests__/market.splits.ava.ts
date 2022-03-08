@@ -1,4 +1,4 @@
-import { TransactionResult } from "near-workspaces-ava";
+import { ava, TransactionResult } from "near-workspaces-ava";
 import {
   batchMint,
   failPromiseRejection,
@@ -28,7 +28,9 @@ MARKET_WORKSPACE.test(
       )
       .catch(failPromiseRejection(test, "allowing store on market"));
 
-    const dave = await root.createAccount("dave", { initialBalance: NEAR(20) });
+    const dave = await root.createAccount("dave", {
+      initialBalance: NEAR(20).toString(),
+    });
 
     await batchMint({ owner: alice, store, num_to_mint: 1 }).catch(
       failPromiseRejection(test, "minting")
@@ -211,13 +213,13 @@ MARKET_WORKSPACE.test(
     // check chain state: alice received nothing
     await assertBalanceChange(
       test,
-      { account: alice, ref: aliceBalance1, diff: "0" },
+      { account: alice, ref: aliceBalance1, diff: NEAR(0) },
       "Checking royalties (without splits)"
     );
     // check chain state: bob received nothing
     await assertBalanceChange(
       test,
-      { account: bob, ref: bobBalance1, diff: "0" },
+      { account: bob, ref: bobBalance1, diff: NEAR(0) },
       "Checking royalties (without splits)"
     );
     // check chain state: carol received 0.975 NEAR

@@ -7,6 +7,7 @@ import {
   mNEAR,
   NEAR,
   Tgas,
+  MintbaseToken,
 } from "./test-utils";
 
 MARKET_WORKSPACE.test(
@@ -61,7 +62,10 @@ MARKET_WORKSPACE.test(
           account_id: market.accountId,
           // TODO::market::medium: doesn't make sense to list a price for an
           //  auction
-          msg: JSON.stringify({ price: NEAR(1), autotransfer: false }),
+          msg: JSON.stringify({
+            price: NEAR(1).toString(),
+            autotransfer: false,
+          }),
         },
         { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
       )
@@ -85,7 +89,7 @@ MARKET_WORKSPACE.test(
             {
               // TODO::market::low: why this duplication?
               list_id: `0:0:${store.accountId}`,
-              price: NEAR(1),
+              price: NEAR(1).toString(),
               // TODO::market::low: why this duplication?
               token_key: `0:${store.accountId}`,
               owner_id: alice.accountId,
@@ -111,7 +115,7 @@ MARKET_WORKSPACE.test(
         owner_id: alice.accountId,
         store_id: store.accountId,
         autotransfer: false,
-        asking_price: NEAR(1),
+        asking_price: NEAR(1).toString(),
         approval_id: 0,
         current_offer: null,
         num_offers: 0,
@@ -121,10 +125,12 @@ MARKET_WORKSPACE.test(
 
     // ------------------------ revoke auction approval ------------------------
     const auctionRevokeCall = await alice
-      .call_raw(store, "nft_revoke", {
-        token_id: "0",
-        account_id: market.accountId,
-      })
+      .call_raw(
+        store,
+        "nft_revoke",
+        { token_id: "0", account_id: market.accountId },
+        { attachedDeposit: "1" }
+      )
       .catch(failPromiseRejection(test, "revoke auction listing"));
 
     // check event logs
@@ -150,9 +156,12 @@ MARKET_WORKSPACE.test(
         {
           token_id: "0",
           account_id: market.accountId,
-          msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
+          msg: JSON.stringify({
+            price: NEAR(1).toString(),
+            autotransfer: true,
+          }),
         },
-        { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
+        { attachedDeposit: mNEAR(0.81).toString(), gas: Tgas(200) }
       )
       .catch(failPromiseRejection(test, "buy now listing"));
 
@@ -178,7 +187,7 @@ MARKET_WORKSPACE.test(
             {
               // TODO::market::low: why this duplication?
               list_id: `0:1:${store.accountId}`,
-              price: NEAR(1),
+              price: NEAR(1).toString(),
               // TODO::market::low: why this duplication?
               token_key: `0:${store.accountId}`,
               owner_id: alice.accountId,
@@ -202,7 +211,7 @@ MARKET_WORKSPACE.test(
         owner_id: alice.accountId,
         store_id: store.accountId,
         autotransfer: true,
-        asking_price: NEAR(1),
+        asking_price: NEAR(1).toString(),
         approval_id: 1,
         current_offer: null,
         num_offers: 0,
@@ -212,10 +221,12 @@ MARKET_WORKSPACE.test(
 
     // ----------------------- revoke "buy now" approval -----------------------
     const buynowRevokeCall = await alice
-      .call_raw(store, "nft_revoke", {
-        token_id: "0",
-        account_id: market.accountId,
-      })
+      .call_raw(
+        store,
+        "nft_revoke",
+        { token_id: "0", account_id: market.accountId },
+        { attachedDeposit: "1" }
+      )
       .catch(failPromiseRejection(test, "revoke auction listing"));
 
     // check event logs
@@ -237,13 +248,13 @@ MARKET_WORKSPACE.test(
       {
         token_ids: ["0", "1"],
         account_id: market.accountId,
-        msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
+        msg: JSON.stringify({ price: NEAR(1).toString(), autotransfer: true }),
       },
       // TODO::store::medium: why does thir require more storage deposit than
       //  batch approving without tail call?
       //  -> we might and probably should require a deposit on the market for
       //     each token on offer
-      { attachedDeposit: mNEAR(8.8), gas: Tgas(200) }
+      { attachedDeposit: mNEAR(8.8).toString(), gas: Tgas(200) }
     );
 
     // check event logs
@@ -266,7 +277,7 @@ MARKET_WORKSPACE.test(
           data: JSON.stringify([
             {
               list_id: `0:2:${store.accountId}`,
-              price: NEAR(1),
+              price: NEAR(1).toString(),
               token_key: `0:${store.accountId}`,
               owner_id: alice.accountId,
               autotransfer: true,
@@ -276,7 +287,7 @@ MARKET_WORKSPACE.test(
             },
             {
               list_id: `1:3:${store.accountId}`,
-              price: NEAR(1),
+              price: NEAR(1).toString(),
               token_key: `1:${store.accountId}`,
               owner_id: alice.accountId,
               autotransfer: true,
@@ -293,11 +304,11 @@ MARKET_WORKSPACE.test(
     // check market state
     test.like(
       await market.view("get_token", { token_key: `0:${store.accountId}` }),
-      { autotransfer: true, asking_price: NEAR(1) }
+      { autotransfer: true, asking_price: NEAR(1).toString() }
     );
     test.like(
       await market.view("get_token", { token_key: `1:${store.accountId}` }),
-      { autotransfer: true, asking_price: NEAR(1) }
+      { autotransfer: true, asking_price: NEAR(1).toString() }
     );
 
     // ---------------------------- batch revoking -----------------------------
@@ -370,7 +381,5 @@ MARKET_WORKSPACE.test(
 //     test.log(await market.view("get_token", { token_key }));
 //     test.log("market balance: ", (await market.balance()).total.toHuman());
 //     test.log("bob balance: ", (await bob.balance()).total.toHuman());
-
-//     test.fail();
 //   }
 // );

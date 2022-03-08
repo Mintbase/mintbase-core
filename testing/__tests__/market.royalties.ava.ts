@@ -194,7 +194,9 @@ MARKET_WORKSPACE.test(
     const bobBalance1 = await getBalance(bob);
     const carolBalance1 = await getBalance(carol);
 
-    const dave = await root.createAccount("dave", { initialBalance: NEAR(20) });
+    const dave = await root.createAccount("dave", {
+      initialBalance: NEAR(20).toString(),
+    });
     await dave
       .call(
         market,

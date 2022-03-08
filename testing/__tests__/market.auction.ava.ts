@@ -61,7 +61,7 @@ MARKET_WORKSPACE.test(
           {
             token_id: "0",
             approval_id: 0,
-            price: NEAR(1),
+            price: NEAR(1).toString(),
             timeout: hours(24),
           },
         ],
@@ -82,8 +82,9 @@ MARKET_WORKSPACE.test(
     );
     // check chain state: highest offer is 1N
     test.like(
+      // FIXME::market::low: price should be a string
       await market.view("get_current_offer", { token_key: tokenKey }),
-      { id: 1, price: parseInt(NEAR(1)) },
+      { id: 1, price: parseInt(NEAR(1).toString()) },
       "Highest offer not set correctly"
     );
     // check chain state: bob has 1N less
@@ -139,7 +140,7 @@ MARKET_WORKSPACE.test(
           {
             token_id: "0",
             approval_id: 0,
-            price: NEAR(2),
+            price: NEAR(2).toString(),
             timeout: hours(24),
           },
         ],
@@ -161,7 +162,7 @@ MARKET_WORKSPACE.test(
     // check chain state: highest offer is 2N
     test.like(
       await market.view("get_current_offer", { token_key: tokenKey }),
-      { id: 2, price: parseInt(NEAR(2)) },
+      { id: 2, price: parseInt(NEAR(2).toString()) },
       "Highest offer not replaced"
     );
     await Promise.all([
@@ -252,7 +253,7 @@ MARKET_WORKSPACE.test(
             list_id: `0:0:${store.accountId}`,
             offer_num: 2,
             token_key: `0:${store.accountId}`,
-            payout: createPayout([[alice, NEAR(1.95)]]),
+            payout: createPayout([[alice, NEAR(1.95).toString()]]),
           }),
         },
       ],

@@ -14,10 +14,10 @@ import {
 
 // No need to fire up the chain for testing my utils
 avaTest("util tests", (test) => {
-  test.is(NEAR(1.5), "1500000000000000000000000");
-  test.is(mNEAR(1.5), "1500000000000000000000");
-  test.is(uNEAR(1.5), "1500000000000000000");
-  test.is(nNEAR(1.5), "1500000000000000");
+  test.is(NEAR(1.5).toString(), "1500000000000000000000000");
+  test.is(mNEAR(1.5).toString(), "1500000000000000000000");
+  test.is(uNEAR(1.5).toString(), "1500000000000000000");
+  test.is(nNEAR(1.5).toString(), "1500000000000000");
 
   // TODO::testing::low: assertTokenIs?
   // TODO::testing::low: assertTokensAre?

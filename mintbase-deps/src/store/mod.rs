@@ -282,6 +282,7 @@ impl MintbaseStore {
         }
     }
 
+    #[payable]
     pub fn nft_revoke(
         &mut self,
         token_id: U64,
@@ -291,6 +292,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
         assert!(token.is_pred_owner());
+        assert_one_yocto();
 
         if token.approvals.remove(&account_id).is_some() {
             self.tokens.insert(&token_idu64, &token);
@@ -298,6 +300,7 @@ impl MintbaseStore {
         }
     }
 
+    #[payable]
     pub fn nft_revoke_all(
         &mut self,
         token_id: U64,
@@ -306,6 +309,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
         assert!(token.is_pred_owner());
+        assert_one_yocto();
 
         if !token.approvals.is_empty() {
             token.approvals.clear();
