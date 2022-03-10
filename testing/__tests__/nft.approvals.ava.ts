@@ -462,6 +462,12 @@ STORE_WORKSPACE.test(
       await store.view("check_is_minter", { account_id: carol.accountId }),
       "How on earth did Carol get minting rights?"
     );
+    // checking the list_minters method
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId, bob.accountId],
+      "Bad minters list after granting minting rigths to Bob"
+    );
 
     // actual minting
     // TODO::store::low: shouldn't third party minting require deposits to
@@ -581,6 +587,12 @@ STORE_WORKSPACE.test(
     test.false(
       await store.view("check_is_minter", { account_id: bob.accountId }),
       "Failed to revoke Bob's minting rights"
+    );
+    // checking the list_minters method
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId],
+      "Bad minters list after granting minting rigths to Bob"
     );
   }
 );

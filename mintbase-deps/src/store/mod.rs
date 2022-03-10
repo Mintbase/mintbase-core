@@ -800,6 +800,10 @@ impl MintbaseStore {
         }
     }
 
+    pub fn list_minters(&self) -> Vec<AccountId> {
+        self.minters.iter().collect()
+    }
+
     /// Transfer ownership of `Store` to a new owner. Setting
     /// `keep_old_minters=true` allows all existing minters (including the
     /// prior owner) to keep their minter status.
