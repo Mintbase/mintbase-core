@@ -20,18 +20,19 @@ use near_sdk::{
     PublicKey,
 };
 
-use crate::logging::{
-    NearJsonEvent,
-    NftStoreCreateLog,
-};
-use crate::{
+use crate::common::{
     NFTContractMetadata,
-    New,
     StoreInitArgs,
+};
+use crate::consts::{
     GAS_CREATE_STORE,
     GAS_ON_CREATE_CALLBACK,
     NO_DEPOSIT,
     STORE_STORAGE,
+};
+use crate::logging::{
+    NearJsonEvent,
+    NftStoreCreateLog,
 };
 // ------------------------------- constants -------------------------------- //
 
@@ -298,6 +299,11 @@ impl MintbaseStoreFactory {
 }
 
 // ------------------------ impls on external types ------------------------- //
+// TODO: Why the trait?
+pub trait New {
+    fn new(arg: Self) -> Self;
+}
+
 impl New for NFTContractMetadata {
     fn new(args: NFTContractMetadata) -> Self {
         let store_account = format!("{}.{}", args.name, env::current_account_id());

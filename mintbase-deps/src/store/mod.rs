@@ -16,6 +16,7 @@ use near_sdk::json_types::{
     U64,
 };
 use near_sdk::{
+    self,
     assert_one_yocto,
     env,
     ext_contract,
@@ -28,6 +29,36 @@ use near_sdk::{
     StorageUsage,
 };
 
+// contract interface modules
+use crate::common::{
+    NFTContractMetadata,
+    NewSplitOwner,
+    NonFungibleContractMetadata,
+    Owner,
+    OwnershipFractions,
+    Payout,
+    Royalty,
+    RoyaltyArgs,
+    SafeFraction,
+    SplitBetweenUnparsed,
+    SplitOwners,
+    StorageCosts,
+    Token,
+    TokenCompliant,
+    TokenMetadata,
+    TokenMetadataCompliant,
+};
+use crate::consts::{
+    GAS_NFT_BATCH_APPROVE,
+    GAS_NFT_TRANSFER_CALL,
+    MAX_LEN_PAYOUT,
+    MINIMUM_CUSHION,
+    NO_DEPOSIT,
+};
+use crate::interfaces::{
+    ext_on_approve,
+    ext_on_transfer,
+};
 // logging functions
 use crate::logging::{
     log_approve,
@@ -45,33 +76,7 @@ use crate::logging::{
     log_set_split_owners,
     log_transfer_store,
 };
-// contract interface modules
-use crate::{
-    ext_on_approve,
-    ext_on_transfer,
-    ntot,
-    NFTContractMetadata,
-    NewSplitOwner,
-    NonFungibleContractMetadata,
-    Owner,
-    OwnershipFractions,
-    Payout,
-    Royalty,
-    RoyaltyArgs,
-    SafeFraction,
-    SplitBetweenUnparsed,
-    SplitOwners,
-    StorageCosts,
-    Token,
-    TokenCompliant,
-    TokenMetadata,
-    TokenMetadataCompliant,
-    GAS_NFT_BATCH_APPROVE,
-    GAS_NFT_TRANSFER_CALL,
-    MAX_LEN_PAYOUT,
-    MINIMUM_CUSHION,
-    NO_DEPOSIT,
-};
+use crate::utils::ntot;
 
 // ------------------------------- constants -------------------------------- //
 const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));
@@ -447,7 +452,12 @@ impl MintbaseStore {
             .get(&account_id)
             .expect("no tokens")
             .iter()
-            .skip(from_index.unwrap_or_else(|| 0.to_string()).parse().unwrap())
+            .skip(
+                from_index
+                    .unwrap_or_else(|| "0".to_string())
+                    .parse()
+                    .unwrap(),
+            )
             .take(limit.unwrap_or(10))
             .map(|x| self.nft_token_compliant_internal(x))
             .collect::<Vec<_>>()
@@ -1112,41 +1122,43 @@ impl MintbaseStore {
         }
     }
 
-    /// Internal
-    /// update the set of tokens composed underneath parent. If insert is
-    /// true, insert token_id; if false, try to remove it.
-    fn update_composed_sets(
-        &mut self,
-        child: String,
-        parent: String,
-        insert: bool,
-    ) {
-        let mut set = self.get_or_new_composed(parent.to_string());
-        if insert {
-            set.insert(&child);
-        } else {
-            set.remove(&child);
-        }
-        if set.is_empty() {
-            self.composeables.remove(&parent);
-        } else {
-            self.composeables.insert(&parent, &set);
-        }
-    }
+    // TODO: unused, deprecated?
+    // /// Internal
+    // /// update the set of tokens composed underneath parent. If insert is
+    // /// true, insert token_id; if false, try to remove it.
+    // fn update_composed_sets(
+    //     &mut self,
+    //     child: String,
+    //     parent: String,
+    //     insert: bool,
+    // ) {
+    //     let mut set = self.get_or_new_composed(parent.to_string());
+    //     if insert {
+    //         set.insert(&child);
+    //     } else {
+    //         set.remove(&child);
+    //     }
+    //     if set.is_empty() {
+    //         self.composeables.remove(&parent);
+    //     } else {
+    //         self.composeables.insert(&parent, &set);
+    //     }
+    // }
 
-    /// Internal
-    /// update the set of tokens composed underneath parent. If insert is
-    /// true, insert token_id; if false, try to remove it.
-    pub(crate) fn get_or_new_composed(
-        &mut self,
-        parent: String,
-    ) -> UnorderedSet<String> {
-        self.composeables.get(&parent).unwrap_or_else(|| {
-            let mut prefix: Vec<u8> = vec![b'h'];
-            prefix.extend_from_slice(parent.to_string().as_bytes());
-            UnorderedSet::new(prefix)
-        })
-    }
+    // TODO: unused, deprecated?
+    // /// Internal
+    // /// update the set of tokens composed underneath parent. If insert is
+    // /// true, insert token_id; if false, try to remove it.
+    // pub(crate) fn get_or_new_composed(
+    //     &mut self,
+    //     parent: String,
+    // ) -> UnorderedSet<String> {
+    //     self.composeables.get(&parent).unwrap_or_else(|| {
+    //         let mut prefix: Vec<u8> = vec![b'h'];
+    //         prefix.extend_from_slice(parent.to_string().as_bytes());
+    //         UnorderedSet::new(prefix)
+    //     })
+    // }
 
     /// If an account_id has never owned tokens on this store, we must
     /// construct an `UnorderedSet` for them. If they have owned tokens on

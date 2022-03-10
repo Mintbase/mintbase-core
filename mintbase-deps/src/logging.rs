@@ -15,7 +15,7 @@ use near_sdk::{
     AccountId,
 };
 
-use crate::{
+use crate::common::{
     NFTContractMetadata,
     Royalty,
     SplitOwners,
@@ -948,4 +948,17 @@ pub fn log_allowlist_update(
         data: serde_json::to_string(&log).unwrap(),
     };
     env::log_str(event.near_json_event().as_str());
+}
+
+// --------------------- NFT event error (deprecated?) ---------------------- //
+#[derive(Debug, Clone)]
+pub struct NftEventError(pub String);
+
+impl std::fmt::Display for NftEventError {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
