@@ -5,6 +5,7 @@ use near_sdk::borsh::{
     BorshDeserialize,
     BorshSerialize,
 };
+use near_sdk::serde::ser::Serializer;
 use near_sdk::serde::{
     Deserialize,
     Serialize,
@@ -13,7 +14,7 @@ use near_sdk::AccountId;
 
 // TODO: rename to `TokenOwner`
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum Owner {
     /// Standard pattern: owned by a user.
     Account(AccountId),
@@ -23,6 +24,16 @@ pub enum Owner {
     CrossKey(crate::common::TokenKey),
     /// Lock: temporarily locked until some callback returns.
     Lock(AccountId),
+}
+
+impl Serialize for Owner {
+    fn serialize<S: Serializer>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        // TODO: create string and then clone?
+        serializer.serialize_str(&format!("{}", self))
+    }
 }
 
 impl fmt::Display for Owner {

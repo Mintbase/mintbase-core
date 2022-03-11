@@ -25,7 +25,7 @@ cargo market-wasm || fail "Compiling market"
 cargo indexer || fail "Compiling indexer"
 
 # Sandbox node is sometimes running in the background and causing problems
-# -> kill sandbox manually in case I used it manually
+# -> kill sandbox in case I used it manually
 killall near-sandbox
 pkill near-sandbox
 
