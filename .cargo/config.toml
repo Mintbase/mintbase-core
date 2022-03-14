@@ -1,10 +1,24 @@
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=-s"]
+
+# instead of creating a new profile, this might be helpful:
+# https://doc.rust-lang.org/cargo/reference/profiles.html#overrides
+[profile.wasm-release]
+inherits = "release"   # base this on the default release profile
+codegen-units = 1      # generate a single blob of machine/Wasm instructions
+opt-level = "z"        # optimize for code size
+lto = true             # compile at link time
+debug = false          # no debug symbols/checks
+panic = "abort"        # usually unwind, but that's extra overhead
+overflow-checks = true # enable safety checks for arithmetic operations
+
 [alias]
-wasm = "build --target wasm32-unknown-unknown --release"
+wasm = "rustc --target wasm32-unknown-unknown --profile wasm-release"
 doc-all = "doc -p mintbase-deps --release --features store-wasm --features factory-wasm --lib --no-deps --target-dir mintbase-core-docs"
-factory-wasm = "rustc -p mintbase-deps --release --features factory-wasm --target wasm32-unknown-unknown --lib -- --emit link=wasm/factory.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
-store-wasm = "rustc -p mintbase-deps --release --features store-wasm --target wasm32-unknown-unknown --lib -- --emit link=wasm/store.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
-market-wasm = "rustc -p simple-market-contract --release --target wasm32-unknown-unknown --lib -- --emit link=wasm/market.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
-helper-wasm = "rustc -p mintbase-deps --release --features helper-wasm --target wasm32-unknown-unknown --lib -- --emit link=wasm/helper.wasm -C link-arg=-s -C opt-level=s -C codegen-units=1"
+helper-wasm = "wasm -p mintbase-deps --features helper-wasm -- --emit link=wasm/helper.wasm"
+store-wasm = "wasm -p mintbase-deps --features store-wasm -- --emit link=wasm/store.wasm"
+factory-wasm = "wasm -p mintbase-deps --features factory-wasm -- --emit link=wasm/factory.wasm"
+market-wasm = "wasm -p simple-market-contract -- --emit link=wasm/market.wasm"
 indexer = "rustc -p mintbase-near-indexer --release --bin mintbase-near-indexer -- --emit link=bin/indexer"
 stats = "rustc -p mintbase-near-indexer --release --bin stats -- --emit link=bin/stats"
 lint = "clippy -- -D warnings"
