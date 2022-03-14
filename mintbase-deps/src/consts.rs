@@ -1,16 +1,9 @@
-use std::collections::HashMap;
-
 use near_sdk::{
     Balance,
     Gas,
 };
 
-use crate::SafeFraction;
-
-/// Near denominated units are in 10^24
-pub const fn ntoy(near_amount: Balance) -> Balance {
-    near_amount * 10u128.pow(24)
-}
+use crate::utils::ntot;
 
 pub const ONE_YOCTO: Balance = 1;
 
@@ -26,19 +19,12 @@ pub const GAS_CREATE_STORE: Gas = ntot(Gas(65 + 5));
 pub const GAS_ON_CREATE_CALLBACK: Gas = ntot(Gas(10));
 pub const STORE_STORAGE: u64 = 550_000; // 499kB
 
-pub type SplitBetween = HashMap<near_sdk::AccountId, SafeFraction>;
-
 /// The argument for non-payable cross contract calls.
 /// ref: https://github.com/near/core-contracts/blob/master/staking-pool/src/lib.rs#L26
 pub const NO_DEPOSIT: Balance = 0;
 
 /// Royalty upper limit is 50%.
 pub const ROYALTY_UPPER_LIMIT: u32 = 5000;
-
-/// Gas is in TerraUnits, default gas call is 100TGas.
-pub const fn ntot(near_amount: Gas) -> Gas {
-    Gas(near_amount.0 * 10u64.pow(12))
-}
 
 pub const MAX_LEN_PAYOUT: u32 = 50;
 
@@ -59,6 +45,3 @@ pub const COMMON_STORAGE: near_sdk::StorageUsage = 80;
 // ref: https://github.com/near-apps/nft-market/blob/main/contracts/nft-simple/src/nft_core.rs
 pub const GAS_RESOLVE_TRANSFER: u64 = 10_000_000_000_000;
 pub const GAS_NFT_TRANSFER_CALL: u64 = 25_000_000_000_000 + GAS_RESOLVE_TRANSFER;
-
-#[cfg(feature = "store-wasm")]
-pub(crate) const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));

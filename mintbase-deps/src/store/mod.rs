@@ -1,613 +1,152 @@
+// misc
 use std::collections::HashMap;
-use std::convert::{
-    TryFrom,
-    TryInto,
+use std::convert::TryFrom;
+
+use near_sdk::borsh::{
+    self,
+    BorshDeserialize,
+    BorshSerialize,
 };
-use std::fmt;
-
-#[cfg(feature = "wasm")]
-pub use near_sdk::{
-    borsh::{
-        self,
-        BorshDeserialize,
-        BorshSerialize,
-    },
-    collections::*,
-    json_types::*,
-    *,
+use near_sdk::collections::{
+    LookupMap,
+    UnorderedSet,
+};
+use near_sdk::json_types::{
+    U128,
+    U64,
+};
+use near_sdk::{
+    self,
+    assert_one_yocto,
+    env,
+    ext_contract,
+    near_bindgen,
+    AccountId,
+    Balance,
+    Gas,
+    Promise,
+    PromiseResult,
+    StorageUsage,
 };
 
-use crate::*;
+// contract interface modules
+use crate::common::{
+    NFTContractMetadata,
+    NewSplitOwner,
+    NonFungibleContractMetadata,
+    Owner,
+    OwnershipFractions,
+    Payout,
+    Royalty,
+    RoyaltyArgs,
+    SafeFraction,
+    SplitBetweenUnparsed,
+    SplitOwners,
+    StorageCosts,
+    Token,
+    TokenCompliant,
+    TokenMetadata,
+    TokenMetadataCompliant,
+};
+use crate::consts::{
+    GAS_NFT_BATCH_APPROVE,
+    GAS_NFT_TRANSFER_CALL,
+    MAX_LEN_PAYOUT,
+    MINIMUM_CUSHION,
+    NO_DEPOSIT,
+};
+use crate::interfaces::{
+    ext_on_approve,
+    ext_on_transfer,
+};
+// logging functions
+use crate::logging::{
+    log_approve,
+    log_batch_approve,
+    log_grant_minter,
+    log_nft_batch_burn,
+    log_nft_batch_mint,
+    log_nft_batch_transfer,
+    log_nft_transfer,
+    log_revoke,
+    log_revoke_all,
+    log_revoke_minter,
+    log_set_base_uri,
+    log_set_icon_base64,
+    log_set_split_owners,
+    log_transfer_store,
+};
+use crate::utils::ntot;
 
-impl NearTime {
-    pub fn is_before_timeout(&self) -> bool {
-        now().0 < self.0
-    }
+// ------------------------------- constants -------------------------------- //
+const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));
 
-    pub fn new(span: TimeUnit) -> Self {
-        match span {
-            TimeUnit::Hours(n) => Self::now_plus_n_hours(n),
-        }
-    }
+// ----------------------------- smart contract ----------------------------- //
 
-    fn now_plus_n_hours(n: u64) -> Self {
-        assert!(n > 0);
-        assert!(
-            n < 70_000,
-            "maximum argument for hours is 70,000 (~8 years)"
-        );
-        let now = env::block_timestamp();
-        let hour_ns = 10u64.pow(9) * 3600;
-        Self(now + n * hour_ns)
-    }
+// TODO: shouldn't this be PanicOnDefault?
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct MintbaseStore {
+    /// Accounts that are allowed to mint tokens on this Store.
+    pub minters: UnorderedSet<AccountId>,
+    /// Initial deployment data of this Store.
+    pub metadata: NFTContractMetadata,
+    /// If a Minter mints more than one token at a time, all tokens will
+    /// share the same `TokenMetadata`. It's more storage-efficient to store
+    /// that `TokenMetadata` once, rather than to copy the data on each
+    /// Token. The key is generated from `tokens_minted`. The map keeps count
+    /// of how many copies of this token remain, so that the element may be
+    /// dropped when the number reaches zero (ie, when tokens are burnt).
+    pub token_metadata: LookupMap<u64, (u16, TokenMetadata)>,
+    /// If a Minter mints more than one token at a time, all tokens will
+    /// share the same `Royalty`. It's more storage-efficient to store that
+    /// `Royalty` once, rather than to copy the data on each Token. The key
+    /// is generated from `tokens_minted`. The map keeps count of how many
+    /// copies of this token remain, so that the element may be dropped when
+    /// the number reaches zero (ie, when tokens are burnt).
+    pub token_royalty: LookupMap<u64, (u16, Royalty)>,
+    /// Tokens this Store has minted, excluding those that have been burned.
+    pub tokens: LookupMap<u64, Token>,
+    /// A mapping from each user to the tokens owned by that user. The owner
+    /// of the token is also stored on the token itself.
+    pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<u64>>,
+    /// A map from a token_id of a token on THIS contract to a set of tokens,
+    /// that may be on ANY contract. If the owned-token is on this contract,
+    /// the id will have format "<u64>". If the token is on another contract,
+    /// the token will have format "<u64>:account_id"
+    pub composeables: LookupMap<String, UnorderedSet<String>>,
+    /// The number of tokens this `Store` has minted. Used to generate
+    /// `TokenId`s.
+    pub tokens_minted: u64,
+    /// The number of tokens this `Store` has burned.
+    pub tokens_burned: u64,
+    /// The number of tokens approved (listed) by this `Store`. Used to index
+    /// listings and approvals. List ID format: `list_nonce:token_key`
+    pub num_approved: u64,
+    /// The owner of the Contract.
+    pub owner_id: AccountId,
+    /// The Near-denominated price-per-byte of storage, and associated
+    /// contract storage costs. As of April 2021, the price per bytes is set
+    /// to 10^19, but this may change in the future, thus this
+    /// future-proofing field.
+    pub storage_costs: StorageCosts,
+    /// If false, disallow users to call `nft_move`.
+    pub allow_moves: bool,
 }
 
-impl StorageCostsMarket {
-    pub fn new(storage_price_per_byte: u128) -> Self {
-        Self {
-            storage_price_per_byte,
-            list: storage_price_per_byte * LIST_STORAGE as u128,
-        }
-    }
-}
-
-impl TokenOffer {
-    /// Timeout is in days.
-    pub fn new(
-        price: u128,
-        timeout: TimeUnit,
-        id: u64,
-    ) -> Self {
-        let timeout = NearTime::new(timeout);
-        Self {
-            id,
-            price,
-            from: env::predecessor_account_id(),
-            timestamp: now(),
-            timeout,
-        }
-    }
-
-    /// An offer is active if it has yet to timeout.
-    pub fn is_active(&self) -> bool {
-        self.timeout.is_before_timeout()
-    }
-}
-
-impl TokenListing {
-    /// Check that the given `account_id` is valid before instantiating a
-    /// `Token`. Note that all input validation for `Token` functions should
-    /// be performed at the `Marketplace` level.
-    pub fn new(
-        owner_id: AccountId,
-        store_id: AccountId,
-        id: u64,
-        approval_id: u64,
-        autotransfer: bool,
-        asking_price: U128,
-    ) -> Self {
-        Self {
-            id,
-            owner_id,
-            store_id,
-            approval_id,
-            autotransfer,
-            asking_price,
-            current_offer: None,
-            num_offers: 0,
-            locked: false,
-        }
-    }
-
-    /// Unique identifier of the Token.
-    pub fn get_token_key(&self) -> TokenKey {
-        TokenKey::new(self.id, self.store_id.to_string().try_into().unwrap())
-    }
-
-    /// Unique identifier of the Token, which is also unique across
-    /// relistings of the Token.
-    pub fn get_list_id(&self) -> String {
-        format!("{}:{}:{}", self.id, self.approval_id, self.store_id)
-    }
-
-    pub fn assert_not_locked(&self) {
-        assert!(!self.locked);
-    }
-}
-
-impl StorageCosts {
-    pub fn new(storage_price_per_byte: u128) -> Self {
-        Self {
-            storage_price_per_byte,
-            common: storage_price_per_byte * 80_u64 as u128,
-            token: storage_price_per_byte * 360_u64 as u128,
-        }
-    }
-}
-
-impl NearJsonEvent {
-    pub fn near_json_event(&self) -> String {
-        let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON: {}", &json)
-    }
-}
-
-impl Nep171Event {
-    pub fn near_json_event(&self) -> String {
-        let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON: {}", &json)
-    }
-}
-
-impl fmt::Display for NftEventError {
-    fn fmt(
-        &self,
-        f: &mut fmt::Formatter,
-    ) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-#[cfg(feature = "factory-wasm")]
-impl New for NFTContractMetadata {
-    fn new(args: NFTContractMetadata) -> Self {
-        let store_account = format!("{}.{}", args.name, env::current_account_id());
-        assert!(
-            env::is_valid_account_id(store_account.as_bytes()),
-            "Invalid character in store id"
-        );
-        assert!(args.symbol.len() <= 6);
-
-        Self {
-            spec: args.spec,
-            name: args.name,
-            symbol: args.symbol,
-            icon: args.icon,
-            base_uri: args.base_uri,
-            reference: args.reference,
-            reference_hash: args.reference_hash,
-        }
-    }
-}
-
-#[cfg(feature = "factory-wasm")]
-impl Default for MintbaseStoreFactory {
-    fn default() -> Self {
-        env::panic_str("Not initialized yet.");
-    }
-}
-
-#[cfg(feature = "helper-wasm")]
-#[cfg_attr(feature = "helper-wasm", near_bindgen)]
-impl HelperWasm {
-    #[init(ignore_state)]
-    pub fn new() -> Self {
-        Self { count: 0 }
-    }
-
-    pub fn nft_on_transfer(
-        &mut self,
-        sender_id: AccountId,
-        previous_owner_id: AccountId,
-        token_id: String,
-        msg: String,
-    ) -> PromiseOrValue<bool> {
-        env::log_str(
-            format!(
-                "in nft_on_transfer; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
-                &sender_id, &previous_owner_id, &token_id, msg
-            )
-            .as_str(),
-        );
-        match msg.as_str() {
-            "true" => PromiseOrValue::Value(true),
-            "false" => PromiseOrValue::Value(false),
-            _ => env::panic_str("unsupported msg"),
-        }
-    }
-}
-
-////////////////
-// Core Logic //
-////////////////
-#[cfg(feature = "factory-wasm")]
-#[cfg_attr(feature = "factory-wasm", near_bindgen)]
-impl MintbaseStoreFactory {
-    pub fn assert_only_owner(&self) {
-        assert_one_yocto();
-        assert_eq!(
-            env::predecessor_account_id(),
-            self.owner_id,
-            "Only contract owner can call this method"
-        );
-    }
-
-    /// Sufficient attached deposit is defined as enough to deploy a `Store`,
-    /// plus enough left over for the mintbase deployment cost.
-    pub fn assert_sufficient_attached_deposit(&self) {
-        let min = STORE_STORAGE as u128 * self.storage_price_per_byte + self.mintbase_fee;
-        assert!(
-            env::attached_deposit() >= min,
-            "Not enough attached deposit to complete store deployment. Need: {}, got: {}",
-            min,
-            env::attached_deposit()
-        );
-    }
-
-    pub fn assert_no_store_with_id(
-        &self,
-        store_id: String,
-    ) {
-        assert!(
-            !self.check_contains_store(store_id),
-            "Store with that ID already exists"
-        );
-    }
-
-    /// If a `Store` with `store_id` has been produced by this `Factory`, return `true`.
-    pub fn check_contains_store(
-        &self,
-        store_id: String,
-    ) -> bool {
-        self.stores.contains(&store_id)
-    }
-
-    /// Get the `owner_id` of this `Factory`.
-    pub fn get_owner(&self) -> &AccountId {
-        &self.owner_id
-    }
-
-    /// Get the `mintbase_fee` of this `Factory`.
-    pub fn get_mintbase_fee(&self) -> U128 {
-        self.mintbase_fee.into()
-    }
-
-    /// The sum of `mintbase_fee` and `STORE_STORAGE`.
-    pub fn get_minimum_attached_balance(&self) -> U128 {
-        (STORE_STORAGE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
-    }
-
-    /// The sum of `mintbase_fee` and `STORE_STORAGE`.
-    pub fn get_admin_public_key(&self) -> &PublicKey {
-        &self.admin_public_key
-    }
-
-    /// The Near Storage price per byte has changed in the past, and may change in
-    /// the future. This method may never be used.
-    #[payable]
-    pub fn set_storage_price_per_byte(
-        &mut self,
-        new_price: U128,
-    ) {
-        self.assert_only_owner();
-        self.storage_price_per_byte = new_price.into();
-        self.store_cost = self.storage_price_per_byte * STORE_STORAGE as u128;
-    }
-
-    /// Set amount of Near tokens taken by Mintbase for making `Store`s. Provide an
-    /// amount denominated in units of yoctoNear, ie. 1 = 10^-24 Near.
-    #[payable]
-    pub fn set_mintbase_factory_fee(
-        &mut self,
-        amount: U128,
-    ) {
-        self.assert_only_owner();
-        self.mintbase_fee = amount.into()
-    }
-
-    /// Set a new `owner_id` for `Factory`.
-    #[payable]
-    pub fn set_mintbase_factory_owner(
-        &mut self,
-        account_id: AccountId,
-    ) {
-        self.assert_only_owner();
-        let account_id = account_id;
-        assert_ne!(account_id, env::predecessor_account_id());
-        self.owner_id = account_id;
-    }
-
-    /// Set the admin public key. If `public_key` is None, use the signer's
-    /// public key.
-    #[payable]
-    pub fn set_admin_public_key(
-        &mut self,
-        public_key: Option<String>,
-    ) {
-        self.assert_only_owner();
-        match public_key {
-            None => {
-                assert_ne!(env::signer_account_pk(), self.admin_public_key);
-                self.admin_public_key = env::signer_account_pk();
-            },
-            Some(public_key) => {
-                let public_key = public_key.as_bytes().to_vec();
-                assert_ne!(public_key, self.admin_public_key.as_bytes());
-                self.admin_public_key = PublicKey::try_from(public_key).unwrap();
-            },
-        }
-    }
-
-    /// Handle callback of store creation.
-    #[private]
-    pub fn on_create(
-        &mut self,
-        store_creator_id: AccountId,
-        metadata: NFTContractMetadata,
-        owner_id: AccountId,
-        store_account_id: AccountId,
-        attached_deposit: U128,
-    ) {
-        let attached_deposit: u128 = attached_deposit.into();
-        if is_promise_success() {
-            // pay out self and update contract state
-            self.stores.insert(&metadata.name);
-            let nscl = NftStoreCreateLog {
-                contract_metadata: metadata,
-                owner_id: owner_id.to_string(),
-                id: store_account_id.to_string(),
-            };
-            let event = NearJsonEvent {
-                standard: "nep171".to_string(),
-                version: "1.0.0".to_string(),
-                event: "nft_store_creation".to_string(),
-                data: serde_json::to_string(&nscl).unwrap(),
-            };
-            env::log_str(event.near_json_event().as_str());
-            Promise::new(self.owner_id.to_string().parse().unwrap())
-                .transfer(attached_deposit - self.store_cost);
-            #[cfg(feature = "panic-test")]
-            env::panic_str("event.near_json_event().as_str()");
-        } else {
-            // Refunding store cost creation to the store creator
-            Promise::new(store_creator_id).transfer(attached_deposit - self.store_cost);
-            env::log_str("failed store deployment");
-        }
-    }
-
-    #[init(ignore_state)]
-    pub fn new() -> Self {
-        assert!(!env::state_exists());
-        let storage_price_per_byte = 10_000_000_000_000_000_000; // 10^19
-        Self {
-            stores: LookupSet::new(b"t".to_vec()),
-            mintbase_fee: 0, // 0 by default
-            owner_id: env::predecessor_account_id(),
-            storage_price_per_byte,
-            store_cost: STORE_STORAGE as u128 * storage_price_per_byte,
-            admin_public_key: env::signer_account_pk(),
-        }
-    }
-
-    /// Contract metadata and methods in the API may be updated. All other
-    /// elements of the state should be copied over. This method may only be
-    /// called by the holder of the contract private key.
-    #[private]
-    #[init(ignore_state)]
-    pub fn migrate() -> Self {
-        let old = env::state_read().expect("ohno ohno state");
-        Self { ..old }
-    }
-
-    /// `create_store` checks that the attached deposit is sufficient before
-    /// parsing the given store_id, validating no such store subaccount exists yet
-    /// and generates a new store from the store metadata.
-    #[payable]
-    pub fn create_store(
-        &mut self,
-        metadata: NFTContractMetadata,
-        owner_id: AccountId,
-    ) -> Promise {
-        self.assert_sufficient_attached_deposit();
-        self.assert_no_store_with_id(metadata.name.clone());
-        assert_ne!(&metadata.name, "market"); // marketplace lives here
-        assert_ne!(&metadata.name, "loan"); // loan lives here
-        let metadata = NFTContractMetadata::new(metadata);
-        let init_args = serde_json::to_vec(&StoreInitArgs {
-            metadata: metadata.clone(),
-            owner_id: owner_id.clone(),
-        })
-        .unwrap();
-        // StoreId is only the subaccount. store_account_id is the full near qualified name.
-        // Note, validity checked in `NFTContractMetadata::new;` above.
-
-        let store_account_id =
-            AccountId::from_str(&*format!("{}.{}", metadata.name, env::current_account_id()))
-                .unwrap();
-        Promise::new(store_account_id.clone())
-            .create_account()
-            .transfer(self.store_cost)
-            .add_full_access_key(self.admin_public_key.clone())
-            .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
-            .function_call("new".to_string(), init_args, 0, GAS_CREATE_STORE)
-            .then(factory_self::on_create(
-                env::predecessor_account_id(),
-                metadata,
-                owner_id,
-                store_account_id,
-                env::attached_deposit().into(),
-                env::current_account_id(),
-                NO_DEPOSIT,
-                GAS_ON_CREATE_CALLBACK,
-            ))
-    }
-}
-
-impl FromStr for NearJsonEvent {
-    type Err = serde_json::error::Error;
-
-    fn from_str(_s: &str) -> Result<Self, Self::Err> {
-        todo!()
-    }
-}
-
-impl From<NftEvent> for NearJsonEvent {
-    fn from(ne: NftEvent) -> Self {
-        let json = serde_json::to_string(&ne).unwrap();
-        Self {
-            standard: "nep171".to_string(),
-            version: "1.0.0".to_string(),
-            event: "".to_string(),
-            data: json,
-        }
-    }
-}
-
-impl TryFrom<&str> for NftEvent {
-    type Error = serde_json::error::Error;
-
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        // ne.map_err(|x|NftEventError(x.to_string()))
-        serde_json::from_str::<NftEvent>(s)
-    }
-}
-
-/// Stable
-impl Royalty {
-    /// Validates all arguments. Addresses must be valid and percentages must be
-    /// within accepted values. Hashmap percentages must add to 10000.
-    pub fn new(royalty_args: RoyaltyArgs) -> Self {
-        assert!(!royalty_args.split_between.is_empty());
-        let percentage = royalty_args.percentage;
-        let split_between = royalty_args.split_between;
-
-        assert!(
-            percentage <= ROYALTY_UPPER_LIMIT,
-            "percentage: {} must be <= 5000",
-            percentage
-        );
-        assert!(percentage > 0, "percentage cannot be zero");
-        assert!(!split_between.is_empty(), "royalty mapping is empty");
-
-        let mut sum: u32 = 0;
-        let split_between: SplitBetween = split_between
-            .into_iter()
-            .map(|(addr, numerator)| {
-                assert!(AccountId::try_from(addr.to_string()).is_ok());
-                // assert!(env::is_valid_account_id(addr.as_bytes()));
-                assert!(numerator > 0, "percentage cannot be zero");
-                let sf = SafeFraction::new(numerator);
-                sum += sf.numerator;
-                (addr, sf)
-            })
-            .collect();
-        assert_eq!(sum, 10_000, "fractions don't add to 10,000");
-
-        Self {
-            percentage: SafeFraction::new(percentage),
-            split_between,
-        }
-    }
-}
-
-impl Default for NFTContractMetadata {
-    fn default() -> Self {
-        Self {
-            spec: "".to_string(),
-            name: "".to_string(),
-            symbol: "".to_string(),
-            icon: None,
-            base_uri: None,
-            reference: None,
-            reference_hash: None,
-        }
-    }
-}
-
-impl Default for NftStoreCreateLog {
-    fn default() -> Self {
-        Self {
-            contract_metadata: Default::default(),
-            owner_id: "".to_string(),
-            id: "".to_string(),
-        }
-    }
-}
-
-impl TokenMetadata {
-    /// Get the metadata and its size in bytes.
-    pub fn from_with_size(
-        args: TokenMetadata,
-        copies: u64,
-    ) -> (Self, u64) {
-        if args.media_hash.is_some() {
-            assert!(args.media.is_some());
-        }
-
-        if args.reference_hash.is_some() {
-            assert!(args.reference.is_some());
-        }
-
-        let metadata = Self {
-            title: args.title,
-            description: args.description,
-            media: args.media,
-            media_hash: args.media_hash,
-            copies: (copies as u16).into(),
-            expires_at: args.expires_at,
-            starts_at: args.starts_at,
-            extra: args.extra,
-            reference: args.reference,
-            reference_hash: args.reference_hash,
-        };
-
-        let size = serde_json::to_vec(&metadata).unwrap().len();
-
-        // let size = metadata.try_to_vec().unwrap().len();
-
-        (metadata, size as u64)
-    }
-}
-
-/// default must be implemented for wasm compilation.
-#[cfg(feature = "helper-wasm")]
-impl Default for HelperWasm {
-    fn default() -> Self {
-        Self { count: 0 }
-    }
-}
-#[cfg(feature = "store-wasm")]
 impl Default for MintbaseStore {
     fn default() -> Self {
         env::panic_str("no default")
     }
 }
-#[cfg(feature = "store-wasm")]
-impl NewSplitOwner for SplitOwners {
-    fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
-        assert!(split_between.len() >= 2);
-        // validate args
-        let mut sum: u32 = 0;
-        let split_between: HashMap<AccountId, SafeFraction> = split_between
-            .into_iter()
-            .map(|(addr, numerator)| {
-                assert!(env::is_valid_account_id(addr.as_bytes()));
-                let sf = SafeFraction::new(numerator);
-                sum += sf.numerator;
-                (addr, sf)
-            })
-            .collect();
-        assert!(sum == 10_000, "sum not 10_000: {}", sum);
 
-        Self { split_between }
-    }
-}
-
-#[cfg_attr(feature = "store-wasm", near_bindgen)]
-#[cfg(feature = "store-wasm")]
 impl NonFungibleContractMetadata for MintbaseStore {
     fn nft_metadata(&self) -> &NFTContractMetadata {
         &self.metadata
     }
 }
 
-//////////////////////////////
-// Store Owner Only Methods //
-//////////////////////////////
-/// Only the Owner of this `Store` may call these methods.
-
-#[cfg_attr(feature = "store-wasm", near_bindgen)]
-#[cfg(feature = "store-wasm")]
+#[near_bindgen]
 impl MintbaseStore {
     pub fn nft_tokens(
         &self,
@@ -748,6 +287,7 @@ impl MintbaseStore {
         }
     }
 
+    #[payable]
     pub fn nft_revoke(
         &mut self,
         token_id: U64,
@@ -757,6 +297,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
         assert!(token.is_pred_owner());
+        assert_one_yocto();
 
         if token.approvals.remove(&account_id).is_some() {
             self.tokens.insert(&token_idu64, &token);
@@ -764,6 +305,7 @@ impl MintbaseStore {
         }
     }
 
+    #[payable]
     pub fn nft_revoke_all(
         &mut self,
         token_id: U64,
@@ -772,6 +314,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert!(!token.is_loaned());
         assert!(token.is_pred_owner());
+        assert_one_yocto();
 
         if !token.approvals.is_empty() {
             token.approvals.clear();
@@ -828,6 +371,7 @@ impl MintbaseStore {
         owner_id: AccountId,
         receiver_id: AccountId,
         token_id: String,
+        // NOTE: might borsh::maybestd::collections::HashMap be more appropriate?
         approved_account_ids: Option<HashMap<AccountId, u64>>,
     ) -> bool {
         let l = format!(
@@ -908,7 +452,12 @@ impl MintbaseStore {
             .get(&account_id)
             .expect("no tokens")
             .iter()
-            .skip(from_index.unwrap_or_else(|| 0.to_string()).parse().unwrap())
+            .skip(
+                from_index
+                    .unwrap_or_else(|| "0".to_string())
+                    .parse()
+                    .unwrap(),
+            )
             .take(limit.unwrap_or(10))
             .map(|x| self.nft_token_compliant_internal(x))
             .collect::<Vec<_>>()
@@ -1251,6 +800,10 @@ impl MintbaseStore {
         }
     }
 
+    pub fn list_minters(&self) -> Vec<AccountId> {
+        self.minters.iter().collect()
+    }
+
     /// Transfer ownership of `Store` to a new owner. Setting
     /// `keep_old_minters=true` allows all existing minters (including the
     /// prior owner) to keep their minter status.
@@ -1573,41 +1126,43 @@ impl MintbaseStore {
         }
     }
 
-    /// Internal
-    /// update the set of tokens composed underneath parent. If insert is
-    /// true, insert token_id; if false, try to remove it.
-    fn update_composed_sets(
-        &mut self,
-        child: String,
-        parent: String,
-        insert: bool,
-    ) {
-        let mut set = self.get_or_new_composed(parent.to_string());
-        if insert {
-            set.insert(&child);
-        } else {
-            set.remove(&child);
-        }
-        if set.is_empty() {
-            self.composeables.remove(&parent);
-        } else {
-            self.composeables.insert(&parent, &set);
-        }
-    }
+    // TODO: unused, deprecated?
+    // /// Internal
+    // /// update the set of tokens composed underneath parent. If insert is
+    // /// true, insert token_id; if false, try to remove it.
+    // fn update_composed_sets(
+    //     &mut self,
+    //     child: String,
+    //     parent: String,
+    //     insert: bool,
+    // ) {
+    //     let mut set = self.get_or_new_composed(parent.to_string());
+    //     if insert {
+    //         set.insert(&child);
+    //     } else {
+    //         set.remove(&child);
+    //     }
+    //     if set.is_empty() {
+    //         self.composeables.remove(&parent);
+    //     } else {
+    //         self.composeables.insert(&parent, &set);
+    //     }
+    // }
 
-    /// Internal
-    /// update the set of tokens composed underneath parent. If insert is
-    /// true, insert token_id; if false, try to remove it.
-    pub(crate) fn get_or_new_composed(
-        &mut self,
-        parent: String,
-    ) -> UnorderedSet<String> {
-        self.composeables.get(&parent).unwrap_or_else(|| {
-            let mut prefix: Vec<u8> = vec![b'h'];
-            prefix.extend_from_slice(parent.to_string().as_bytes());
-            UnorderedSet::new(prefix)
-        })
-    }
+    // TODO: unused, deprecated?
+    // /// Internal
+    // /// update the set of tokens composed underneath parent. If insert is
+    // /// true, insert token_id; if false, try to remove it.
+    // pub(crate) fn get_or_new_composed(
+    //     &mut self,
+    //     parent: String,
+    // ) -> UnorderedSet<String> {
+    //     self.composeables.get(&parent).unwrap_or_else(|| {
+    //         let mut prefix: Vec<u8> = vec![b'h'];
+    //         prefix.extend_from_slice(parent.to_string().as_bytes());
+    //         UnorderedSet::new(prefix)
+    //     })
+    // }
 
     /// If an account_id has never owned tokens on this store, we must
     /// construct an `UnorderedSet` for them. If they have owned tokens on
@@ -1741,336 +1296,68 @@ impl MintbaseStore {
     }
 }
 
-impl OwnershipFractions {
-    /// Generate a mapping of who receives what from a token's Royalty,
-    /// SplitOwners, and normal owner data.
-    pub fn new(
-        owner_id: &str,
-        royalty: &Option<Royalty>,
-        split_owners: &Option<SplitOwners>,
-    ) -> Self {
-        let roy_len = royalty.as_ref().map(|r| r.split_between.len()).unwrap_or(0);
-        let split_len = split_owners
-            .as_ref()
-            .map(|r| r.split_between.len())
-            .unwrap_or(1);
-        assert!((roy_len + split_len) as u32 <= MAX_LEN_PAYOUT);
+// ----------------------- contract interface modules ----------------------- //
 
-        let mut payout: HashMap<AccountId, MultipliedSafeFraction> = Default::default();
-        let percentage_not_taken_by_royalty = match royalty {
-            Some(royalty) => {
-                let (split_between, percentage) =
-                    (royalty.split_between.clone(), royalty.percentage);
-                split_between.iter().for_each(|(receiver, &rel_perc)| {
-                    let abs_perc: MultipliedSafeFraction = percentage * rel_perc;
-                    payout.insert(receiver.to_string().parse().unwrap(), abs_perc);
-                });
-                SafeFraction::new(10_000 - percentage.numerator)
-            },
-            None => SafeFraction::new(10_000u32),
-        };
-
-        match split_owners {
-            Some(ref split_owners) => {
-                split_owners
-                    .split_between
-                    .iter()
-                    .for_each(|(receiver, &rel_perc)| {
-                        let abs_perc: MultipliedSafeFraction =
-                            percentage_not_taken_by_royalty * rel_perc;
-                        // If an account is already in the payout map, update their take.
-                        if let Some(&roy_perc) = payout.get(receiver) {
-                            payout.insert(receiver.clone(), abs_perc + roy_perc);
-                        } else {
-                            payout.insert(receiver.clone(), abs_perc);
-                        }
-                    });
-            },
-            None => {
-                if let Some(&roy_perc) = payout.get(&AccountId::new_unchecked(owner_id.to_string()))
-                {
-                    payout.insert(
-                        owner_id.to_string().parse().unwrap(),
-                        MultipliedSafeFraction::from(percentage_not_taken_by_royalty) + roy_perc,
-                    );
-                } else {
-                    payout.insert(
-                        owner_id.to_string().parse().unwrap(),
-                        MultipliedSafeFraction::from(percentage_not_taken_by_royalty),
-                    );
-                }
-            },
-        };
-        Self { fractions: payout }
-    }
-
-    pub fn into_payout(
-        self,
-        balance: Balance,
-    ) -> Payout {
-        Payout {
-            payout: self
-                .fractions
-                .into_iter()
-                .map(|(k, v)| (k, v.multiply_balance(balance).into()))
-                .collect(),
-        }
-    }
-}
-
-impl Token {
-    /// - `metadata` validation performed in `TokenMetadataArgs::new`
-    /// - `royalty` validation performed in `Royalty::new`
-    pub fn new(
-        owner_id: AccountId,
-        token_id: u64,
-        metadata_id: u64,
-        royalty_id: Option<u64>,
-        split_owners: Option<SplitOwners>,
-        minter: AccountId,
-    ) -> Self {
-        Self {
-            owner_id: Owner::Account(owner_id),
-            id: token_id,
-            metadata_id,
-            royalty_id,
-            split_owners,
-            approvals: HashMap::new(),
-            minter,
-            loan: None,
-            composeable_stats: ComposeableStats::new(),
-            origin_key: None,
-        }
-    }
-
-    /// If the token is loaned, return the loaner as the owner.
-    pub fn get_owner_or_loaner(&self) -> Owner {
-        self.loan
-            .as_ref()
-            .map(|l| Owner::Account(l.holder.clone()))
-            .unwrap_or_else(|| self.owner_id.clone())
-    }
-
-    pub fn is_pred_owner(&self) -> bool {
-        self.owner_id.to_string() == near_sdk::env::predecessor_account_id().to_string()
-    }
-
-    pub fn is_loaned(&self) -> bool {
-        self.loan.is_some()
-    }
-}
-
-impl fmt::Display for Owner {
-    fn fmt(
-        &self,
-        f: &mut fmt::Formatter,
-    ) -> fmt::Result {
-        match self {
-            Owner::Account(s) => write!(f, "{}", s),
-            Owner::TokenId(n) => write!(f, "{}", n),
-            Owner::CrossKey(key) => write!(f, "{}", key),
-            Owner::Lock(_) => panic!("locked"),
-        }
-    }
-}
-
-impl Loan {
-    pub fn new(
-        holder: AccountId,
-        loan_contract: AccountId,
-    ) -> Self {
-        Self {
-            holder,
-            loan_contract,
-        }
-    }
-}
-
-impl ComposeableStats {
-    fn new() -> Self {
-        Self {
-            local_depth: 0,
-            cross_contract_children: 0,
-        }
-    }
-}
-
-impl TokenKey {
-    pub fn new(
-        n: u64,
-        account_id: AccountId,
-    ) -> Self {
-        Self {
-            token_id: n,
-            account_id: account_id.into(),
-        }
-    }
-
-    pub fn split(self) -> (u64, String) {
-        (self.token_id, self.account_id)
-    }
-}
-impl fmt::Display for TokenKey {
-    fn fmt(
-        &self,
-        f: &mut fmt::Formatter,
-    ) -> fmt::Result {
-        write!(f, "{}:{}", self.token_id, self.account_id)
-    }
-}
-impl From<String> for TokenKey {
-    fn from(s: String) -> Self {
-        let (id, account_id) = split_colon(&s);
-        Self {
-            token_id: id.parse::<u64>().unwrap(),
-            account_id: account_id.to_string(),
-        }
-    }
-}
-
-impl SafeFraction {
-    /// Take a u32 numerator to a 10^4 denominator.
+#[ext_contract(store_self)]
+pub trait NonFungibleResolveTransfer {
+    /// Finalize an `nft_transfer_call` chain of cross-contract calls.
     ///
-    /// Upper limit is 10^4 so as to prevent multiplication with overflow.
-    pub fn new(numerator: u32) -> Self {
-        assert!(
-            (0..=10000).contains(&numerator),
-            "{} not between 0 and 10,000",
-            numerator
-        );
-        SafeFraction { numerator }
-    }
-
-    /// Fractionalize a balance.
-    pub fn multiply_balance(
-        &self,
-        value: Balance,
-    ) -> Balance {
-        value / 10_000u128 * self.numerator as u128
-    }
-}
-
-impl std::ops::Sub for SafeFraction {
-    type Output = SafeFraction;
-
-    fn sub(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        assert!(self.numerator >= rhs.numerator);
-        Self {
-            numerator: self.numerator - rhs.numerator,
-        }
-    }
-}
-
-impl std::ops::SubAssign for SafeFraction {
-    fn sub_assign(
+    /// The `nft_transfer_call` process:
+    ///
+    /// 1. Sender calls `nft_transfer_call` on FT contract
+    /// 2. NFT contract transfers token from sender to receiver
+    /// 3. NFT contract calls `nft_on_transfer` on receiver contract
+    /// 4+. [receiver contract may make other cross-contract calls]
+    /// N. NFT contract resolves promise chain with `nft_resolve_transfer`, and may
+    ///    transfer token back to sender
+    ///
+    /// Requirements:
+    /// * Contract MUST forbid calls to this function by any account except self
+    /// * If promise chain failed, contract MUST revert token transfer
+    /// * If promise chain resolves with `true`, contract MUST return token to
+    ///   `sender_id`
+    ///
+    /// Arguments:
+    /// * `sender_id`: the sender of `ft_transfer_call`
+    /// * `token_id`: the `token_id` argument given to `ft_transfer_call`
+    /// * `approved_token_ids`: if using Approval Management, contract MUST provide
+    ///   set of original approved accounts in this argument, and restore these
+    ///   approved accounts in case of revert.
+    ///
+    /// Returns true if token was successfully transferred to `receiver_id`.
+    ///
+    /// Mild modifications from core standard, commented where applicable.
+    #[private]
+    fn nft_resolve_transfer(
         &mut self,
-        rhs: Self,
-    ) {
-        assert!(self.numerator >= rhs.numerator);
-        self.numerator -= rhs.numerator;
-    }
+        owner_id: AccountId,
+        receiver_id: AccountId,
+        token_id: String,
+        approved_account_ids: Option<Vec<String>>,
+    );
 }
 
-impl std::ops::Mul for SafeFraction {
-    type Output = MultipliedSafeFraction;
+// ------------------------ impls on external types ------------------------- //
+impl NewSplitOwner for SplitOwners {
+    fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
+        assert!(split_between.len() >= 2);
+        // validate args
+        let mut sum: u32 = 0;
+        let split_between: HashMap<AccountId, SafeFraction> = split_between
+            .into_iter()
+            .map(|(addr, numerator)| {
+                assert!(env::is_valid_account_id(addr.as_bytes()));
+                let sf = SafeFraction::new(numerator);
+                sum += sf.numerator;
+                (addr, sf)
+            })
+            .collect();
+        assert!(sum == 10_000, "sum not 10_000: {}", sum);
 
-    fn mul(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        MultipliedSafeFraction {
-            numerator: self.numerator * rhs.numerator,
-        }
+        Self { split_between }
     }
 }
+// --------------------------- logging functions ---------------------------- //
+// TODO: move those here :)
 
-impl From<SafeFraction> for MultipliedSafeFraction {
-    fn from(f: SafeFraction) -> Self {
-        MultipliedSafeFraction {
-            numerator: f.numerator * 10_000,
-        }
-    }
-}
-
-impl std::ops::Add for MultipliedSafeFraction {
-    type Output = Self;
-
-    fn add(
-        self,
-        rhs: Self,
-    ) -> Self::Output {
-        MultipliedSafeFraction {
-            numerator: self.numerator + rhs.numerator,
-        }
-    }
-}
-
-impl MultipliedSafeFraction {
-    /// Fractionalize a balance.
-    pub fn multiply_balance(
-        &self,
-        value: Balance,
-    ) -> Balance {
-        value / 100_000_000u128 * self.numerator as u128
-    }
-}
-
-#[cfg(feature = "all")]
-impl<'a> std::io::Write for StdioLock<'a> {
-    fn write(
-        &mut self,
-        buf: &[u8],
-    ) -> std::io::Result<usize> {
-        match self {
-            StdioLock::Stdout(lock) => lock.write(buf),
-            StdioLock::Stderr(lock) => lock.write(buf),
-        }
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        match self {
-            StdioLock::Stdout(lock) => lock.flush(),
-            StdioLock::Stderr(lock) => lock.flush(),
-        }
-    }
-
-    fn write_all(
-        &mut self,
-        buf: &[u8],
-    ) -> std::io::Result<()> {
-        match self {
-            StdioLock::Stdout(lock) => lock.write_all(buf),
-            StdioLock::Stderr(lock) => lock.write_all(buf),
-        }
-    }
-}
-
-#[cfg(feature = "all")]
-impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for MyMakeWriter {
-    type Writer = StdioLock<'a>;
-
-    fn make_writer(&'a self) -> Self::Writer {
-        // We must have an implementation of `make_writer` that makes
-        // a "default" writer without any configuring metadata. Let's
-        // just return stdout in that case.
-        StdioLock::Stdout(self.stdout.lock())
-    }
-
-    fn make_writer_for(
-        &'a self,
-        meta: &tracing::Metadata<'_>,
-    ) -> Self::Writer {
-        // Here's where we can implement our special behavior. We'll
-        // check if the metadata's verbosity level is WARN or ERROR,
-        // and return stderr in that case.
-        if meta.level() <= &tracing::Level::WARN {
-            return StdioLock::Stderr(self.stderr.lock());
-        }
-
-        // Otherwise, we'll return stdout.
-        StdioLock::Stdout(self.stdout.lock())
-    }
-}
+// ---------------------------------- misc ---------------------------------- //
