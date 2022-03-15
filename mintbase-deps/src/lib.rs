@@ -11,14 +11,6 @@ pub use near_sdk::{
     serde_json,
 };
 
-// TODO: extract
-#[cfg(feature = "factory-wasm")]
-pub mod factory;
-#[cfg(feature = "helper-wasm")]
-pub mod helper;
-#[cfg(feature = "store-wasm")]
-pub mod store;
-
 // TODO: move module resolution to indexer
 #[cfg(feature = "all")]
 pub use crate::logging::{

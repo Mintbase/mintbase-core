@@ -2,35 +2,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use near_sdk::borsh::{
-    self,
-    BorshDeserialize,
-    BorshSerialize,
-};
-use near_sdk::collections::{
-    LookupMap,
-    UnorderedSet,
-};
-use near_sdk::json_types::{
-    U128,
-    U64,
-};
-use near_sdk::{
-    self,
-    assert_one_yocto,
-    env,
-    ext_contract,
-    near_bindgen,
-    AccountId,
-    Balance,
-    Gas,
-    Promise,
-    PromiseResult,
-    StorageUsage,
-};
-
-// contract interface modules
-use crate::common::{
+use mintbase_deps::common::{
     NFTContractMetadata,
     NewSplitOwner,
     NonFungibleContractMetadata,
@@ -39,7 +11,6 @@ use crate::common::{
     Payout,
     Royalty,
     RoyaltyArgs,
-    SafeFraction,
     SplitBetweenUnparsed,
     SplitOwners,
     StorageCosts,
@@ -48,19 +19,20 @@ use crate::common::{
     TokenMetadata,
     TokenMetadataCompliant,
 };
-use crate::consts::{
+use mintbase_deps::consts::{
     GAS_NFT_BATCH_APPROVE,
     GAS_NFT_TRANSFER_CALL,
     MAX_LEN_PAYOUT,
     MINIMUM_CUSHION,
     NO_DEPOSIT,
 };
-use crate::interfaces::{
+// contract interface modules
+use mintbase_deps::interfaces::{
     ext_on_approve,
     ext_on_transfer,
 };
 // logging functions
-use crate::logging::{
+use mintbase_deps::logging::{
     log_approve,
     log_batch_approve,
     log_grant_minter,
@@ -76,7 +48,33 @@ use crate::logging::{
     log_set_split_owners,
     log_transfer_store,
 };
-use crate::utils::ntot;
+use mintbase_deps::near_sdk::borsh::{
+    self,
+    BorshDeserialize,
+    BorshSerialize,
+};
+use mintbase_deps::near_sdk::collections::{
+    LookupMap,
+    UnorderedSet,
+};
+use mintbase_deps::near_sdk::json_types::{
+    U128,
+    U64,
+};
+use mintbase_deps::near_sdk::{
+    self,
+    assert_one_yocto,
+    env,
+    ext_contract,
+    near_bindgen,
+    AccountId,
+    Balance,
+    Gas,
+    Promise,
+    PromiseResult,
+    StorageUsage,
+};
+use mintbase_deps::utils::ntot;
 
 // ------------------------------- constants -------------------------------- //
 const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));
@@ -1338,25 +1336,6 @@ pub trait NonFungibleResolveTransfer {
 }
 
 // ------------------------ impls on external types ------------------------- //
-impl NewSplitOwner for SplitOwners {
-    fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
-        assert!(split_between.len() >= 2);
-        // validate args
-        let mut sum: u32 = 0;
-        let split_between: HashMap<AccountId, SafeFraction> = split_between
-            .into_iter()
-            .map(|(addr, numerator)| {
-                assert!(env::is_valid_account_id(addr.as_bytes()));
-                let sf = SafeFraction::new(numerator);
-                sum += sf.numerator;
-                (addr, sf)
-            })
-            .collect();
-        assert!(sum == 10_000, "sum not 10_000: {}", sum);
-
-        Self { split_between }
-    }
-}
 // --------------------------- logging functions ---------------------------- //
 // TODO: move those here :)
 

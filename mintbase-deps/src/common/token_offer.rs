@@ -12,8 +12,8 @@ use serde::{
     Serialize,
 };
 
-use crate::common::time::now;
-use crate::common::{
+use crate::common::time::{
+    now,
     NearTime,
     TimeUnit,
 };
