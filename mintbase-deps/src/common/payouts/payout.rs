@@ -16,7 +16,7 @@ use crate::common::{
     SafeFraction,
     SplitOwners,
 };
-use crate::consts::MAX_LEN_PAYOUT;
+use crate::constants::MAX_LEN_PAYOUT;
 
 /// Whom to pay. Generated from `OwnershipFractions`.
 #[derive(Serialize, Deserialize)]

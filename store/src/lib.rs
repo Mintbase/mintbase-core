@@ -6,25 +6,22 @@ use mintbase_deps::common::{
     NFTContractMetadata,
     NewSplitOwner,
     NonFungibleContractMetadata,
-    Owner,
     OwnershipFractions,
     Payout,
     Royalty,
     RoyaltyArgs,
     SplitBetweenUnparsed,
     SplitOwners,
-    StorageCosts,
-    Token,
-    TokenCompliant,
     TokenMetadata,
     TokenMetadataCompliant,
 };
-use mintbase_deps::consts::{
-    GAS_NFT_BATCH_APPROVE,
-    GAS_NFT_TRANSFER_CALL,
+use mintbase_deps::constants::{
+    gas,
+    storage_stake,
+    StorageCosts,
     MAX_LEN_PAYOUT,
-    MINIMUM_CUSHION,
     NO_DEPOSIT,
+    YOCTO_PER_BYTE,
 };
 // contract interface modules
 use mintbase_deps::interfaces::{
@@ -69,15 +66,15 @@ use mintbase_deps::near_sdk::{
     near_bindgen,
     AccountId,
     Balance,
-    Gas,
     Promise,
     PromiseResult,
     StorageUsage,
 };
-use mintbase_deps::utils::ntot;
-
-// ------------------------------- constants -------------------------------- //
-const GAS_PASS_TO_APPROVED: Gas = ntot(Gas(25));
+use mintbase_deps::token::{
+    Owner,
+    Token,
+    TokenCompliant,
+};
 
 // ----------------------------- smart contract ----------------------------- //
 
@@ -195,7 +192,7 @@ impl MintbaseStore {
                 msg,
                 account_id,
                 env::attached_deposit() - store_approval_storage,
-                GAS_NFT_BATCH_APPROVE,
+                gas::NFT_BATCH_APPROVE,
             )
             .into()
         } else {
@@ -277,7 +274,7 @@ impl MintbaseStore {
                 msg,
                 account_id,
                 0,
-                GAS_PASS_TO_APPROVED,
+                gas::NFT_ON_APPROVE,
             )
             .into()
         } else {
@@ -358,7 +355,7 @@ impl MintbaseStore {
             tokens_burned: 0,
             num_approved: 0,
             owner_id,
-            storage_costs: StorageCosts::new(10_000_000_000_000_000_000), // 10^19
+            storage_costs: StorageCosts::new(YOCTO_PER_BYTE), // 10^19
             allow_moves: true,
         }
     }
@@ -722,9 +719,9 @@ impl MintbaseStore {
         self.assert_store_owner();
         let unused_deposit: u128 = env::account_balance()
             - env::storage_usage() as u128 * self.storage_costs.storage_price_per_byte;
-        if unused_deposit > MINIMUM_CUSHION {
+        if unused_deposit > storage_stake::CUSHION {
             near_sdk::Promise::new(self.owner_id.clone())
-                .transfer(unused_deposit - MINIMUM_CUSHION);
+                .transfer(unused_deposit - storage_stake::CUSHION);
         } else {
             let s = format!(
                 "Nothing withdrawn. Unused deposit is less than 0.5N: {}",
@@ -1273,7 +1270,7 @@ impl MintbaseStore {
             msg,
             receiver_id.clone(),
             NO_DEPOSIT,
-            Gas(GAS_NFT_TRANSFER_CALL),
+            gas::NFT_TRANSFER_CALL,
         )
         .then(store_self::nft_resolve_transfer(
             owner_id,
@@ -1282,7 +1279,7 @@ impl MintbaseStore {
             None,
             env::current_account_id(),
             NO_DEPOSIT,
-            Gas(GAS_NFT_TRANSFER_CALL),
+            gas::NFT_TRANSFER_CALL,
         ))
     }
 

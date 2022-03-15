@@ -17,7 +17,7 @@ use crate::common::{
     SplitBetween,
     SplitBetweenUnparsed,
 };
-use crate::consts::ROYALTY_UPPER_LIMIT;
+use crate::constants::ROYALTY_UPPER_LIMIT;
 
 /// A representation of permanent partial ownership of a Token's revenues.
 /// Percentages must add to 10,000. On purchase of the `Token`, a percentage of

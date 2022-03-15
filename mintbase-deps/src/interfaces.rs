@@ -151,7 +151,7 @@ mod factory_interfaces {
     }
 }
 
-// TODO: Is this used anywhere?
+// TODO: Is this used anywhere? -> nope
 // --------------------------- nft core interface --------------------------- //
 
 /// Impl of NEP-171. Note that the impl makes the assumption that `TokenId` has
@@ -237,5 +237,5 @@ pub trait NonFungibleContractCore {
     fn nft_token(
         &self,
         token_id: near_sdk::json_types::U64,
-    ) -> Option<crate::common::Token>;
+    ) -> Option<crate::token::Token>;
 }
