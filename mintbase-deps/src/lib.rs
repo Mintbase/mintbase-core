@@ -2,11 +2,16 @@ pub mod common;
 pub mod consts;
 pub mod interfaces;
 pub mod logging;
+pub mod utils;
 
-// re-export for market
-#[cfg(feature = "wasm")]
-pub use near_sdk;
+// re-exports for consistent dependencies
+pub use near_sdk::{
+    self,
+    serde,
+    serde_json,
+};
 
+// TODO: extract
 #[cfg(feature = "factory-wasm")]
 pub mod factory;
 #[cfg(feature = "helper-wasm")]
@@ -14,12 +19,28 @@ pub mod helper;
 #[cfg(feature = "store-wasm")]
 pub mod store;
 
+// TODO: move module resolution to indexer
 #[cfg(feature = "all")]
-pub mod indexer;
-// TODO: end global scope pollution
-#[cfg(feature = "all")]
-pub use consts::*;
-#[cfg(feature = "all")]
-pub use indexer::*;
-
-pub mod utils;
+pub use crate::logging::{
+    NearJsonEvent,
+    Nep171Event,
+    Nep171EventLog,
+    NftApproveLog,
+    NftBurnLog,
+    NftComposeLog,
+    NftListLog,
+    NftLoanSetLog,
+    NftMarketLog,
+    NftMintLog,
+    NftMintLogMemo,
+    NftOfferLog2,
+    NftOptionStringLog,
+    NftRevokeLog,
+    NftSaleLog,
+    NftSetSplitOwnerLog,
+    NftStoreCreateLog,
+    NftStringLog,
+    NftTransferLog,
+    NftUpdateListLog,
+    NftUpdateOfferLog,
+};

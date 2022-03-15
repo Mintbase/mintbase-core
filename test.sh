@@ -16,6 +16,11 @@ build_wasm() {
   # mv "wasm/$1-opt.wasm" "wasm/$1.wasm"
 }
 
+kill_the_damn_sandbox() {
+  killall near-sandbox
+  pkill near-sandbox
+}
+
 cargo +nightly fmt || fail "Formatting"
 cargo lint || fail "Linting"
 
@@ -34,12 +39,13 @@ cargo indexer || fail "Compiling indexer"
 
 # Sandbox node is sometimes running in the background and causing problems
 # -> kill sandbox in case I used it manually
-killall near-sandbox
-pkill near-sandbox
+kill_the_damn_sandbox
 
 # (cd testing && npm test -- -m "approvals::core") || fail "Testing"
-(cd testing && npm test) || fail "Testing"
+(cd testing && npm test) || {
+  kill_the_damn_sandbox
+  fail "Testing"
+}
 
 # Be a good scripty-boy and clean up!
-killall near-sandbox
-pkill near-sandbox
+kill_the_damn_sandbox
