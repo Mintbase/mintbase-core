@@ -2,7 +2,7 @@
 .idea
 .vscode
 *leak*
-indexer
+# indexer
 _scripts
 .postgres.sh
 wasm
@@ -10,3 +10,7 @@ error.log
 out.log
 bin
 *.log
+
+tills-notes.md
+testing/node_modules
+testing/TODO

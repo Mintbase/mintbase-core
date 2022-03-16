@@ -1,50 +1,39 @@
-mod consts;
-mod enums;
-mod fns;
-mod impls;
-mod structs;
-mod traits;
+pub mod common;
+pub mod constants;
+pub mod interfaces;
+pub mod logging;
+pub mod token;
+pub mod utils;
 
-use std::path::PathBuf;
-use std::str::FromStr;
+// ----------------- re-exports for consistent dependencies ----------------- //
+pub use near_sdk::{
+    self,
+    serde,
+    serde_json,
+};
 
-pub use consts::*;
-pub use enums::*;
-pub use fns::*;
-pub use impls::*;
-pub use structs::*;
-pub use traits::*;
-
+// TODO: move module resolution to indexer
 #[cfg(feature = "all")]
-mod mintbase_std {
-    pub use {
-        bigdecimal,
-        chrono,
-        dotenv,
-        futures,
-        hyper,
-        near_account_id,
-        near_client_primitives,
-        near_crypto,
-        near_indexer,
-        near_jsonrpc_client,
-        near_jsonrpc_primitives,
-        near_primitives,
-        near_sdk,
-        openssl_probe,
-        rayon,
-        reqwest,
-        tokio,
-        tokio_postgres,
-        tokio_stream,
-        tower,
-        tracing,
-        tracing_appender,
-        tracing_subscriber,
-        uuid,
-    };
-}
-#[cfg(feature = "all")]
-pub use mintbase_std::*;
-#[cfg(feature = "wasm")]
-pub use near_sdk;
+pub use crate::logging::{
+    NearJsonEvent,
+    Nep171Event,
+    Nep171EventLog,
+    NftApproveLog,
+    NftBurnLog,
+    NftComposeLog,
+    NftListLog,
+    NftLoanSetLog,
+    NftMarketLog,
+    NftMintLog,
+    NftMintLogMemo,
+    NftOfferLog2,
+    NftOptionStringLog,
+    NftRevokeLog,
+    NftSaleLog,
+    NftSetSplitOwnerLog,
+    NftStoreCreateLog,
+    NftStringLog,
+    NftTransferLog,
+    NftUpdateListLog,
+    NftUpdateOfferLog,
+};

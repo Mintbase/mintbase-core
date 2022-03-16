@@ -1,111 +1,323 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
+use std::str::FromStr;
 
+use near_sdk::json_types::{
+    U128,
+    U64,
+};
+use near_sdk::serde::{
+    Deserialize,
+    Serialize,
+};
 use near_sdk::{
     env,
     AccountId,
 };
-use serde_json::{self,};
 
-#[cfg(feature = "all")]
-use crate::tokio_postgres::NoTls;
-use crate::*;
-#[cfg(feature = "all")]
-use crate::{
-    tokio,
-    tokio_postgres,
+use crate::common::{
+    NFTContractMetadata,
+    Royalty,
+    SplitOwners,
+    TokenOffer,
 };
 
-#[cfg(feature = "all")]
-pub async fn get_postgres_conn() -> tokio_postgres::Client {
-    let (client, connection) = tokio_postgres::connect(
-        "host=localhost user=postgres dbname=postgres password=abc123 port=5433",
-        NoTls,
-    )
-    .await
-    .unwrap();
+// ----------------------------- various types ------------------------------ //
 
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
-        } else {
-            println!("done");
-        }
-    });
-
-    client
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "event", content = "data")]
+#[serde(rename_all = "snake_case")]
+pub enum Nep171EventLog {
+    NftMint(Vec<NftMintLog>),
+    NftBurn(Vec<NftBurnLog>),
+    NftTransfer(Vec<NftTransferLog>),
 }
 
-#[cfg(feature = "all")]
-pub fn near_json_event_from_str(s: &str) -> Result<NearJsonEvent, serde_json::Error> {
-    let s = s.replace("EVENT_JSON:", "");
-    let s = s.replace("EVENT_JSON", "");
-    let event = serde_json::from_str::<NearJsonEvent>(s.as_str())?;
-    Ok(event)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Nep171Event {
+    pub standard: String,
+    pub version: String,
+    #[serde(flatten)]
+    pub event_kind: Nep171EventLog,
 }
 
-#[cfg(feature = "all")]
-pub fn near_nep171_event_from_str(s: &str) -> Result<Nep171Event, serde_json::Error> {
-    let s = s.replace("EVENT_JSON:", "");
-    let s = s.replace("EVENT_JSON", "");
-    let event = serde_json::from_str::<Nep171Event>(s.as_str())?;
-    Ok(event)
-}
-
-#[cfg(feature = "all")]
-pub fn indexer_home_dir() -> PathBuf {
-    near_indexer::get_default_home()
-}
-
-#[cfg(feature = "all")]
-pub fn indexer_pk() -> PathBuf {
-    let mut home_dir = indexer_home_dir();
-    home_dir.push("validator_key.json");
-    home_dir
-}
-#[cfg(feature = "all")]
-pub fn clear_dir() {
-    let dir = indexer_home_dir();
-    println!("clearing {:?}", dir);
-    std::fs::remove_dir_all(&dir).unwrap();
-}
-
-#[cfg(feature = "factory-wasm")]
-pub fn log_factory_new(
-    store: &NFTContractMetadata,
-    store_account_id: &str,
-    owner_id: &str,
-) {
-    let nscl = NftStoreCreateLog {
-        contract_metadata: store.clone(),
-        owner_id: owner_id.to_string(),
-        id: store_account_id.to_string(),
-    };
-    let event = NearJsonEvent {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event: "nft_store_creation".to_string(),
-        data: serde_json::to_string(&nscl).unwrap(),
-    };
-    env::log_str(event.near_json_event().as_str());
-}
-
-/// Split a &str around a dash char
-pub fn split_colon(string: &str) -> (&str, &str) {
-    let pos = string.find(':').expect("no colon");
-    (&string[..pos], &string[(pos + 1)..])
-}
-
-pub fn to_yocto(value: &str) -> u128 {
-    let vals: Vec<_> = value.split('.').collect();
-    let part1 = vals[0].parse::<u128>().unwrap() * 10u128.pow(24);
-    if vals.len() > 1 {
-        let power = vals[1].len() as u32;
-        let part2 = vals[1].parse::<u128>().unwrap() * 10u128.pow(24 - power);
-        part1 + part2
-    } else {
-        part1
+impl Nep171Event {
+    pub fn near_json_event(&self) -> String {
+        let json = serde_json::to_string(&self).unwrap();
+        format!("EVENT_JSON: {}", &json)
     }
 }
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum NftEvent {
+    NftCreateStore(NftStoreCreateLog),
+    NftStringEvent(NftStringLog),
+    NftCreate(Vec<NftMintLog>),
+    NftDelete(Vec<NftBurnLog>),
+    NftCreateApproval(Vec<NftApproveLog>),
+    NftRevoke(NftRevokeLog),
+    NftUpdate(Vec<NftTransferLog>),
+    NftUpdateSplitOwner(NftSetSplitOwnerLog),
+    NftUpdateLoan(NftLoanSetLog),
+    NftCreateCompose(NftComposeLog),
+    NftDeleteCompose(NftUncomposeLog),
+    NftOnCreateCompose(NftOnComposeLog),
+    NftOnDeleteCompose(NftOnUncomposeLog),
+    NftOnMove(NftOnMoveLog),
+    NftMoved(NftMovedLog),
+    NftCreateList(Vec<NftListLog>),
+    NftCreateOffer(NftOfferLog),
+    NftUpdateOffer(NftUpdateOfferLog),
+    NftCreateSale(NftSaleLog),
+    NftUpdateMarket(NftMarketLog),
+    NftUpdateIcon(NftOptionStringLog),
+    NftUpdateList(NftUpdateListLog),
+}
+
+impl TryFrom<&str> for NftEvent {
+    type Error = serde_json::error::Error;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        // ne.map_err(|x|NftEventError(x.to_string()))
+        serde_json::from_str::<NftEvent>(s)
+    }
+}
+
+// ------------------ general event according to standard ------------------- //
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NearJsonEvent {
+    pub standard: String,
+    pub version: String,
+    pub event: String,
+    pub data: String,
+}
+
+impl FromStr for NearJsonEvent {
+    type Err = serde_json::error::Error;
+
+    fn from_str(_s: &str) -> Result<Self, Self::Err> {
+        todo!()
+    }
+}
+
+impl From<NftEvent> for NearJsonEvent {
+    fn from(ne: NftEvent) -> Self {
+        let json = serde_json::to_string(&ne).unwrap();
+        Self {
+            standard: "nep171".to_string(),
+            version: "1.0.0".to_string(),
+            event: "".to_string(),
+            data: json,
+        }
+    }
+}
+
+impl NearJsonEvent {
+    pub fn near_json_event(&self) -> String {
+        let json = serde_json::to_string(&self).unwrap();
+        format!("EVENT_JSON: {}", &json)
+    }
+}
+
+// ------------------------------- log types -------------------------------- //
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftStoreCreateLog {
+    pub contract_metadata: NFTContractMetadata,
+    pub owner_id: String,
+    pub id: String,
+}
+
+impl Default for NftStoreCreateLog {
+    fn default() -> Self {
+        Self {
+            contract_metadata: Default::default(),
+            owner_id: "".to_string(),
+            id: "".to_string(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftStringLog {
+    pub data: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOptionStringLog {
+    pub data: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftMintLog {
+    pub owner_id: String,
+    pub token_ids: Vec<String>,
+    pub memo: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftBurnLog {
+    pub owner_id: String,
+    pub authorized_id: Option<String>,
+    pub token_ids: Vec<String>,
+    pub memo: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftApproveLog {
+    pub token_id: u64,
+    pub approval_id: u64,
+    pub account_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftRevokeLog {
+    pub token_id: u64,
+    pub account_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftTransferLog {
+    pub authorized_id: Option<String>,
+    pub old_owner_id: String,
+    pub new_owner_id: String,
+    pub token_ids: Vec<String>,
+    pub memo: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftSetSplitOwnerLog {
+    pub split_owners: SplitOwners,
+    pub token_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftLoanSetLog {
+    pub account_id: Option<String>,
+    pub token_id: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftComposeLog {
+    pub token_ids: Vec<U64>,
+    /// direct parent of token_ids
+    pub parent: String,
+    /// - "t": owned directly by a token on this contract
+    /// - "k": owned directly by a token on another contract
+    pub ttype: String,
+    /// local root of chain of token_ids
+    pub lroot: Option<u64>,
+    /// holder of local root
+    pub holder: String,
+    pub depth: u8,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftUncomposeLog {
+    pub token_ids: Vec<U64>,
+    pub holder: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOnComposeLog {
+    pub predecessor: String,
+    pub token_id: U64,
+    /// direct parent of token_ids
+    pub cross_child_id: U64,
+    /// local root of chain of token_ids
+    pub lroot: Option<u64>,
+    /// holder of local root
+    pub holder: String,
+    pub depth: u8,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOnUncomposeLog {
+    pub token_id: U64,
+    pub holder: String,
+    pub child_key: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftMovedLog {
+    pub token_id: U64,
+    pub contract_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOnMoveLog {
+    pub token_id: U64,
+    pub origin_key: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftListLog {
+    pub list_id: String,
+    pub price: String,
+    pub token_key: String,
+    pub owner_id: String,
+    pub autotransfer: bool,
+    pub approval_id: String,
+    pub token_id: String,
+    pub store_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftMintLogMemo {
+    pub royalty: Option<Royalty>,
+    pub split_owners: Option<SplitOwners>,
+    pub meta_id: Option<String>,
+    pub meta_extra: Option<String>,
+    pub minter: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftUpdateListLog {
+    pub auto_transfer: Option<bool>,
+    pub price: Option<String>,
+    pub list_id: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOfferLog2 {
+    pub offer: TokenOffer,
+    pub list_id: String,
+    pub token_key: String,
+    pub offer_num: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftOfferLog {
+    pub price: String,
+    pub from: String,
+    pub timeout: String,
+    pub list_id: String,
+    pub token_key: String,
+    pub offer_num: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftUpdateOfferLog {
+    pub list_id: String,
+    pub offer_num: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftSaleLog {
+    pub list_id: String,
+    pub offer_num: u64,
+    pub token_key: String,
+    pub payout: HashMap<AccountId, U128>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NftMarketLog {
+    pub account_id: String,
+    pub state: bool,
+}
+
+// --------------------------- logging functions ---------------------------- //
 
 pub fn log_grant_minter(account_id: &AccountId) {
     let log = NftStringLog {
@@ -230,9 +442,7 @@ pub fn log_nft_batch_burn(
     env::log_str(event.near_json_event().as_str());
 }
 
-//////////
-// NEPs //
-//////////
+// ---------------------------------- NEPs ---------------------------------- //
 
 // Approval
 pub fn log_approve(
@@ -525,12 +735,7 @@ pub fn log_nft_moved(
     env::log_str(event.near_json_event().as_str());
 }
 
-/// An alias for env::block_timestamp. Note that block_timestamp returns
-/// the number of **nanoseconds since Jan 1 1970 UTC**. Note that each day
-/// is 8.64*10^14 nanoseconds.
-pub fn now() -> NearTime {
-    NearTime(env::block_timestamp())
-}
+// ----------------------------- market events ------------------------------ //
 
 pub fn log_listing_created(
     list_id: &str,
@@ -711,26 +916,6 @@ pub fn log_token_removed(list_id: &str) {
     env::log_str(event.near_json_event().as_str());
 }
 
-//////////////////
-// Market owner //
-//////////////////
-pub fn log_allowlist_update(
-    account_id: &AccountId,
-    state: bool,
-) {
-    let log = vec![NftMarketLog {
-        account_id: account_id.to_string(),
-        state,
-    }];
-    let event = NearJsonEvent {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event: "nft_allowlist".to_string(),
-        data: serde_json::to_string(&log).unwrap(),
-    };
-    env::log_str(event.near_json_event().as_str());
-}
-
 pub fn log_banlist_update(
     account_id: &AccountId,
     state: bool,
@@ -748,6 +933,32 @@ pub fn log_banlist_update(
     env::log_str(event.near_json_event().as_str());
 }
 
-pub fn to_near(n: u128) -> u128 {
-    n * 10u128.pow(24)
+pub fn log_allowlist_update(
+    account_id: &AccountId,
+    state: bool,
+) {
+    let log = vec![NftMarketLog {
+        account_id: account_id.to_string(),
+        state,
+    }];
+    let event = NearJsonEvent {
+        standard: "nep171".to_string(),
+        version: "1.0.0".to_string(),
+        event: "nft_allowlist".to_string(),
+        data: serde_json::to_string(&log).unwrap(),
+    };
+    env::log_str(event.near_json_event().as_str());
+}
+
+// --------------------- NFT event error (deprecated?) ---------------------- //
+#[derive(Debug, Clone)]
+pub struct NftEventError(pub String);
+
+impl std::fmt::Display for NftEventError {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
