@@ -135,6 +135,7 @@ impl Default for MintbaseStore {
     }
 }
 
+#[near_bindgen]
 impl NonFungibleContractMetadata for MintbaseStore {
     fn nft_metadata(&self) -> &NFTContractMetadata {
         &self.metadata
