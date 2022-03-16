@@ -1,17 +1,33 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use near_sdk::borsh::{
+use mintbase_deps::common::{
+    NFTContractMetadata,
+    StoreInitArgs,
+};
+use mintbase_deps::constants::{
+    gas,
+    storage_bytes,
+    storage_stake,
+    NO_DEPOSIT,
+    YOCTO_PER_BYTE,
+};
+use mintbase_deps::interfaces::factory_self;
+use mintbase_deps::logging::{
+    NearJsonEvent,
+    NftStoreCreateLog,
+};
+use mintbase_deps::near_sdk::borsh::{
     self,
     BorshDeserialize,
     BorshSerialize,
 };
-use near_sdk::collections::LookupSet;
-use near_sdk::json_types::U128;
-use near_sdk::{
+use mintbase_deps::near_sdk::collections::LookupSet;
+use mintbase_deps::near_sdk::json_types::U128;
+use mintbase_deps::near_sdk::{
+    self,
     assert_one_yocto,
     env,
-    ext_contract,
     is_promise_success,
     near_bindgen,
     AccountId,
@@ -19,21 +35,7 @@ use near_sdk::{
     Promise,
     PublicKey,
 };
-
-use crate::common::{
-    NFTContractMetadata,
-    StoreInitArgs,
-};
-use crate::consts::{
-    GAS_CREATE_STORE,
-    GAS_ON_CREATE_CALLBACK,
-    NO_DEPOSIT,
-    STORE_STORAGE,
-};
-use crate::logging::{
-    NearJsonEvent,
-    NftStoreCreateLog,
-};
+use mintbase_deps::serde_json;
 // ------------------------------- constants -------------------------------- //
 
 // ----------------------------- smart contract ----------------------------- //
@@ -58,18 +60,6 @@ pub struct MintbaseStoreFactory {
 }
 
 // ----------------------- contract interface modules ----------------------- //
-#[ext_contract(factory_self)]
-pub trait OnCreateCallback {
-    fn on_create(
-        &mut self,
-        store_creator_id: AccountId,
-        metadata: NFTContractMetadata,
-        owner_id: AccountId,
-        store_account_id: AccountId,
-        attached_deposit: U128,
-    );
-}
-
 impl Default for MintbaseStoreFactory {
     fn default() -> Self {
         env::panic_str("Not initialized yet.");
@@ -90,7 +80,7 @@ impl MintbaseStoreFactory {
     /// Sufficient attached deposit is defined as enough to deploy a `Store`,
     /// plus enough left over for the mintbase deployment cost.
     pub fn assert_sufficient_attached_deposit(&self) {
-        let min = STORE_STORAGE as u128 * self.storage_price_per_byte + self.mintbase_fee;
+        let min = storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee;
         assert!(
             env::attached_deposit() >= min,
             "Not enough attached deposit to complete store deployment. Need: {}, got: {}",
@@ -129,7 +119,7 @@ impl MintbaseStoreFactory {
 
     /// The sum of `mintbase_fee` and `STORE_STORAGE`.
     pub fn get_minimum_attached_balance(&self) -> U128 {
-        (STORE_STORAGE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
+        (storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
     }
 
     /// The sum of `mintbase_fee` and `STORE_STORAGE`.
@@ -146,7 +136,7 @@ impl MintbaseStoreFactory {
     ) {
         self.assert_only_owner();
         self.storage_price_per_byte = new_price.into();
-        self.store_cost = self.storage_price_per_byte * STORE_STORAGE as u128;
+        self.store_cost = self.storage_price_per_byte * storage_bytes::STORE as u128;
     }
 
     /// Set amount of Near tokens taken by Mintbase for making `Store`s. Provide an
@@ -233,13 +223,13 @@ impl MintbaseStoreFactory {
     #[init(ignore_state)]
     pub fn new() -> Self {
         assert!(!env::state_exists());
-        let storage_price_per_byte = 10_000_000_000_000_000_000; // 10^19
+        let storage_price_per_byte = YOCTO_PER_BYTE; // 10^19
         Self {
             stores: LookupSet::new(b"t".to_vec()),
             mintbase_fee: 0, // 0 by default
             owner_id: env::predecessor_account_id(),
             storage_price_per_byte,
-            store_cost: STORE_STORAGE as u128 * storage_price_per_byte,
+            store_cost: storage_stake::STORE,
             admin_public_key: env::signer_account_pk(),
         }
     }
@@ -283,8 +273,8 @@ impl MintbaseStoreFactory {
             .create_account()
             .transfer(self.store_cost)
             .add_full_access_key(self.admin_public_key.clone())
-            .deploy_contract(include_bytes!("../../../wasm/store.wasm").to_vec())
-            .function_call("new".to_string(), init_args, 0, GAS_CREATE_STORE)
+            .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
+            .function_call("new".to_string(), init_args, 0, gas::CREATE_STORE)
             .then(factory_self::on_create(
                 env::predecessor_account_id(),
                 metadata,
@@ -293,13 +283,13 @@ impl MintbaseStoreFactory {
                 env::attached_deposit().into(),
                 env::current_account_id(),
                 NO_DEPOSIT,
-                GAS_ON_CREATE_CALLBACK,
+                gas::ON_CREATE_CALLBACK,
             ))
     }
 }
 
 // ------------------------ impls on external types ------------------------- //
-// TODO: Why the trait?
+// TODO: Why the trait? -> to be able to impl it in this crate
 pub trait New {
     fn new(arg: Self) -> Self;
 }

@@ -1,15 +1,15 @@
-use near_sdk::borsh::{
+use mintbase_deps::near_sdk::borsh::{
     self,
     BorshDeserialize,
     BorshSerialize,
 };
-use near_sdk::{
+use mintbase_deps::near_sdk::{
+    self,
     env,
     near_bindgen,
     AccountId,
     PromiseOrValue,
 };
-// ------------------------------- constants -------------------------------- //
 
 // ----------------------------- smart contract ----------------------------- //
 #[near_bindgen]
@@ -53,9 +53,3 @@ impl HelperWasm {
         }
     }
 }
-
-// ----------------------- contract interface modules ----------------------- //
-
-// ------------------------ impls on external types ------------------------- //
-
-// ---------------------------------- misc ---------------------------------- //

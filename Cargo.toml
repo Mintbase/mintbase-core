@@ -2,6 +2,9 @@
 
 members = [
 	"mintbase-deps",
+	"store",
+	"factory",
+	"helper",
+	"simple-market-contract",
 	"mintbase-near-indexer",
-	"simple-market-contract"
 ]

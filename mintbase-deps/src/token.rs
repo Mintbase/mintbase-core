@@ -12,14 +12,18 @@ use near_sdk::serde::{
 use near_sdk::AccountId;
 
 use crate::common::{
-    ComposeableStats,
-    Loan,
-    Owner,
     Royalty,
     SplitOwners,
     TokenKey,
     TokenMetadataCompliant,
 };
+
+mod composeable_stats;
+pub use composeable_stats::ComposeableStats;
+mod loan;
+pub use loan::Loan;
+mod owner;
+pub use owner::Owner;
 
 /// Supports NEP-171, 177, 178, 181. Ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Core.md

@@ -33,7 +33,7 @@ pub struct ComposeableStats {
 }
 
 impl ComposeableStats {
-    pub(crate) fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             local_depth: 0,
             cross_contract_children: 0,

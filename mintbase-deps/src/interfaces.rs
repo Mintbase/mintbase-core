@@ -123,15 +123,36 @@ mod store_interfaces {
     }
 }
 
-// TODO: Is this used anywhere?
-// --------------------------- nft core interface --------------------------- //
-use near_sdk::json_types::U64;
-use near_sdk::{
-    AccountId,
-    Promise,
-};
+#[cfg(feature = "factory-wasm")]
+pub use factory_interfaces::*;
 
-use crate::common::Token;
+/// Interfaces that we need the factory to be aware of
+#[cfg(feature = "factory-wasm")]
+#[allow(clippy::too_many_arguments)]
+mod factory_interfaces {
+    use near_sdk::json_types::U128;
+    use near_sdk::{
+        self,
+        ext_contract,
+    };
+
+    use crate::common::NFTContractMetadata;
+
+    #[ext_contract(factory_self)]
+    pub trait OnCreateCallback {
+        fn on_create(
+            &mut self,
+            store_creator_id: AccountId,
+            metadata: NFTContractMetadata,
+            owner_id: AccountId,
+            store_account_id: AccountId,
+            attached_deposit: U128,
+        );
+    }
+}
+
+// TODO: Is this used anywhere? -> nope
+// --------------------------- nft core interface --------------------------- //
 
 /// Impl of NEP-171. Note that the impl makes the assumption that `TokenId` has
 /// type `String`, where this contract internally uses `u64`, which is more
@@ -161,9 +182,9 @@ pub trait NonFungibleContractCore {
     //#[payable]
     fn nft_transfer(
         &mut self,
-        receiver_id: AccountId,
-        token_id: U64,
-        approval_id: Option<U64>,
+        receiver_id: near_sdk::AccountId,
+        token_id: near_sdk::json_types::U64,
+        approval_id: Option<near_sdk::json_types::U64>,
         memo: Option<String>,
     );
 
@@ -205,16 +226,16 @@ pub trait NonFungibleContractCore {
     //#[payable]
     fn nft_transfer_call(
         &mut self,
-        receiver_id: AccountId,
-        token_id: U64,
-        approval_id: Option<U64>,
+        receiver_id: near_sdk::AccountId,
+        token_id: near_sdk::json_types::U64,
+        approval_id: Option<near_sdk::json_types::U64>,
         memo: Option<String>,
         msg: String,
-    ) -> Promise;
+    ) -> near_sdk::Promise;
 
     /// Returns the token with the given `token_id` or `None` if no such token.
     fn nft_token(
         &self,
-        token_id: U64,
-    ) -> Option<Token>;
+        token_id: near_sdk::json_types::U64,
+    ) -> Option<crate::token::Token>;
 }
