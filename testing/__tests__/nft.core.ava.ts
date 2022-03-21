@@ -40,8 +40,6 @@ FACTORY_WORKSPACE.test(
     // TODO::testing::medium trying deployment with forbidden names
     //  - reserved names: "market", "loan"
     //  - taken names, in this case "alice"
-    // TODO::testing::medium deployment with more metadata
-    // TODO::testing::medium check this contracts metadata
 
     // minting
     const mintCall = await alice
