@@ -260,9 +260,9 @@ impl MintbaseStore {
                     reference_hash: metadata.reference_hash,
                 };
                 TokenCompliant {
-                    id: x.id,
+                    token_id: format!("{}", x.id),
                     owner_id: x.owner_id,
-                    approvals: x.approvals,
+                    approved_account_ids: x.approvals,
                     metadata,
                     royalty,
                     split_owners: x.split_owners,

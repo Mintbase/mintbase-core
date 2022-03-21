@@ -83,12 +83,12 @@ FACTORY_WORKSPACE.test(
     await assertContractTokenOwners(
       { test, store },
       [
-        { id: "0", owner_id: alice.accountId },
-        { id: "1", owner_id: alice.accountId },
-        { id: "2", owner_id: alice.accountId },
-        { id: "3", owner_id: alice.accountId },
-        { id: "4", owner_id: alice.accountId },
-        { id: "5", owner_id: alice.accountId },
+        { token_id: "0", owner_id: alice.accountId },
+        { token_id: "1", owner_id: alice.accountId },
+        { token_id: "2", owner_id: alice.accountId },
+        { token_id: "3", owner_id: alice.accountId },
+        { token_id: "4", owner_id: alice.accountId },
+        { token_id: "5", owner_id: alice.accountId },
       ],
       "After minting"
     ).catch(failPromiseRejection(test, "checking token format"));
@@ -132,8 +132,6 @@ FACTORY_WORKSPACE.test(
       .catch(failPromiseRejection(test, "transferring"));
 
     // check transfer logs
-    // TODO::contracts::low: should empty fields be serialized as null or
-    //  simply omitted? -> null might make sense for the indexer
     assertEventLogs(
       test,
       (transferCall as TransactionResult).logs,
@@ -294,12 +292,12 @@ FACTORY_WORKSPACE.test(
     await assertContractTokenOwners(
       { test, store },
       [
-        { id: "0", owner_id: bob.accountId },
-        { id: "1", owner_id: bob.accountId },
-        { id: "2", owner_id: carol.accountId },
-        { id: "3", owner_id: alice.accountId },
-        { id: "4", owner_id: alice.accountId },
-        { id: "5", owner_id: alice.accountId },
+        { token_id: "0", owner_id: bob.accountId },
+        { token_id: "1", owner_id: bob.accountId },
+        { token_id: "2", owner_id: carol.accountId },
+        { token_id: "3", owner_id: alice.accountId },
+        { token_id: "4", owner_id: alice.accountId },
+        { token_id: "5", owner_id: alice.accountId },
       ],
       "After transfers"
     ).catch(failPromiseRejection(test, "checking token ownership"));

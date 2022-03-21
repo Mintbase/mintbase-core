@@ -7,7 +7,6 @@ import {
   mNEAR,
   NEAR,
   Tgas,
-  MintbaseToken,
 } from "./test-utils";
 
 MARKET_WORKSPACE.test(
