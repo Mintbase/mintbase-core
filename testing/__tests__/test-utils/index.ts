@@ -1,4 +1,4 @@
-import { NearAccount } from "near-workspaces-ava";
+import { NearAccount, TestnetRpc } from "near-workspaces-ava";
 import { ExecutionContext } from "ava";
 
 // TODO::testing::low: commenting all my test utils
@@ -10,6 +10,7 @@ export * from "./token";
 export * from "./approvals";
 export * from "./events";
 export * from "./payouts";
+export * from "./download-contracts";
 
 // ---------------------------------- misc ---------------------------------- //
 export async function batchMint({

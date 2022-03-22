@@ -276,5 +276,8 @@ MARKET_WORKSPACE.test(
     );
 
     // TODO::testing::low what happens in the case where one offer is valid and the other is not?
+
+    // TODO::testing::medium: Users don't need to pay for replacing an offer
+    // TODO::testing::medium: Users don't need to pay for replacing multiple offers
   }
 );
