@@ -114,13 +114,13 @@ impl Token {
 pub struct TokenCompliant {
     /// The id of this token on this `Store`. Not unique across `Store`s.
     /// `token_id`s count up from 0. Ref: https://github.com/near/NEPs/discussions/171
-    pub id: u64,
+    pub token_id: String,
     /// The current owner of this token. Either an account_id or a token_id (if composed).
     pub owner_id: Owner,
     /// Ref:
     /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/ApprovalManagement.md
     /// Set of accounts that may transfer this token, other than the owner.
-    pub approvals: HashMap<AccountId, u64>,
+    pub approved_account_ids: HashMap<AccountId, u64>,
     /// The metadata content for this token is stored in the Contract
     /// `token_metadata` field, to avoid duplication of metadata across tokens.
     /// Use metadata_id to lookup the metadata. `Metadata`s is permanently set

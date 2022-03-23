@@ -34,10 +34,10 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     test,
     await store.view("nft_tokens", {}),
     [
-      { id: "0", owner_id: alice.accountId },
-      { id: "1", owner_id: alice.accountId },
-      { id: "2", owner_id: bob.accountId },
-      { id: "3", owner_id: bob.accountId },
+      { token_id: "0", owner_id: alice.accountId },
+      { token_id: "1", owner_id: alice.accountId },
+      { token_id: "2", owner_id: bob.accountId },
+      { token_id: "3", owner_id: bob.accountId },
     ],
     "`nft_tokens({})` output is wrong"
   );
@@ -47,8 +47,8 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     test,
     await store.view("nft_tokens", { from_index: "2" }),
     [
-      { id: "2", owner_id: bob.accountId },
-      { id: "3", owner_id: bob.accountId },
+      { token_id: "2", owner_id: bob.accountId },
+      { token_id: "3", owner_id: bob.accountId },
     ],
     "`nft_tokens({ from_index })` output is wrong"
   );
@@ -61,8 +61,8 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     // FIXME::contracts::medium: limit should be 2
     await store.view("nft_tokens", { from_index: "1", limit: 3 }),
     [
-      { id: "1", owner_id: alice.accountId },
-      { id: "2", owner_id: bob.accountId },
+      { token_id: "1", owner_id: alice.accountId },
+      { token_id: "2", owner_id: bob.accountId },
     ],
     "`nft_tokens({ from_index, limit })` output is wrong"
   );
@@ -72,8 +72,8 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     test,
     await store.view("nft_tokens_for_owner", { account_id: bob.accountId }),
     [
-      { id: "2", owner_id: bob.accountId },
-      { id: "3", owner_id: bob.accountId },
+      { token_id: "2", owner_id: bob.accountId },
+      { token_id: "3", owner_id: bob.accountId },
     ],
     "`nft_tokens_for_owner({})` output is wrong"
   );
@@ -87,7 +87,7 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
       //  index of token for this token owner? -> if token_id, then use "3"
       from_index: "1",
     }),
-    [{ id: "3", owner_id: bob.accountId }],
+    [{ token_id: "3", owner_id: bob.accountId }],
     "`nft_tokens_for_owner({ from_index })` output is wrong"
   );
 
@@ -103,7 +103,7 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
       // (see above)
       limit: 1,
     }),
-    [{ id: "2", owner_id: bob.accountId }],
+    [{ token_id: "2", owner_id: bob.accountId }],
     "`nft_tokens_for_owner({ from_index, limit })` output is wrong"
   );
 });
