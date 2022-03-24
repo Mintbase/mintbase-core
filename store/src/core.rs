@@ -108,7 +108,7 @@ impl MintbaseStore {
         &self,
         token_id: U64,
     ) -> Option<TokenCompliant> {
-        Some(self.nft_token_compliant_internal(token_id.0))
+        self.nft_token_compliant_internal(token_id.0)
     }
 
     // -------------------------- private methods --------------------------
@@ -239,39 +239,36 @@ impl MintbaseStore {
     pub(crate) fn nft_token_compliant_internal(
         &self,
         token_id: u64,
-    ) -> TokenCompliant {
-        self.tokens
-            .get(&token_id)
-            .map(|x| {
-                let metadata = self.nft_token_metadata(U64(x.id));
-                let royalty = self.get_token_royalty(U64(x.id));
-                let metadata = TokenMetadataCompliant {
-                    title: metadata.title,
-                    description: metadata.description,
-                    media: metadata.media,
-                    media_hash: metadata.media_hash,
-                    copies: metadata.copies,
-                    issued_at: None,
-                    expires_at: metadata.expires_at,
-                    starts_at: metadata.starts_at,
-                    updated_at: None,
-                    extra: metadata.extra,
-                    reference: metadata.reference,
-                    reference_hash: metadata.reference_hash,
-                };
-                TokenCompliant {
-                    token_id: format!("{}", x.id),
-                    owner_id: x.owner_id,
-                    approved_account_ids: x.approvals,
-                    metadata,
-                    royalty,
-                    split_owners: x.split_owners,
-                    minter: x.minter,
-                    loan: x.loan,
-                    composeable_stats: x.composeable_stats,
-                    origin_key: x.origin_key,
-                }
-            })
-            .unwrap_or_else(|| panic!("token: {} doesn't exist", token_id))
+    ) -> Option<TokenCompliant> {
+        self.tokens.get(&token_id).map(|x| {
+            let metadata = self.nft_token_metadata(U64(x.id));
+            let royalty = self.get_token_royalty(U64(x.id));
+            let metadata = TokenMetadataCompliant {
+                title: metadata.title,
+                description: metadata.description,
+                media: metadata.media,
+                media_hash: metadata.media_hash,
+                copies: metadata.copies,
+                issued_at: None,
+                expires_at: metadata.expires_at,
+                starts_at: metadata.starts_at,
+                updated_at: None,
+                extra: metadata.extra,
+                reference: metadata.reference,
+                reference_hash: metadata.reference_hash,
+            };
+            TokenCompliant {
+                token_id: format!("{}", x.id),
+                owner_id: x.owner_id,
+                approved_account_ids: x.approvals,
+                metadata,
+                royalty,
+                split_owners: x.split_owners,
+                minter: x.minter,
+                loan: x.loan,
+                composeable_stats: x.composeable_stats,
+                origin_key: x.origin_key,
+            }
+        })
     }
 }
