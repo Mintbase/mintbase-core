@@ -77,7 +77,7 @@ MARKET_WORKSPACE.test(
     // check chain state: token owner hasn't changed
     await assertContractTokenOwner(
       { test, store },
-      { id: "0", owner_id: alice.accountId },
+      { token_id: "0", owner_id: alice.accountId },
       "Token auto-transferred on making auction offer"
     );
     // check chain state: highest offer is 1N
@@ -156,7 +156,7 @@ MARKET_WORKSPACE.test(
     // check chain state: token owner still hasn't changed
     await assertContractTokenOwner(
       { test, store },
-      { id: "0", owner_id: alice.accountId },
+      { token_id: "0", owner_id: alice.accountId },
       "Token auto-transferred on making auction offer"
     );
     // check chain state: highest offer is 2N
@@ -263,7 +263,7 @@ MARKET_WORKSPACE.test(
     // check chain state: token is owned by carol now
     assertContractTokenOwner(
       { test, store },
-      { id: "0", owner_id: carol.accountId },
+      { token_id: "0", owner_id: carol.accountId },
       "accepting auction offer"
     );
 

@@ -245,12 +245,12 @@ MARKET_WORKSPACE.test(
 
     await assertContractTokenOwner(
       { test, store },
-      { id: "0", owner_id: bob.accountId },
+      { token_id: "0", owner_id: bob.accountId },
       "After transfers"
     ).catch(failPromiseRejection(test, "checking token ownership"));
     await assertContractTokenOwner(
       { test, store },
-      { id: "1", owner_id: bob.accountId },
+      { token_id: "1", owner_id: bob.accountId },
       "After transfers"
     ).catch(failPromiseRejection(test, "checking token ownership"));
 

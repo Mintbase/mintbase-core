@@ -1,41 +1,26 @@
 import { NearAccount } from "near-workspaces-ava";
 import { ExecutionContext } from "ava";
 
-/** The current interface of a token on the store contract */
-export interface MintbaseToken {
-  // FIXME::store::high: this should  be a string, not number
-  id: number;
-  // owner_id: { Account: string };
-  owner_id: string;
-}
-
-/** Typescript narrowing function for `MintbaseToken` */
-export function isMintbaseToken(x: any): x is MintbaseToken {
-  return typeof x.id === "number" && typeof x.owner_id === "string";
-}
-
-// FIXME::store::high make token compliant with this
 /** The current interface of a token as described in NEP171 */
 export interface Nep171Token {
-  id: string;
+  token_id: string;
   owner_id: string;
 }
 
-// export function isNep171Token(x: any): x is Nep171Token {
-//   return typeof x.id === "string" && typeof x.owner_id === "string";
-// }
+export function isNep171Token(x: any): x is Nep171Token {
+  return typeof x.token_id === "string" && typeof x.owner_id === "string";
+}
 
-// FIXME::store::high should be based on NEP171, not the Mintbase token
 /**
  * Asserts that a token matches an expected token_id/owner_id pairing.
  */
 export function assertTokenIs(
   test: ExecutionContext,
-  token: MintbaseToken,
-  { id, owner_id }: Nep171Token,
+  token: Nep171Token,
+  { token_id, owner_id }: Nep171Token,
   msg: string
 ) {
-  test.is(`${token.id}`, id, `${msg}: Wrong token_id`);
+  test.is(`${token.token_id}`, token_id, `${msg}: Wrong token_id`);
   test.is(`${token.owner_id}`, owner_id, `${msg}: Wrong owner_id`);
 }
 
@@ -44,7 +29,7 @@ export function assertTokenIs(
  */
 export function assertTokensAre(
   test: ExecutionContext,
-  actual: MintbaseToken[],
+  actual: Nep171Token[],
   expected: Nep171Token[],
   msg: string
 ) {
@@ -60,23 +45,22 @@ export function assertTokensAre(
   });
 }
 
-// FIXME::store::high should be based on NEP171, not the Mintbase token
 /**
  * Asserts the contract state matches an expected token_id/owner_id pairing.
  */
 export async function assertContractTokenOwner(
   { test, store }: { test: ExecutionContext; store: NearAccount },
-  { id, owner_id }: Nep171Token,
+  { token_id, owner_id }: Nep171Token,
   msg: string
 ) {
-  const token: MintbaseToken = await store.view("nft_token", {
-    token_id: id,
+  const token: Nep171Token = await store.view("nft_token", {
+    token_id,
   });
   test.true(
-    isMintbaseToken(token),
-    `${msg}: Not a MintbaseToken (token_id: ${id})`
+    isNep171Token(token),
+    `${msg}: Not a MintbaseToken (token_id: ${token_id})`
   );
-  assertTokenIs(test, token, { id, owner_id }, msg);
+  assertTokenIs(test, token, { token_id, owner_id }, msg);
 }
 
 /**
@@ -86,7 +70,7 @@ export async function assertContractTokenOwner(
  */
 export async function assertContractTokenOwners(
   { test, store }: { test: ExecutionContext; store: NearAccount },
-  tokens: { id: string; owner_id: string }[],
+  tokens: { token_id: string; owner_id: string }[],
   msg: string
 ) {
   await Promise.all(
