@@ -121,6 +121,13 @@ STORE_WORKSPACE.test(
       ],
       "approving"
     );
+    test.is(
+      await store.view("nft_approval_id", {
+        token_id: "0",
+        account_id: bob.accountId,
+      }),
+      0
+    );
 
     // ----------------------------- batch approve -----------------------------
     const batchApproveCall = await alice

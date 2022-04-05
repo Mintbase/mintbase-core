@@ -30,8 +30,8 @@ impl MintbaseStore {
         account_id: AccountId,
         msg: Option<String>,
     ) -> Option<Promise> {
-        // Note: This method only guarantees that the store-storage is covered. The
-        // market may still reject.
+        // Note: This method only guarantees that the store-storage is covered.
+        // The market may still reject.
         assert!(env::attached_deposit() > self.storage_costs.common);
         let token_idu64 = token_id.into();
         // validates owner and loaned
@@ -151,6 +151,20 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
+    /// Returns the most recent `approval_id` for `account_id` on `token_id`.
+    /// If the account doesn't have approval on the token, it will return
+    /// `None`.
+    ///
+    /// Panics if the token doesn't exist.
+    pub fn nft_approval_id(
+        &self,
+        token_id: U64,
+        account_id: AccountId,
+    ) -> Option<u64> {
+        let token = self.nft_token_internal(token_id.into());
+        token.approvals.get(&account_id).cloned()
+    }
+
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
 
