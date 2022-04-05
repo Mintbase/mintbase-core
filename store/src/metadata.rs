@@ -41,7 +41,10 @@ impl MintbaseStore {
         base_uri: String,
     ) {
         self.assert_store_owner();
-        assert!(base_uri.len() <= 100);
+        near_assert!(
+            base_uri.len() <= 100,
+            "Base URI must be less then 100 chars"
+        );
         log_set_base_uri(&base_uri);
         self.metadata.base_uri = Some(base_uri);
     }
@@ -55,7 +58,10 @@ impl MintbaseStore {
         icon: Option<String>,
     ) {
         self.assert_store_owner();
-        assert!(icon.as_ref().map(|b| b.len() <= 100).unwrap_or(true));
+        near_assert!(
+            icon.as_ref().map(|b| b.len() <= 100).unwrap_or(true),
+            "Icon URI must be less then 100 chars"
+        );
         log_set_icon_base64(&icon);
         self.metadata.icon = icon;
     }

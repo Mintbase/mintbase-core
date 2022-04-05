@@ -98,7 +98,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(1), gas: Tgas(200) }
         );
       },
-      "panicked at 'assertion failed: n > 0',",
+      "Cannot set times into the past",
       "Bob tried to set instant expiry"
     );
     // fuzzing: to few arguments

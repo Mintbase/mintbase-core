@@ -104,7 +104,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        `panicked at '${bob.accountId} not a minter'`,
+        `${bob.accountId} is not allowed to mint on this store`,
         "Bob tried minting without minter permission",
       ],
       // try minting without yoctoNEAR deposit
@@ -116,7 +116,7 @@ FACTORY_WORKSPACE.test(
             num_to_mint: 1,
           });
         },
-        "panicked at 'assertion failed: env::attached_deposit() >= 1'",
+        "Requires deposit of at least 1 yoctoNEAR",
         "Alice tried minting without yoctoNEAR deposit",
       ],
     ]);
@@ -165,7 +165,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'approval_id required'",
+        "Disallowing approvals without approval ID",
         "Bob tried to transfer an unowned token",
       ],
       // try to transfer unowned token (store owner)
@@ -178,7 +178,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'approval_id required'",
+        "Disallowing approvals without approval ID",
         "Alice tried to transfer an unowned token",
       ],
     ]);
@@ -252,7 +252,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'assertion failed: token.is_pred_owner()'",
+        `${bob.accountId} is required to own token 2`,
         "Bob tried to batch transfer unowned tokens",
       ],
       // try to batch transfer unowned tokens (store owner)
@@ -270,7 +270,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'assertion failed: token.is_pred_owner()'",
+        `${alice.accountId} is required to own token 0`,
         "Alice tried to batch transfer unowned tokens",
       ],
       // try to batch transfer without yoctoNEAR deposit
@@ -345,8 +345,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        // TODO::contracts::low: msg should be more descriptive
-        "panicked at 'assertion failed: `(left == right)`",
+        `${bob.accountId} is required to own token 2`,
         "Bob tried to burn unowned tokens",
       ],
       // try to burn unowned tokens (store owner)
@@ -359,8 +358,7 @@ FACTORY_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        // TODO::contracts::low: msg should be more descriptive
-        "panicked at 'assertion failed: `(left == right)`",
+        `${alice.accountId} is required to own token 0`,
         "Alice tried to burn unowned tokens",
       ],
       // try to burn tokens without deposit

@@ -1,5 +1,4 @@
 use mintbase_deps::common::{
-    NewSplitOwner,
     Royalty,
     RoyaltyArgs,
     SplitBetweenUnparsed,
@@ -20,6 +19,10 @@ use mintbase_deps::near_sdk::{
     Balance,
 };
 use mintbase_deps::token::Token;
+use mintbase_deps::{
+    near_assert_ne,
+    near_panic,
+};
 
 use crate::*;
 
@@ -49,14 +52,20 @@ impl MintbaseStore {
         royalty_args: Option<RoyaltyArgs>,
         split_owners: Option<SplitBetweenUnparsed>,
     ) {
-        assert!(num_to_mint > 0);
-        assert!(num_to_mint <= 125); // upper gas limit
-        assert!(env::attached_deposit() >= 1);
+        near_assert!(num_to_mint > 0, "No tokens to mint");
+        near_assert!(
+            num_to_mint <= 125,
+            "Cannot mint more than 125 tokens due to gas limits"
+        ); // upper gas limit
+        near_assert!(
+            env::attached_deposit() >= 1,
+            "Requires deposit of at least 1 yoctoNEAR"
+        );
         let minter_id = env::predecessor_account_id();
-        assert!(
+        near_assert!(
             self.minters.contains(&minter_id),
-            "{} not a minter",
-            minter_id.as_ref()
+            "{} is not allowed to mint on this store",
+            minter_id
         );
 
         // Calculating storage consuption upfront saves gas if the transaction
@@ -79,12 +88,16 @@ impl MintbaseStore {
             })
             // if there is no split map, there still is an owner, thus default to 1
             .unwrap_or(1);
-        assert!(roy_len + split_len <= MAX_LEN_PAYOUT);
+        near_assert!(
+            roy_len + split_len <= MAX_LEN_PAYOUT,
+            "Number of payout addresses may not exceed {}",
+            MAX_LEN_PAYOUT
+        );
         let expected_storage_consumption: Balance =
             self.storage_cost_to_mint(num_to_mint, md_size, roy_len, split_len);
-        assert!(
+        near_assert!(
             covered_storage >= expected_storage_consumption,
-            "covered: {}; need: {}",
+            "This mint would exceed the current storage coverage of {} yoctoNEAR. Requires at least {} yoctoNEAR",
             covered_storage,
             expected_storage_consumption
         );
@@ -168,9 +181,13 @@ impl MintbaseStore {
         account_id: AccountId,
     ) {
         self.assert_store_owner();
-        assert_ne!(account_id, self.owner_id, "can't revoke owner");
+        near_assert_ne!(
+            account_id,
+            self.owner_id,
+            "Owner cannot be removed from minters"
+        );
         if !self.minters.remove(&account_id) {
-            env::panic_str("not a minter")
+            near_panic!("{} is not a minter", account_id);
         } else {
             log_revoke_minter(&account_id);
         }

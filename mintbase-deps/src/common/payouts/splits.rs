@@ -30,26 +30,29 @@ pub struct SplitOwners {
     pub split_between: HashMap<AccountId, SafeFraction>,
 }
 
-// TODO: why defined here and then implemented inside store?
-pub trait NewSplitOwner {
-    fn new(arg: SplitBetweenUnparsed) -> Self;
-}
-
-impl NewSplitOwner for SplitOwners {
-    fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
-        assert!(split_between.len() >= 2);
+impl SplitOwners {
+    pub fn new(split_between: HashMap<near_sdk::AccountId, u32>) -> Self {
+        crate::near_assert!(
+            split_between.len() >= 2,
+            "Requires at least two accounts to split revenue"
+        );
         // validate args
         let mut sum: u32 = 0;
         let split_between: HashMap<AccountId, SafeFraction> = split_between
             .into_iter()
             .map(|(addr, numerator)| {
-                assert!(env::is_valid_account_id(addr.as_bytes()));
+                crate::near_assert!(
+                    // TODO: different method than royalty?
+                    env::is_valid_account_id(addr.as_bytes()),
+                    "{} is not a valid account ID on NEAR",
+                    addr
+                );
                 let sf = SafeFraction::new(numerator);
                 sum += sf.numerator;
                 (addr, sf)
             })
             .collect();
-        assert!(sum == 10_000, "sum not 10_000: {}", sum);
+        crate::near_assert!(sum == 10_000, "Splits numerators must sum up to 10_000");
 
         Self { split_between }
     }

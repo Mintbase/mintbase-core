@@ -15,7 +15,6 @@ use mintbase_deps::logging::{
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
-    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
@@ -26,6 +25,14 @@ use mintbase_deps::token::{
     Owner,
     Token,
     TokenCompliant,
+};
+use mintbase_deps::{
+    assert_token_owned_by,
+    assert_token_owned_or_approved,
+    assert_token_unloaned,
+    assert_yocto_deposit,
+    near_assert_eq,
+    near_assert_ne,
 };
 
 use crate::*;
@@ -43,18 +50,12 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {
-        assert_one_yocto();
+        assert_yocto_deposit!();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         let old_owner = token.owner_id.to_string();
-        assert!(!token.is_loaned());
-        if !token.is_pred_owner() {
-            assert!(self.nft_is_approved_internal(
-                &token,
-                env::predecessor_account_id(),
-                approval_id
-            ));
-        }
+        assert_token_unloaned!(token);
+        assert_token_owned_or_approved!(token, &env::predecessor_account_id(), approval_id);
 
         self.transfer_internal(&mut token, receiver_id.clone(), true);
         log_nft_transfer(&receiver_id, token_idu64, &memo, old_owner);
@@ -68,16 +69,12 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         msg: String,
     ) -> Promise {
-        assert_one_yocto();
+        assert_yocto_deposit!();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
-        assert!(!token.is_loaned());
         let pred = env::predecessor_account_id();
-        if !token.is_pred_owner() {
-            // check if pred has an approval
-            let approval_id: Option<u64> = approval_id;
-            assert!(self.nft_is_approved_internal(&token, pred.clone(), approval_id));
-        }
+        assert_token_unloaned!(token);
+        assert_token_owned_or_approved!(token, &pred, approval_id);
         // prevent race condition, temporarily lock-replace owner
         let owner_id = AccountId::new_unchecked(token.owner_id.to_string());
         self.lock_token(&mut token);
@@ -134,7 +131,11 @@ impl MintbaseStore {
         let token_id_u64 = token_id.parse::<u64>().unwrap();
         let mut token = self.nft_token_internal(token_id_u64);
         self.unlock_token(&mut token);
-        assert_eq!(env::promise_results_count(), 1);
+        near_assert_eq!(
+            env::promise_results_count(),
+            1,
+            "Wtf? Had more than one DataReceipt to process"
+        );
         // Get whether token should be returned
         let must_revert = match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
@@ -167,8 +168,8 @@ impl MintbaseStore {
         &mut self,
         token_ids: Vec<(U64, AccountId)>,
     ) {
-        near_sdk::assert_one_yocto();
-        assert!(!token_ids.is_empty());
+        assert_yocto_deposit!();
+        near_assert!(!token_ids.is_empty(), "Token IDs cannot be empty");
         let pred = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&pred).expect("none owned");
         let (tokens, accounts, old_owners) = token_ids
@@ -177,9 +178,15 @@ impl MintbaseStore {
                 let token_idu64 = token_id.into();
                 let mut token = self.nft_token_internal(token_idu64);
                 let old_owner = token.owner_id.to_string();
-                assert!(!token.is_loaned());
-                assert!(token.is_pred_owner());
-                assert_ne!(account_id.to_string(), token.owner_id.to_string()); // can't transfer to self
+                assert_token_unloaned!(token);
+                assert_token_owned_by!(token, &pred);
+                near_assert_ne!(
+                    account_id.to_string(),
+                    token.owner_id.to_string(),
+                    "Token {} is already owned by {}",
+                    token.id,
+                    account_id
+                ); // can't transfer to self
                 self.transfer_internal(&mut token, account_id.clone(), false);
                 set_owned.remove(&token_idu64);
                 (token_id, account_id, old_owner)

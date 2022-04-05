@@ -57,7 +57,7 @@ STORE_WORKSPACE.test(
         store,
         "nft_approve",
         { token_id: "0", account_id: bob.accountId },
-        { attachedDeposit: mNEAR(0.81) } // no value for this in mintbase-js
+        { attachedDeposit: mNEAR(0.8) }
       )
       .catch(failPromiseRejection("approving"));
     // check event logs
@@ -86,9 +86,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_approve",
             { token_id: "1", account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.81) }
+            { attachedDeposit: mNEAR(0.8) }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 1`,
         "Bob tried approving on unowned token",
       ],
       // require at least one yoctoNEAR to approve
@@ -98,10 +98,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_approve",
             { token_id: "1", account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.8) } // deposit > 0.8
+            { attachedDeposit: mNEAR(0.79) }
           ),
-        //TODO::store::low: panic message format
-        "panicked at 'assertion failed: env::attached_deposit() > self.storage_costs.common',",
+        "Requires storage deposit of at least 800000000000000000000 yoctoNEAR",
         "Alice tried approving with insufficient deposit",
       ],
     ]);
@@ -135,7 +134,7 @@ STORE_WORKSPACE.test(
         store,
         "nft_batch_approve",
         { token_ids: ["1", "2"], account_id: bob.accountId },
-        { attachedDeposit: mNEAR(1.61) } // no value for this in mintbase-js
+        { attachedDeposit: mNEAR(1.6) } // no value for this in mintbase-js
       )
       .catch(failPromiseRejection("batch approving"));
     // check event logs
@@ -167,9 +166,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_batch_approve",
             { token_ids: ["2", "3"], account_id: bob.accountId },
-            { attachedDeposit: mNEAR(1.61) }
+            { attachedDeposit: mNEAR(1.6) }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 2`,
         "Bob tried batch approving on unowned tokens",
       ],
       // require at sufficient deposit to cover storage rent
@@ -179,10 +178,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_batch_approve",
             { token_ids: ["3"], account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.8) }
+            { attachedDeposit: mNEAR(0.79) }
           ),
-        //TODO::store::low: consistent error messages
-        "panicked at 'deposit less than: 800000000000000000000',",
+        "Requires storage deposit of at least 800000000000000000000 yoctoNEAR",
         "Alice tried batch approving with insufficient deposit",
       ],
     ]);
@@ -273,7 +271,7 @@ STORE_WORKSPACE.test(
             },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 1`,
         "Bob tried revoking on unowned token",
       ],
       // require at least one yoctoNEAR to revoke
@@ -367,7 +365,7 @@ STORE_WORKSPACE.test(
             { token_id: "0" },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 0`,
         "Bob tried revoking all on unowned token",
       ],
       // require at least one yoctoNEAR to revoke all
@@ -448,7 +446,7 @@ STORE_WORKSPACE.test(
             { account_id: bob.accountId },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: `(left == right)`",
+        "This method can only be called by the store owner",
         "Bob tried granting himself minting rights",
       ],
       //  require deposit
@@ -562,7 +560,7 @@ STORE_WORKSPACE.test(
             { account_id: bob.accountId },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: `(left == right)`",
+        "This method can only be called by the store owner",
         "Bob tried to revoke his minting rights",
       ],
       // requires yoctoNEAR deposit
@@ -581,11 +579,7 @@ STORE_WORKSPACE.test(
             { account_id: alice.accountId },
             { attachedDeposit: "1" }
           ),
-        // TODO::testing::low: look for the comment AFTER the failed
-        //  assertion message (in this case: "can't revoke owner")
-        // TODO::testing::low: look for similar test cases where I might
-        //  have missed this
-        "panicked at 'assertion failed: `(left != right)`",
+        "Owner cannot be removed from minters",
         "Alice tried to revoke her own minting rights",
       ],
     ]);
@@ -671,7 +665,7 @@ STORE_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'approval_id required'",
+        "Disallowing approvals without approval ID",
         "Bob tried transferring (approved) without approval_id",
       ],
       // require at least one yoctoNEAR to transfer
@@ -697,9 +691,8 @@ STORE_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        // TODO::store::low: better error messages
-        "panicked at 'assertion failed: self.nft_is_approved_internal(&token, env::predecessor_account_id(),",
-        "Bob tried transferring (approved) without yoctoNEAR deposit",
+        `${bob.accountId} has no approval for token 0`,
+        "Bob tried transferring without having approval",
       ],
     ]);
 

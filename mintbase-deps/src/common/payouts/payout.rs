@@ -44,7 +44,11 @@ impl OwnershipFractions {
             .as_ref()
             .map(|r| r.split_between.len())
             .unwrap_or(1);
-        assert!((roy_len + split_len) as u32 <= MAX_LEN_PAYOUT);
+        crate::near_assert!(
+            (roy_len + split_len) as u32 <= MAX_LEN_PAYOUT,
+            "Number of payout addresses may not exceed {}",
+            MAX_LEN_PAYOUT
+        );
 
         let mut payout: HashMap<AccountId, MultipliedSafeFraction> = Default::default();
         let percentage_not_taken_by_royalty = match royalty {
