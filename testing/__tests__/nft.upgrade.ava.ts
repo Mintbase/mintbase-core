@@ -85,17 +85,11 @@ Workspace.init().test("upgrade::mainnet", async (test, { root }) => {
     currentState.tokenData.metadata,
     referenceState.tokenData.metadata
   );
-  test.is(
-    currentState.tokenData.owner_id,
-    referenceState.tokenData.owner_id.Account
-  );
-  test.is(
-    currentState.tokenData.token_id,
-    referenceState.tokenData.id.toString()
-  );
+  test.is(currentState.tokenData.owner_id, referenceState.tokenData.owner_id);
+  test.is(currentState.tokenData.token_id, referenceState.tokenData.token_id);
   test.deepEqual(
     currentState.tokenData.approved_account_ids,
-    referenceState.tokenData.approvals
+    referenceState.tokenData.approved_account_ids
   );
 });
 
