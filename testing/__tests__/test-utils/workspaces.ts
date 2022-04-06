@@ -12,6 +12,7 @@ export async function createAccounts(
     root.createAccount("alice", { initialBalance: NEAR(20).toString() }),
     root.createAccount("bob", { initialBalance: NEAR(20).toString() }),
     root.createAccount("carol", { initialBalance: NEAR(20).toString() }),
+    root.createAccount("dave", { initialBalance: NEAR(20).toString() }),
   ]);
 }
 
@@ -64,21 +65,21 @@ export async function deployStore({
 
 /** A workspace with the factory deployed by root, no store deployed */
 export const FACTORY_WORKSPACE = Workspace.init(async ({ root }) => {
-  const [alice, bob, carol] = await createAccounts(root);
+  const [alice, bob, carol, dave] = await createAccounts(root);
 
   const factory = await deployFactory(root);
 
-  return { alice, bob, carol, factory };
+  return { alice, bob, carol, dave, factory };
 });
 
 /** A workspace with the factory deployed by root, store deployed by Alice */
 export const STORE_WORKSPACE = Workspace.init(async ({ root }) => {
-  const [alice, bob, carol] = await createAccounts(root);
+  const [alice, bob, carol, dave] = await createAccounts(root);
 
   const factory = await deployFactory(root);
   const store = await deployStore({ factory, owner: alice, name: "alice" });
 
-  return { alice, bob, carol, factory, store };
+  return { alice, bob, carol, dave, factory, store };
 });
 
 /**
@@ -86,11 +87,11 @@ export const STORE_WORKSPACE = Workspace.init(async ({ root }) => {
  * store deployed by Alice
  */
 export const MARKET_WORKSPACE = Workspace.init(async ({ root }) => {
-  const [alice, bob, carol] = await createAccounts(root);
+  const [alice, bob, carol, dave] = await createAccounts(root);
 
   const factory = await deployFactory(root);
   const store = await deployStore({ factory, owner: alice, name: "alice" });
   const market = await deployMarket(root);
 
-  return { alice, bob, carol, factory, store, market };
+  return { alice, bob, carol, dave, factory, store, market };
 });

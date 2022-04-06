@@ -15,7 +15,7 @@ import {
 
 MARKET_WORKSPACE.test(
   "market::royalties",
-  async (test, { root, factory, store, market, alice, bob, carol }) => {
+  async (test, { root, factory, store, market, alice, bob, carol, dave }) => {
     // cannot use `prepareTokenListing`, because royalties need to be set
     // during minting
     await root
@@ -194,9 +194,6 @@ MARKET_WORKSPACE.test(
     const bobBalance1 = await getBalance(bob);
     const carolBalance1 = await getBalance(carol);
 
-    const dave = await root.createAccount("dave", {
-      initialBalance: NEAR(20).toString(),
-    });
     await dave
       .call(
         market,

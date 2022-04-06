@@ -400,7 +400,7 @@ STORE_WORKSPACE.test(
 
 STORE_WORKSPACE.test(
   "approvals::minting",
-  async (test, { alice, bob, carol, store }) => {
+  async (test, { alice, bob, carol, dave, store }) => {
     const failPromiseRejection = (msg: string) => (e: any) => {
       test.log(`Promise rejected while ${msg}:`);
       test.log(e);
@@ -593,7 +593,119 @@ STORE_WORKSPACE.test(
     test.deepEqual(
       await store.view("list_minters"),
       [alice.accountId],
-      "Bad minters list after granting minting rigths to Bob"
+      "Bad minters list after granting minting rights to Bob"
+    );
+
+    // batch_change_minters: add bob and carol
+    const batchGrantMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { grant: [bob.accountId, carol.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch grant minter rights"));
+
+    // check logs
+    assertEventLogs(
+      test,
+      (batchGrantMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: bob.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: carol.accountId }),
+        },
+      ],
+      "batch grant minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId, bob.accountId, carol.accountId],
+      "Bad minters list after batch granting minter rights"
+    );
+
+    // TODO: batch_change_minters: change carol to dave
+    const batchChangeMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { revoke: [carol.accountId], grant: [dave.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch change minter rights"));
+    // check logs
+    assertEventLogs(
+      test,
+      (batchChangeMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: dave.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: carol.accountId }),
+        },
+      ],
+      "batch change minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId, bob.accountId, dave.accountId],
+      "Bad minters list after batch changing minter rights"
+    );
+
+    // batch_change_minters: revoke bob and dave
+    const batchRevokeMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { revoke: [bob.accountId, dave.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch revoke minter rights"));
+    // check logs
+    assertEventLogs(
+      test,
+      (batchRevokeMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: bob.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: dave.accountId }),
+        },
+      ],
+      "batch revoke minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId],
+      "Bad minters list after batch revoking minter rights"
     );
   }
 );

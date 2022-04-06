@@ -16,7 +16,7 @@ import {
 
 MARKET_WORKSPACE.test(
   "market::splits",
-  async (test, { root, factory, store, market, alice, bob, carol }) => {
+  async (test, { root, factory, store, market, alice, bob, carol, dave }) => {
     // cannot use `prepareTokenListing`, because royalties need to be set
     // during minting
     await root
@@ -27,10 +27,6 @@ MARKET_WORKSPACE.test(
         { attachedDeposit: "1" }
       )
       .catch(failPromiseRejection(test, "allowing store on market"));
-
-    const dave = await root.createAccount("dave", {
-      initialBalance: NEAR(20).toString(),
-    });
 
     await batchMint({ owner: alice, store, num_to_mint: 1 }).catch(
       failPromiseRejection(test, "minting")

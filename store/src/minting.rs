@@ -11,6 +11,7 @@ use mintbase_deps::logging::{
     log_nft_batch_mint,
     log_revoke_minter,
 };
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
     env,
@@ -19,10 +20,6 @@ use mintbase_deps::near_sdk::{
     Balance,
 };
 use mintbase_deps::token::Token;
-use mintbase_deps::{
-    near_assert_ne,
-    near_panic,
-};
 
 use crate::*;
 
@@ -156,17 +153,24 @@ impl MintbaseStore {
     ///
     /// Only the store owner may call this function.
     ///
-    /// This method increases storage costs of the contract.
+    /// This method increases storage costs of the contract, but covering them
+    /// is optional.
     #[payable]
     pub fn grant_minter(
         &mut self,
         account_id: AccountId,
     ) {
         self.assert_store_owner();
-        let account_id: AccountId = account_id;
+        self.grant_minter_internal(&account_id)
+    }
+
+    fn grant_minter_internal(
+        &mut self,
+        account_id: &AccountId,
+    ) {
         // does nothing if account_id is already a minter
-        if self.minters.insert(&account_id) {
-            log_grant_minter(&account_id);
+        if self.minters.insert(account_id) {
+            log_grant_minter(account_id);
         }
     }
 
@@ -181,15 +185,53 @@ impl MintbaseStore {
         account_id: AccountId,
     ) {
         self.assert_store_owner();
-        near_assert_ne!(
-            account_id,
-            self.owner_id,
+        self.revoke_minter_internal(&account_id);
+    }
+
+    fn revoke_minter_internal(
+        &mut self,
+        account_id: &AccountId,
+    ) {
+        near_assert!(
+            *account_id != self.owner_id,
             "Owner cannot be removed from minters"
         );
-        if !self.minters.remove(&account_id) {
-            near_panic!("{} is not a minter", account_id);
-        } else {
-            log_revoke_minter(&account_id);
+        // does nothing if account_id wasn't a minter
+        if self.minters.remove(account_id) {
+            log_revoke_minter(account_id);
+            // } else {
+            //     near_panic!("{} was not a minter", account_id)
+        }
+    }
+
+    /// Allows batched granting and revoking of minting rights in a single
+    /// transaction. Subject to the same restrictions as `grant_minter`
+    /// and `revoke_minter`.
+    ///
+    /// Should you include an account in both lists, it will end up becoming
+    /// approved and immediately revoked in the same step.
+    #[payable]
+    pub fn batch_change_minters(
+        &mut self,
+        grant: Option<Vec<AccountId>>,
+        revoke: Option<Vec<AccountId>>,
+    ) {
+        self.assert_store_owner();
+        near_assert!(
+            grant.is_some() || revoke.is_some(),
+            "You need to either grant or revoke at least one account"
+        );
+
+        if let Some(grant_ids) = grant {
+            for account_id in grant_ids {
+                self.grant_minter_internal(&account_id)
+            }
+        }
+
+        if let Some(revoke_ids) = revoke {
+            for account_id in revoke_ids {
+                self.revoke_minter_internal(&account_id)
+            }
         }
     }
 
