@@ -7,6 +7,9 @@ pub mod token;
 pub mod utils;
 
 // ----------------- re-exports for consistent dependencies ----------------- //
+#[cfg(feature = "wasm")]
+pub use near_contract_standards;
+#[cfg(feature = "wasm")]
 pub use near_sdk::{
     self,
     serde,

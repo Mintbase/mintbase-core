@@ -2213,6 +2213,7 @@ name = "mintbase-deps"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "near-contract-standards",
  "near-sdk",
  "serde",
  "serde_json",
@@ -2545,6 +2546,17 @@ dependencies = [
  "serde",
  "strum",
  "thiserror",
+]
+
+[[package]]
+name = "near-contract-standards"
+version = "4.0.0-pre.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52c4f636adbffbd9399610cb6445894c64c6c8fcf9ea4e607021f252a1e0459f"
+dependencies = [
+ "near-sdk",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

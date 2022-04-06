@@ -6,6 +6,11 @@ use mintbase_deps::logging::{
     log_revoke,
     log_revoke_all,
 };
+use mintbase_deps::near_contract_standards::non_fungible_token::approval::{
+    ext_approval_receiver,
+    NonFungibleTokenApproval,
+};
+use mintbase_deps::near_contract_standards::non_fungible_token::TokenId;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
@@ -26,12 +31,12 @@ use crate::*;
 
 // --------------------- standardized approval methods ---------------------- //
 #[near_bindgen]
-impl MintbaseStore {
+impl NonFungibleTokenApproval for MintbaseStore {
     // -------------------------- change methods ---------------------------
     #[payable]
-    pub fn nft_approve(
+    fn nft_approve(
         &mut self,
-        token_id: U64,
+        token_id: TokenId,
         account_id: AccountId,
         msg: Option<String>,
     ) -> Option<Promise> {
@@ -39,13 +44,14 @@ impl MintbaseStore {
         // The market may still reject.
         assert_storage_deposit!(self.storage_costs.common);
         // assert!(env::attached_deposit() > self.storage_costs.common);
-        let token_idu64 = token_id.into();
+        // TODO: extract parsing into mintbase deps
+        let token_idu64 = token_id.parse().expect("Token ID needs to parse to u64");
         // validates owner and loaned
         let approval_id = self.approve_internal(token_idu64, &account_id);
         log_approve(token_idu64, approval_id, &account_id);
 
         if let Some(msg) = msg {
-            ext_on_approve::nft_on_approve(
+            ext_approval_receiver::nft_on_approve(
                 token_id,
                 env::predecessor_account_id(),
                 approval_id,
@@ -61,12 +67,12 @@ impl MintbaseStore {
     }
 
     #[payable]
-    pub fn nft_revoke(
+    fn nft_revoke(
         &mut self,
-        token_id: U64,
+        token_id: TokenId,
         account_id: AccountId,
     ) {
-        let token_idu64 = token_id.into();
+        let token_idu64 = token_id.parse().expect("Token ID needs to parse to u64");
         let mut token = self.nft_token_internal(token_idu64);
         // token.assert_unloaned();
         // token.assert_owned_by_predecessor();
@@ -82,11 +88,11 @@ impl MintbaseStore {
     }
 
     #[payable]
-    pub fn nft_revoke_all(
+    fn nft_revoke_all(
         &mut self,
-        token_id: U64,
+        token_id: TokenId,
     ) {
-        let token_idu64 = token_id.into();
+        let token_idu64 = token_id.parse().expect("Token ID needs to parse to u64");
         let mut token = self.nft_token_internal(token_idu64);
         // token.assert_unloaned();
         // token.assert_owned_by_predecessor();
@@ -103,14 +109,14 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
-    pub fn nft_is_approved(
+    fn nft_is_approved(
         &self,
-        token_id: U64,
+        token_id: TokenId,
         approved_account_id: AccountId,
         approval_id: Option<u64>,
     ) -> bool {
         self.nft_is_approved_internal(
-            &self.nft_token_internal(token_id.into()),
+            &self.nft_token_internal(token_id.parse().expect("Token ID needs to parse to u64")),
             &approved_account_id,
             approval_id,
         )

@@ -115,6 +115,7 @@ impl Token {
     }
 }
 
+// TODO: use `near_contract_standards::non_fungible_token::Token as StandardToken` instead
 // Supports NEP-171, 177, 178, 181. Ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Core.md
 #[derive(Clone, Debug, Deserialize, Serialize)]

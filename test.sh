@@ -21,29 +21,29 @@ kill_the_damn_sandbox() {
   pkill near-sandbox >/dev/null 2>&1
 }
 
-# cargo +nightly fmt || fail "Formatting"
-# cargo lint || fail "Linting"
+cargo +nightly fmt || fail "Formatting"
+cargo lint || fail "Linting"
 
-# # prevent factory checking from failing
-# touch wasm/store.wasm
+# prevent factory checking from failing
+touch wasm/store.wasm
 
-# cargo check -p mintbase-deps --features store-wasm --message-format short || fail "Checking store"
-# cargo check -p mintbase-deps --features factory-wasm --message-format short || fail "Checking factory"
-# cargo check -p mintbase-deps --features helper-wasm --message-format short || fail "Checking helper"
-# cargo check -p simple-market-contract --message-format short || fail "Checking market"
-# cargo check -p mintbase-near-indexer || fail "Checking indexer"
+cargo check -p mintbase-deps --features store-wasm --message-format short || fail "Checking store"
+cargo check -p mintbase-deps --features factory-wasm --message-format short || fail "Checking factory"
+cargo check -p mintbase-deps --features helper-wasm --message-format short || fail "Checking helper"
+cargo check -p simple-market-contract --message-format short || fail "Checking market"
+cargo check -p mintbase-near-indexer || fail "Checking indexer"
 
-# build_wasm store
-# build_wasm factory
-# build_wasm helper
-# build_wasm market
-# cargo indexer || fail "Compiling indexer"
+build_wasm store
+build_wasm factory
+build_wasm helper
+build_wasm market
+cargo indexer || fail "Compiling indexer"
 
 # Sandbox node is sometimes running in the background and causing problems
 # -> kill sandbox in case I used it manually
 kill_the_damn_sandbox
 
-# Limit to 6 parallel tests to prevent hiccups with the key store
+# Limit to 6 parallel tests to prevent hiccups with the key store.
 # Doesn"t feel like it helps though.
 (cd testing && npm test -- -c 6) || {
   kill_the_damn_sandbox
