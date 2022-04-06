@@ -44,10 +44,12 @@ cargo indexer || fail "Compiling indexer"
 kill_the_damn_sandbox
 
 # (cd testing && npm test -- -m "approvals::core") || fail "Testing"
-(cd testing && npm test) || {
+(cd testing && npm test -- -c 6) || {
   kill_the_damn_sandbox
   fail "Testing"
 }
 
 # Be a good scripty-boy and clean up!
 kill_the_damn_sandbox
+
+(cd mintbase-near-indexer && ./test.sh)

@@ -5,7 +5,7 @@ macro_rules! near_panic {
     };
 
     ($msg:literal, $($arg:expr),*) => {
-        near_sdk::env::panic_str(&format!($msg, $($arg),*))
+        near_sdk::env::panic_str(format!($msg, $($arg),*).as_str())
     };
 }
 
