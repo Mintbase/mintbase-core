@@ -17,8 +17,8 @@ build_wasm() {
 }
 
 kill_the_damn_sandbox() {
-  killall near-sandbox
-  pkill near-sandbox
+  killall near-sandbox >/dev/null 2>&1
+  pkill near-sandbox >/dev/null 2>&1
 }
 
 cargo +nightly fmt || fail "Formatting"
@@ -43,7 +43,8 @@ cargo indexer || fail "Compiling indexer"
 # -> kill sandbox in case I used it manually
 kill_the_damn_sandbox
 
-# (cd testing && npm test -- -m "approvals::core") || fail "Testing"
+# Limit to 6 parallel tests to prevent hiccups with the key store
+# Doesn"t feel like it helps though.
 (cd testing && npm test -- -c 6) || {
   kill_the_damn_sandbox
   fail "Testing"

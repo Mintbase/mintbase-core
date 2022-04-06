@@ -45,10 +45,9 @@ impl fmt::Display for TokenKey {
     }
 }
 
-// TODO: this should not take ownership
-impl From<String> for TokenKey {
-    fn from(s: String) -> Self {
-        let (id, account_id) = split_colon(&s);
+impl From<&str> for TokenKey {
+    fn from(s: &str) -> Self {
+        let (id, account_id) = split_colon(s);
         Self {
             token_id: id.parse::<u64>().unwrap(),
             account_id: account_id.to_string(),
