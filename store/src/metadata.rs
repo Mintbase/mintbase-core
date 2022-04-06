@@ -1,11 +1,11 @@
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    NonFungibleContractMetadata,
-    TokenMetadata,
-};
+use mintbase_deps::common::TokenMetadata;
 use mintbase_deps::logging::{
     log_set_base_uri,
     log_set_icon_base64,
+};
+use mintbase_deps::near_contract_standards::non_fungible_token::metadata::{
+    NFTContractMetadata,
+    NonFungibleTokenMetadataProvider,
 };
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
@@ -18,9 +18,9 @@ use crate::*;
 
 // --------------------- standardized metadata methods ---------------------- //
 #[near_bindgen]
-impl NonFungibleContractMetadata for MintbaseStore {
-    fn nft_metadata(&self) -> &NFTContractMetadata {
-        &self.metadata
+impl NonFungibleTokenMetadataProvider for MintbaseStore {
+    fn nft_metadata(&self) -> NFTContractMetadata {
+        self.metadata.to_standardized()
     }
 }
 

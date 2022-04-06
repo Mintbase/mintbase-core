@@ -1,3 +1,4 @@
+use near_contract_standards::non_fungible_token::metadata;
 use near_sdk::borsh::{
     self,
     BorshDeserialize,
@@ -40,6 +41,20 @@ impl Default for NFTContractMetadata {
             base_uri: None,
             reference: None,
             reference_hash: None,
+        }
+    }
+}
+
+impl NFTContractMetadata {
+    pub fn to_standardized(&self) -> metadata::NFTContractMetadata {
+        metadata::NFTContractMetadata {
+            spec: self.spec.clone(),
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            icon: self.icon.clone(),
+            base_uri: self.base_uri.clone(),
+            reference: self.reference.clone(),
+            reference_hash: self.reference_hash.clone(),
         }
     }
 }
