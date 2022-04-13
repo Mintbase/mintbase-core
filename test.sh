@@ -37,7 +37,6 @@ build_wasm store
 build_wasm factory
 build_wasm helper
 build_wasm market
-cargo indexer || fail "Compiling indexer"
 
 # Sandbox node is sometimes running in the background and causing problems
 # -> kill sandbox in case I used it manually
@@ -53,4 +52,5 @@ kill_the_damn_sandbox
 # Be a good scripty-boy and clean up!
 kill_the_damn_sandbox
 
+cargo indexer || fail "Compiling indexer"
 (cd mintbase-near-indexer && ./test.sh)
