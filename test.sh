@@ -44,7 +44,7 @@ kill_the_damn_sandbox
 
 # Limit to 6 parallel tests to prevent hiccups with the key store
 # Doesn"t feel like it helps though.
-(cd testing && npm test -- -c 6) || {
+(cd testing && npm test -- -c 6 --fail-fast) || {
   kill_the_damn_sandbox
   fail "Testing"
 }
