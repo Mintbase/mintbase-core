@@ -5,7 +5,10 @@ use mintbase_deps::common::{
     SplitOwners,
     TokenMetadata,
 };
-use mintbase_deps::constants::MAX_LEN_PAYOUT;
+use mintbase_deps::constants::{
+    MAX_LEN_PAYOUT,
+    MINIMUM_FREE_STORAGE_STAKE,
+};
 use mintbase_deps::logging::{
     log_grant_minter,
     log_nft_batch_mint,
@@ -136,6 +139,17 @@ impl MintbaseStore {
         self.tokens_per_owner.insert(&owner_id, &owned_set);
 
         let minted = self.tokens_minted;
+
+        // check if sufficient storage stake (e.g. 0.5 NEAR) remains
+        let used_storage_stake: Balance = env::storage_usage() as u128 * env::storage_byte_cost();
+        let free_storage_stake: Balance = env::account_balance() - used_storage_stake;
+        near_assert!(
+            free_storage_stake > MINIMUM_FREE_STORAGE_STAKE,
+            "A minimum of {} yoctoNEAR is required as free contract balance to allow updates (currently: {})",
+            MINIMUM_FREE_STORAGE_STAKE,
+            free_storage_stake
+        );
+
         log_nft_batch_mint(
             minted - num_to_mint,
             minted - 1,
