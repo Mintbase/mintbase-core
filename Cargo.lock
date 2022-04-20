@@ -2214,6 +2214,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "near-sdk",
+ "near_events",
  "serde",
  "serde_json",
 ]
@@ -2646,6 +2647,28 @@ dependencies = [
  "rand 0.7.3",
  "serde_json",
  "smart-default",
+]
+
+[[package]]
+name = "near-event-data-log-macro"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "proc-macro-support",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "near-event-data-macro"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "proc-macro-support",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3346,6 +3369,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "near_events"
+version = "0.1.0"
+dependencies = [
+ "near-event-data-log-macro",
+ "near-event-data-macro",
+ "near-sdk",
+ "serde_json",
+]
+
+[[package]]
 name = "nearcore"
 version = "1.25.0"
 source = "git+https://github.com/near/nearcore?rev=9b3d6ba551f561a028f0216051e031bc2ba0c6b7#9b3d6ba551f561a028f0216051e031bc2ba0c6b7"
@@ -3979,10 +4012,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
 
 [[package]]
+name = "proc-macro-support"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "syn",
+]
+
+[[package]]
 name = "proc-macro2"
-version = "1.0.30"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edc3358ebc67bc8b7fa0c007f945b0b18226f78437d61bec735a9eb96b61ee70"
+checksum = "ec757218438d5fda206afc041538b2f6d889286160d649a86a24d37e1235afd1"
 dependencies = [
  "unicode-xid",
 ]
@@ -4927,9 +4969,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.80"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d010a1623fbd906d51d650a9916aaefc05ffa0e4053ff7fe601167f3e715d194"
+checksum = "b683b2b825c8eef438b77c36a06dc262294da3d5a5813fac20da149241dcd44d"
 dependencies = [
  "proc-macro2",
  "quote",

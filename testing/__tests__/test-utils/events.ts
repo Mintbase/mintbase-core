@@ -28,9 +28,9 @@ export function assertEventLog(
 
 function parseEvent(test: ExecutionContext, log: string, msg: string) {
   // FIXME::contracts::medium: standard has no space between colon and JSON
-  test.is(log.slice(0, 12), "EVENT_JSON: ", `${msg}: Not an event log`);
+  test.is(log.slice(0, 11), "EVENT_JSON:", `${msg}: Not an event log`);
   // test.log("Sliced:", log.slice(12));
-  const event = JSON.parse(log.slice(12));
+  const event = JSON.parse(log.slice(11).trimStart());
   // test.log("Parsed:", event);
   return event;
 }

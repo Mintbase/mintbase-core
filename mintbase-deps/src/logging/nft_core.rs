@@ -1,45 +1,28 @@
-use near_sdk::json_types::U64;
-use near_sdk::serde::{
-    Deserialize,
-    Serialize,
+use near_events::{
+    near_event_data,
+    near_event_data_log,
 };
+use near_sdk::json_types::U64;
+#[cfg(feature = "de")]
+use near_sdk::serde::Deserialize;
+#[cfg(feature = "ser")]
+use near_sdk::serde::Serialize;
 use near_sdk::{
     env,
     AccountId,
 };
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "event", content = "data")]
-#[serde(rename_all = "snake_case")]
-pub enum Nep171EventLog {
-    NftMint(Vec<NftMintLog>),
-    NftBurn(Vec<NftBurnLog>),
-    NftTransfer(Vec<NftTransferLog>),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Nep171Event {
-    pub standard: String,
-    pub version: String,
-    #[serde(flatten)]
-    pub event_kind: Nep171EventLog,
-}
-
-impl Nep171Event {
-    pub fn near_json_event(&self) -> String {
-        let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON: {}", &json)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[near_event_data_log(standard = "nep171", version = "1.0.0", event = "nft_mint")]
 pub struct NftMintLog {
     pub owner_id: String,
     pub token_ids: Vec<String>,
     pub memo: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+// #[near_event_data(standard = "nep171", version = "1.0.0", event = "nft_mint")]
+// pub struct NftMintData(Vec<NftMintLog>);
+
+#[near_event_data_log(standard = "nep171", version = "1.0.0", event = "nft_burn")]
 pub struct NftBurnLog {
     pub owner_id: String,
     pub authorized_id: Option<String>,
@@ -47,7 +30,12 @@ pub struct NftBurnLog {
     pub memo: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+// #[near_event_data(standard = "nep171", version = "1.0.0", event = "nft_burn")]
+// pub struct NftBurnData(Vec<NftBurnLog>);
+
+#[cfg_attr(feature = "ser", derive(Serialize))]
+#[cfg_attr(feature = "de", derive(Deserialize))]
+#[cfg_attr(any(feature = "ser", feature = "de"), serde(crate = "near_sdk::serde"))]
 pub struct NftTransferLog {
     pub authorized_id: Option<String>,
     pub old_owner_id: String,
@@ -56,7 +44,12 @@ pub struct NftTransferLog {
     pub memo: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[near_event_data(standard = "nep171", version = "1.0.0", event = "nft_transfer")]
+pub struct NftTransferData(Vec<NftTransferLog>);
+
+#[cfg_attr(feature = "ser", derive(Serialize))]
+#[cfg_attr(feature = "de", derive(Deserialize))]
+#[cfg_attr(any(feature = "ser", feature = "de"), serde(crate = "near_sdk::serde"))]
 pub struct NftMintLogMemo {
     pub royalty: Option<crate::common::Royalty>,
     pub split_owners: Option<crate::common::SplitOwners>,
@@ -87,18 +80,13 @@ pub fn log_nft_batch_mint(
     let token_ids = (first_token_id..=last_token_id)
         .map(|x| x.to_string())
         .collect::<Vec<_>>();
-    let log = vec![NftMintLog {
+    let log = NftMintLog {
         owner_id: owner.to_string(),
         token_ids,
         memo: Option::from(memo),
-    }];
-    let event = Nep171Event {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event_kind: Nep171EventLog::NftMint(log),
     };
 
-    env::log_str(event.near_json_event().as_str());
+    env::log_str(log.serialize_event().as_str());
 }
 
 pub fn log_nft_transfer(
@@ -107,19 +95,15 @@ pub fn log_nft_transfer(
     memo: &Option<String>,
     old_owner: String,
 ) {
-    let log = vec![NftTransferLog {
+    let data = NftTransferData(vec![NftTransferLog {
         authorized_id: None,
         old_owner_id: old_owner,
         new_owner_id: to.to_string(),
         token_ids: vec![token_id.to_string()],
         memo: memo.clone(),
-    }];
-    let event = Nep171Event {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event_kind: Nep171EventLog::NftTransfer(log),
-    };
-    env::log_str(event.near_json_event().as_str());
+    }]);
+
+    env::log_str(data.serialize_event().as_str());
 }
 
 pub fn log_nft_batch_transfer(
@@ -127,23 +111,21 @@ pub fn log_nft_batch_transfer(
     accounts: &[AccountId],
     old_owners: Vec<String>,
 ) {
-    let log = accounts
-        .iter()
-        .enumerate()
-        .map(|(u, x)| NftTransferLog {
-            authorized_id: None,
-            old_owner_id: old_owners[u].clone(),
-            new_owner_id: x.to_string(),
-            token_ids: vec![tokens[u].0.to_string()],
-            memo: None,
-        })
-        .collect::<Vec<_>>();
-    let event = Nep171Event {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event_kind: Nep171EventLog::NftTransfer(log),
-    };
-    env::log_str(event.near_json_event().as_str());
+    let data = NftTransferData(
+        accounts
+            .iter()
+            .enumerate()
+            .map(|(u, x)| NftTransferLog {
+                authorized_id: None,
+                old_owner_id: old_owners[u].clone(),
+                new_owner_id: x.to_string(),
+                token_ids: vec![tokens[u].0.to_string()],
+                memo: None,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    env::log_str(data.serialize_event().as_str());
 }
 
 pub fn log_nft_batch_burn(
@@ -154,16 +136,12 @@ pub fn log_nft_batch_burn(
         .iter()
         .map(|x| x.0.to_string())
         .collect::<Vec<_>>();
-    let log = vec![NftBurnLog {
+    let log = NftBurnLog {
         owner_id,
         authorized_id: None,
         token_ids,
         memo: None,
-    }];
-    let event = Nep171Event {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event_kind: Nep171EventLog::NftBurn(log),
     };
-    env::log_str(event.near_json_event().as_str());
+
+    env::log_str(log.serialize_event().as_str());
 }

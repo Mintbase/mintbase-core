@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+// use std::convert::TryFrom;
 use std::str::FromStr;
 
 use near_sdk::serde::{
@@ -27,41 +27,41 @@ pub use nft_move::*;
 
 // ----------------------------- various types ------------------------------ //
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(untagged)]
-pub enum NftEvent {
-    NftCreateStore(NftStoreCreateLog),
-    NftStringEvent(NftStringLog),
-    NftCreate(Vec<NftMintLog>),
-    NftDelete(Vec<NftBurnLog>),
-    NftCreateApproval(Vec<NftApproveLog>),
-    NftRevoke(NftRevokeLog),
-    NftUpdate(Vec<NftTransferLog>),
-    NftUpdateSplitOwner(NftSetSplitOwnerLog),
-    NftUpdateLoan(NftLoanSetLog),
-    NftCreateCompose(NftComposeLog),
-    NftDeleteCompose(NftUncomposeLog),
-    NftOnCreateCompose(NftOnComposeLog),
-    NftOnDeleteCompose(NftOnUncomposeLog),
-    NftOnMove(NftOnMoveLog),
-    NftMoved(NftMovedLog),
-    NftCreateList(Vec<NftListLog>),
-    NftCreateOffer(NftOfferLog),
-    NftUpdateOffer(NftUpdateOfferLog),
-    NftCreateSale(NftSaleLog),
-    NftUpdateMarket(NftMarketLog),
-    NftUpdateIcon(NftOptionStringLog),
-    NftUpdateList(NftUpdateListLog),
-}
+// #[derive(Deserialize, Serialize, Clone, Debug)]
+// #[serde(untagged)]
+// pub enum NftEvent {
+//     NftCreateStore(NftStoreCreateLog),
+//     NftStringEvent(NftStringLog),
+//     NftCreate(Vec<NftMintLog>),
+//     NftDelete(Vec<NftBurnLog>),
+//     NftCreateApproval(Vec<NftApproveLog>),
+//     NftRevoke(NftRevokeLog),
+//     NftUpdate(Vec<NftTransferLog>),
+//     NftUpdateSplitOwner(NftSetSplitOwnerLog),
+//     NftUpdateLoan(NftLoanSetLog),
+//     NftCreateCompose(NftComposeLog),
+//     NftDeleteCompose(NftUncomposeLog),
+//     NftOnCreateCompose(NftOnComposeLog),
+//     NftOnDeleteCompose(NftOnUncomposeLog),
+//     NftOnMove(NftOnMoveLog),
+//     NftMoved(NftMovedLog),
+//     NftCreateList(Vec<NftListLog>),
+//     NftCreateOffer(NftOfferLog),
+//     NftUpdateOffer(NftUpdateOfferLog),
+//     NftCreateSale(NftSaleLog),
+//     NftUpdateMarket(NftMarketLog),
+//     NftUpdateIcon(NftOptionStringLog),
+//     NftUpdateList(NftUpdateListLog),
+// }
 
-impl TryFrom<&str> for NftEvent {
-    type Error = serde_json::error::Error;
+// impl TryFrom<&str> for NftEvent {
+//     type Error = serde_json::error::Error;
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        // ne.map_err(|x|NftEventError(x.to_string()))
-        serde_json::from_str::<NftEvent>(s)
-    }
-}
+//     fn try_from(s: &str) -> Result<Self, Self::Error> {
+//         // ne.map_err(|x|NftEventError(x.to_string()))
+//         serde_json::from_str::<NftEvent>(s)
+//     }
+// }
 
 // ------------------ general event according to standard ------------------- //
 
@@ -82,17 +82,17 @@ impl FromStr for NearJsonEvent {
     }
 }
 
-impl From<NftEvent> for NearJsonEvent {
-    fn from(ne: NftEvent) -> Self {
-        let json = serde_json::to_string(&ne).unwrap();
-        Self {
-            standard: "nep171".to_string(),
-            version: "1.0.0".to_string(),
-            event: "".to_string(),
-            data: json,
-        }
-    }
-}
+// impl From<NftEvent> for NearJsonEvent {
+//     fn from(ne: NftEvent) -> Self {
+//         let json = serde_json::to_string(&ne).unwrap();
+//         Self {
+//             standard: "nep171".to_string(),
+//             version: "1.0.0".to_string(),
+//             event: "".to_string(),
+//             data: json,
+//         }
+//     }
+// }
 
 impl NearJsonEvent {
     pub fn near_json_event(&self) -> String {

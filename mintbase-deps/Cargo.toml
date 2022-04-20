@@ -15,11 +15,18 @@ near-sdk = { version = "4.0.0-pre.7", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+[dependencies.near_events]
+path = "../../near-events/near-events"
+# git = "https://github.com/mintbase/near-events"
+# rev = "c7d07ea9b02f8d756d044360553398eb9edf296c"
+
 [features]
+ser = ["near_events/ser"]
+de = ["near_events/de"]
 store-wasm = ["wasm"]
 factory-wasm = ["wasm"]
 market-wasm = ["wasm"]
 helper-wasm = ["wasm"]
 test = ["clap", "all"]
-all = ["wasm"]
-wasm = ["near-sdk"]
+wasm = ["near-sdk", "ser"]
+all = ["wasm", "de"]

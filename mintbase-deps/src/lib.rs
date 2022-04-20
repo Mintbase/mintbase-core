@@ -17,8 +17,8 @@ pub use near_sdk::{
 #[cfg(feature = "all")]
 pub use crate::logging::{
     NearJsonEvent,
-    Nep171Event,
-    Nep171EventLog,
+    // Nep171Event,
+    // Nep171EventLog,
     NftApproveLog,
     NftBurnLog,
     NftComposeLog,
