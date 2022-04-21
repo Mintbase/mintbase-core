@@ -6,6 +6,11 @@ use mintbase_deps::near_sdk::{
     near_bindgen,
     AccountId,
 };
+use mintbase_deps::{
+    assert_token_owned_by,
+    assert_token_unloaned,
+    assert_yocto_deposit,
+};
 
 use crate::*;
 
@@ -22,7 +27,7 @@ impl MintbaseStore {
         &mut self,
         token_ids: Vec<U64>,
     ) {
-        near_sdk::assert_one_yocto();
+        assert_yocto_deposit!();
         assert!(!token_ids.is_empty());
         self.burn_triaged(token_ids, env::predecessor_account_id());
     }
@@ -41,8 +46,10 @@ impl MintbaseStore {
         token_ids.iter().for_each(|&token_id| {
             let token_id: u64 = token_id.into();
             let token = self.nft_token_internal(token_id);
-            assert!(!token.is_loaned());
-            assert_eq!(token.owner_id.to_string(), account_id.to_string());
+            // token.assert_unloaned();
+            // token.assert_owned_by(&account_id);
+            assert_token_unloaned!(token);
+            assert_token_owned_by!(token, &account_id);
 
             // update the counts on token metadata and royalties stored
             let metadata_id = self.nft_token_internal(token_id).metadata_id;

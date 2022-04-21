@@ -11,6 +11,11 @@ out.log
 bin
 *.log
 
+Dockerfile
+
 tills-notes.md
 testing/node_modules
 testing/TODO
+testing/downloads
+
+.DS_Store

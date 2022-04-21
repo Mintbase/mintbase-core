@@ -33,10 +33,10 @@ impl NearTime {
     }
 
     fn now_plus_n_hours(n: u64) -> Self {
-        assert!(n > 0);
-        assert!(
+        crate::near_assert!(n > 0, "Cannot set times into the past");
+        crate::near_assert!(
             n < 70_000,
-            "maximum argument for hours is 70,000 (~8 years)"
+            "Cannot set times more than 70_000 hours into the future (~8 years)"
         );
         let now = env::block_timestamp();
         let hour_ns = 10u64.pow(9) * 3600;

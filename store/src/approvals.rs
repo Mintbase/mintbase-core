@@ -9,13 +9,18 @@ use mintbase_deps::logging::{
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
-    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
     Promise,
 };
 use mintbase_deps::token::Token;
+use mintbase_deps::{
+    assert_storage_deposit,
+    assert_token_owned_by_predecessor,
+    assert_token_unloaned,
+    assert_yocto_deposit,
+};
 
 use crate::*;
 
@@ -30,9 +35,10 @@ impl MintbaseStore {
         account_id: AccountId,
         msg: Option<String>,
     ) -> Option<Promise> {
-        // Note: This method only guarantees that the store-storage is covered. The
-        // market may still reject.
-        assert!(env::attached_deposit() > self.storage_costs.common);
+        // Note: This method only guarantees that the store-storage is covered.
+        // The market may still reject.
+        assert_storage_deposit!(self.storage_costs.common);
+        // assert!(env::attached_deposit() > self.storage_costs.common);
         let token_idu64 = token_id.into();
         // validates owner and loaned
         let approval_id = self.approve_internal(token_idu64, &account_id);
@@ -62,14 +68,17 @@ impl MintbaseStore {
     ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
-        assert!(!token.is_loaned());
-        assert!(token.is_pred_owner());
-        assert_one_yocto();
+        // token.assert_unloaned();
+        // token.assert_owned_by_predecessor();
+        assert_token_unloaned!(token);
+        assert_token_owned_by_predecessor!(token);
+        assert_yocto_deposit!();
 
         if token.approvals.remove(&account_id).is_some() {
             self.tokens.insert(&token_idu64, &token);
             log_revoke(token_idu64, &account_id);
         }
+        // TODO: refund storage deposit
     }
 
     #[payable]
@@ -79,15 +88,18 @@ impl MintbaseStore {
     ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
-        assert!(!token.is_loaned());
-        assert!(token.is_pred_owner());
-        assert_one_yocto();
+        // token.assert_unloaned();
+        // token.assert_owned_by_predecessor();
+        assert_token_unloaned!(token);
+        assert_token_owned_by_predecessor!(token);
+        assert_yocto_deposit!();
 
         if !token.approvals.is_empty() {
             token.approvals.clear();
             self.tokens.insert(&token_idu64, &token);
             log_revoke_all(token_idu64);
         }
+        // TODO: refund storage deposit
     }
 
     // -------------------------- view methods -----------------------------
@@ -99,7 +111,7 @@ impl MintbaseStore {
     ) -> bool {
         self.nft_is_approved_internal(
             &self.nft_token_internal(token_id.into()),
-            approved_account_id,
+            &approved_account_id,
             approval_id,
         )
     }
@@ -119,14 +131,15 @@ impl MintbaseStore {
         let tlen = token_ids.len() as u128;
         assert!(tlen > 0);
         assert!(tlen <= 70);
-        let store_approval_storage = self.storage_costs.common * tlen;
+        let storage_stake = self.storage_costs.common * tlen;
         // Note: This method only guarantees that the store-storage is covered.
         // The financial contract may still reject.
-        assert!(
-            env::attached_deposit() > store_approval_storage,
-            "deposit less than: {}",
-            store_approval_storage
-        );
+        assert_storage_deposit!(storage_stake);
+        // assert!(
+        //     env::attached_deposit() > store_approval_storage,
+        //     "deposit less than: {}",
+        //     store_approval_storage
+        // );
         let approval_ids: Vec<U64> = token_ids
             .iter()
             // validates owner and loaned
@@ -141,7 +154,7 @@ impl MintbaseStore {
                 env::predecessor_account_id(),
                 msg,
                 account_id,
-                env::attached_deposit() - store_approval_storage,
+                env::attached_deposit() - storage_stake,
                 gas::NFT_BATCH_APPROVE,
             )
             .into()
@@ -151,6 +164,20 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
+    /// Returns the most recent `approval_id` for `account_id` on `token_id`.
+    /// If the account doesn't have approval on the token, it will return
+    /// `None`.
+    ///
+    /// Panics if the token doesn't exist.
+    pub fn nft_approval_id(
+        &self,
+        token_id: U64,
+        account_id: AccountId,
+    ) -> Option<u64> {
+        let token = self.nft_token_internal(token_id.into());
+        token.approvals.get(&account_id).cloned()
+    }
+
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
 
@@ -161,8 +188,11 @@ impl MintbaseStore {
         account_id: &AccountId,
     ) -> u64 {
         let mut token = self.nft_token_internal(token_idu64);
-        assert!(!token.is_loaned());
-        assert!(token.is_pred_owner());
+        // token.assert_unloaned();
+        // token.assert_owned_by_predecessor();
+        assert_token_unloaned!(token);
+        assert_token_owned_by_predecessor!(token);
+
         let approval_id = self.num_approved;
         self.num_approved += 1;
         token.approvals.insert(account_id.clone(), approval_id);
@@ -175,14 +205,14 @@ impl MintbaseStore {
     pub(crate) fn nft_is_approved_internal(
         &self,
         token: &Token,
-        approved_account_id: AccountId,
+        approved_account_id: &AccountId,
         approval_id: Option<u64>,
     ) -> bool {
         if approved_account_id.to_string() == token.owner_id.to_string() {
             true
         } else {
             let approval_id = approval_id.expect("approval_id required");
-            let stored_approval = token.approvals.get(&approved_account_id);
+            let stored_approval = token.approvals.get(approved_account_id);
             match stored_approval {
                 None => false,
                 Some(&stored_approval_id) => stored_approval_id == approval_id,

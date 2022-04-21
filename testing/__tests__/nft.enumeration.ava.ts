@@ -106,6 +106,35 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     [{ token_id: "2", owner_id: bob.accountId }],
     "`nft_tokens_for_owner({ from_index, limit })` output is wrong"
   );
+
+  await bob.call(
+    store,
+    "nft_batch_burn",
+    { token_ids: ["2"] },
+    { attachedDeposit: "1" }
+  );
+
+  // call `nft_tokens` with a burned token
+  assertTokensAre(
+    test,
+    await store.view("nft_tokens", {}),
+    [
+      { token_id: "0", owner_id: alice.accountId },
+      { token_id: "1", owner_id: alice.accountId },
+      { token_id: "3", owner_id: bob.accountId },
+    ],
+    "`nft_tokens({})` output is wrong after burning"
+  );
+
+  // call `nft_tokens_for_owner` for Bob with starting index and limit
+  assertTokensAre(
+    test,
+    await store.view("nft_tokens_for_owner", {
+      account_id: bob.accountId,
+    }),
+    [{ token_id: "3", owner_id: bob.accountId }],
+    "`nft_tokens_for_owner({})` output is wrong after burning"
+  );
 });
 
 // TODO:

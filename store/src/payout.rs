@@ -1,5 +1,4 @@
 use mintbase_deps::common::{
-    NewSplitOwner,
     OwnershipFractions,
     Payout,
     Royalty,
@@ -14,12 +13,18 @@ use mintbase_deps::near_sdk::json_types::{
 };
 use mintbase_deps::near_sdk::{
     self,
-    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
 };
 use mintbase_deps::token::Owner;
+use mintbase_deps::{
+    assert_storage_deposit,
+    assert_token_owned_by_predecessor,
+    assert_token_unloaned,
+    assert_yocto_deposit,
+    near_assert,
+};
 
 use crate::*;
 
@@ -36,7 +41,7 @@ impl MintbaseStore {
         balance: near_sdk::json_types::U128,
         max_len_payout: u32,
     ) -> Payout {
-        assert_one_yocto();
+        assert_yocto_deposit!();
         let payout = self.nft_payout(token_id, balance, max_len_payout);
         self.nft_transfer(receiver_id, token_id, Some(approval_id), None);
         payout
@@ -86,22 +91,28 @@ impl MintbaseStore {
         token_ids: Vec<U64>,
         split_between: SplitBetweenUnparsed,
     ) {
-        assert!(!token_ids.is_empty());
-        assert!(split_between.len() >= 2, "split len must be >= 2");
-        let storage_cost =
-            (self.storage_costs.common * split_between.len() as u128) * token_ids.len() as u128;
-        assert!(
-            env::attached_deposit() >= storage_cost,
-            "insuf. deposit. Need: {}",
-            storage_cost
+        near_assert!(!token_ids.is_empty(), "Requires token IDs");
+        // near_assert!(
+        //     split_between.len() >= 2,
+        //     "Requires at least two accounts to split between"
+        // );
+        assert_storage_deposit!(
+            (self.storage_costs.common * split_between.len() as u128) * token_ids.len() as u128
         );
         let splits = SplitOwners::new(split_between);
 
         token_ids.iter().for_each(|&token_id| {
             let mut token = self.nft_token_internal(token_id.into());
-            assert!(!token.is_loaned());
-            assert!(token.is_pred_owner());
-            assert!(token.split_owners.is_none());
+            // token.assert_unloaned();
+            // token.assert_owned_by_predecessor();
+            assert_token_unloaned!(token);
+            assert_token_owned_by_predecessor!(token);
+
+            // TODO: Can splits not be overwritten? Why not?
+            near_assert!(
+                token.split_owners.is_none(),
+                "Cannot overwrite split owners"
+            );
             let roy_len = match token.royalty_id {
                 Some(royalty_id) => self
                     .token_royalty
@@ -112,7 +123,11 @@ impl MintbaseStore {
                     .len(),
                 None => 0,
             };
-            assert!(splits.split_between.len() + roy_len <= MAX_LEN_PAYOUT as usize);
+            near_assert!(
+                splits.split_between.len() + roy_len <= MAX_LEN_PAYOUT as usize,
+                "Number of payout addresses may not exceed {}",
+                MAX_LEN_PAYOUT
+            );
 
             token.split_owners = Some(splits.clone());
             self.tokens.insert(&token_id.into(), &token);

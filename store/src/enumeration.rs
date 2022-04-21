@@ -12,6 +12,7 @@ use crate::*;
 #[near_bindgen]
 impl MintbaseStore {
     pub fn nft_total_supply(&self) -> U64 {
+        // TODO: shouldn't this subtract all burned tokens?
         self.tokens_minted.into()
     }
 
@@ -24,10 +25,10 @@ impl MintbaseStore {
             .unwrap_or_else(|| "0".to_string())
             .parse()
             .unwrap();
-        let limit = limit.unwrap_or(self.nft_total_supply().0);
+        let limit = limit.unwrap_or(self.tokens_minted);
         (from_index..limit)
             .into_iter()
-            .map(|token_id| self.nft_token_compliant_internal(token_id))
+            .flat_map(|token_id| self.nft_token_compliant_internal(token_id))
             .collect()
     }
 
@@ -59,7 +60,7 @@ impl MintbaseStore {
                     .unwrap(),
             )
             .take(limit.unwrap_or(10))
-            .map(|x| self.nft_token_compliant_internal(x))
+            .flat_map(|x| self.nft_token_compliant_internal(x))
             .collect::<Vec<_>>()
     }
 }

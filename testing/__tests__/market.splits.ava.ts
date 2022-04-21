@@ -16,7 +16,7 @@ import {
 
 MARKET_WORKSPACE.test(
   "market::splits",
-  async (test, { root, factory, store, market, alice, bob, carol }) => {
+  async (test, { root, factory, store, market, alice, bob, carol, dave }) => {
     // cannot use `prepareTokenListing`, because royalties need to be set
     // during minting
     await root
@@ -27,10 +27,6 @@ MARKET_WORKSPACE.test(
         { attachedDeposit: "1" }
       )
       .catch(failPromiseRejection(test, "allowing store on market"));
-
-    const dave = await root.createAccount("dave", {
-      initialBalance: NEAR(20).toString(),
-    });
 
     await batchMint({ owner: alice, store, num_to_mint: 1 }).catch(
       failPromiseRejection(test, "minting")
@@ -54,7 +50,7 @@ MARKET_WORKSPACE.test(
             { attachedDeposit: mNEAR(1.6) }
           );
         },
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 0`,
         "Bob tried setting splits on Alice's token",
       ],
       [
@@ -73,8 +69,7 @@ MARKET_WORKSPACE.test(
             { attachedDeposit: mNEAR(1.59) }
           );
         },
-        // TODO::store::low: better error messages
-        `panicked at 'insuf. deposit. Need: ${mNEAR(1.6)}',`,
+        `Requires storage deposit of at least ${mNEAR(1.6)}`,
         "Alice tried setting splits with insufficient storage deposit",
       ],
     ]);

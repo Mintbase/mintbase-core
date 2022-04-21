@@ -100,7 +100,14 @@ impl Token {
     }
 
     pub fn is_pred_owner(&self) -> bool {
-        self.owner_id.to_string() == near_sdk::env::predecessor_account_id().to_string()
+        self.is_owned_by(&near_sdk::env::predecessor_account_id())
+    }
+
+    pub fn is_owned_by(
+        &self,
+        account_id: &AccountId,
+    ) -> bool {
+        self.owner_id.to_string() == account_id.to_string()
     }
 
     pub fn is_loaned(&self) -> bool {

@@ -61,7 +61,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(1), gas: Tgas(200) }
         );
       },
-      `price: ${NEAR(1.1)} > deposit: ${NEAR(1)}`,
+      `Summed prices must match the attached deposit`,
       "Bob tried attaching less than claimed"
     );
     // try to set price below ask
@@ -80,7 +80,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(2) }
         );
       },
-      "panicked at 'Offer is below ask!'",
+      "Cannot set offer below ask",
       "Bob tried setting the price below the asking price"
     );
     // try to set instant expiry
@@ -98,7 +98,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(1), gas: Tgas(200) }
         );
       },
-      "panicked at 'assertion failed: n > 0',",
+      "Cannot set times into the past",
       "Bob tried to set instant expiry"
     );
     // fuzzing: to few arguments
@@ -116,8 +116,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(1), gas: Tgas(200) }
         );
       },
-      // TODO::testing::low: comment at the end of panic msg
-      "panicked at 'assertion failed: `(left == right)`",
+      "Price list doesn't match up with token list",
       "Bob tried fuzzing by omitting arguments"
     );
     // fuzzing: to many arguments
@@ -135,8 +134,7 @@ MARKET_WORKSPACE.test(
           { attachedDeposit: NEAR(3), gas: Tgas(200) }
         );
       },
-      // TODO::testing::low: comment at the end of panic msg
-      "panicked at 'assertion failed: `(left == right)`",
+      "Price list doesn't match up with token list",
       "Bob tried fuzzing by adding arguments"
     );
 
@@ -276,5 +274,8 @@ MARKET_WORKSPACE.test(
     );
 
     // TODO::testing::low what happens in the case where one offer is valid and the other is not?
+
+    // TODO::testing::medium: Users don't need to pay for replacing an offer
+    // TODO::testing::medium: Users don't need to pay for replacing multiple offers
   }
 );
