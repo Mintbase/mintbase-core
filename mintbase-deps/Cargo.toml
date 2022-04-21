@@ -16,9 +16,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 [dependencies.near_events]
-path = "../../near-events/near-events"
-# git = "https://github.com/mintbase/near-events"
-# rev = "c7d07ea9b02f8d756d044360553398eb9edf296c"
+git = "https://github.com/mintbase/near-events"
+rev = "6d5fe6eef75d2ac5d67ce01d7219c91219a0c7b7"
 
 [features]
 ser = ["near_events/ser"]
