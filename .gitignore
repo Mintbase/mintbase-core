@@ -1,16 +1,16 @@
 /target
-.idea
 .vscode
 *leak*
 # indexer
-_scripts
 .postgres.sh
-wasm
-error.log
-out.log
-bin
+wasm/*
+bin/*
 *.log
+Dockerfile
 
 tills-notes.md
 testing/node_modules
+testing/downloads
 testing/TODO
+
+.DS_Store
