@@ -12,7 +12,7 @@ use near_sdk::{
     AccountId,
 };
 
-#[cfg_attr(feature = "all", derive(Clone))]
+#[cfg_attr(feature = "all", derive(Clone, Debug))]
 #[near_event_data_log(standard = "nep171", version = "1.0.0", event = "nft_mint")]
 pub struct NftMintLog {
     pub owner_id: String,
