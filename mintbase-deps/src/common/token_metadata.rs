@@ -46,19 +46,19 @@ impl TokenMetadata {
         args: TokenMetadata,
         copies: u64,
     ) -> (Self, u64) {
-        if args.media.is_some() {
-            crate::near_assert!(
-                args.media_hash.is_some(),
-                "Cannot specificy metadata.media without metadata.media_hash"
-            );
-        }
+        // if args.media.is_some() {
+        //     crate::near_assert!(
+        //         args.media_hash.is_some(),
+        //         "Cannot specificy metadata.media without metadata.media_hash"
+        //     );
+        // }
 
-        if args.reference.is_some() {
-            crate::near_assert!(
-                args.reference_hash.is_some(),
-                "Cannot specificy metadata.reference without metadata.reference_hash"
-            );
-        }
+        // if args.reference.is_some() {
+        //     crate::near_assert!(
+        //         args.reference_hash.is_some(),
+        //         "Cannot specificy metadata.reference without metadata.reference_hash"
+        //     );
+        // }
 
         let metadata = Self {
             title: args.title,
