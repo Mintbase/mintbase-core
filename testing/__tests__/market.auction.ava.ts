@@ -199,7 +199,7 @@ MARKET_WORKSPACE.test(
             { attachedDeposit: "1", gas: Tgas(200) }
           );
         },
-        "panicked at 'assertion failed:",
+        `${bob.accountId} does not own token ${tokenKey}`,
         "Bob tried to accept an offer for Alice's token",
       ],
       // try accepting offer without yoctoNEAR deposit

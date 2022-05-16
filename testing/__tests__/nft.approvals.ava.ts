@@ -57,7 +57,7 @@ STORE_WORKSPACE.test(
         store,
         "nft_approve",
         { token_id: "0", account_id: bob.accountId },
-        { attachedDeposit: mNEAR(0.81) } // no value for this in mintbase-js
+        { attachedDeposit: mNEAR(0.8) }
       )
       .catch(failPromiseRejection("approving"));
     // check event logs
@@ -86,9 +86,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_approve",
             { token_id: "1", account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.81) }
+            { attachedDeposit: mNEAR(0.8) }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 1`,
         "Bob tried approving on unowned token",
       ],
       // require at least one yoctoNEAR to approve
@@ -98,10 +98,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_approve",
             { token_id: "1", account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.8) } // deposit > 0.8
+            { attachedDeposit: mNEAR(0.79) }
           ),
-        //TODO::store::low: panic message format
-        "panicked at 'assertion failed: env::attached_deposit() > self.storage_costs.common',",
+        "Requires storage deposit of at least 800000000000000000000 yoctoNEAR",
         "Alice tried approving with insufficient deposit",
       ],
     ]);
@@ -121,6 +120,13 @@ STORE_WORKSPACE.test(
       ],
       "approving"
     );
+    test.is(
+      await store.view("nft_approval_id", {
+        token_id: "0",
+        account_id: bob.accountId,
+      }),
+      0
+    );
 
     // ----------------------------- batch approve -----------------------------
     const batchApproveCall = await alice
@@ -128,7 +134,7 @@ STORE_WORKSPACE.test(
         store,
         "nft_batch_approve",
         { token_ids: ["1", "2"], account_id: bob.accountId },
-        { attachedDeposit: mNEAR(1.61) } // no value for this in mintbase-js
+        { attachedDeposit: mNEAR(1.6) } // no value for this in mintbase-js
       )
       .catch(failPromiseRejection("batch approving"));
     // check event logs
@@ -160,9 +166,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_batch_approve",
             { token_ids: ["2", "3"], account_id: bob.accountId },
-            { attachedDeposit: mNEAR(1.61) }
+            { attachedDeposit: mNEAR(1.6) }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 2`,
         "Bob tried batch approving on unowned tokens",
       ],
       // require at sufficient deposit to cover storage rent
@@ -172,10 +178,9 @@ STORE_WORKSPACE.test(
             store,
             "nft_batch_approve",
             { token_ids: ["3"], account_id: bob.accountId },
-            { attachedDeposit: mNEAR(0.8) }
+            { attachedDeposit: mNEAR(0.79) }
           ),
-        //TODO::store::low: consistent error messages
-        "panicked at 'deposit less than: 800000000000000000000',",
+        "Requires storage deposit of at least 800000000000000000000 yoctoNEAR",
         "Alice tried batch approving with insufficient deposit",
       ],
     ]);
@@ -266,7 +271,7 @@ STORE_WORKSPACE.test(
             },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 1`,
         "Bob tried revoking on unowned token",
       ],
       // require at least one yoctoNEAR to revoke
@@ -360,7 +365,7 @@ STORE_WORKSPACE.test(
             { token_id: "0" },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: token.is_pred_owner()',",
+        `${bob.accountId} is required to own token 0`,
         "Bob tried revoking all on unowned token",
       ],
       // require at least one yoctoNEAR to revoke all
@@ -395,7 +400,7 @@ STORE_WORKSPACE.test(
 
 STORE_WORKSPACE.test(
   "approvals::minting",
-  async (test, { alice, bob, carol, store }) => {
+  async (test, { alice, bob, carol, dave, store }) => {
     const failPromiseRejection = (msg: string) => (e: any) => {
       test.log(`Promise rejected while ${msg}:`);
       test.log(e);
@@ -441,7 +446,7 @@ STORE_WORKSPACE.test(
             { account_id: bob.accountId },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: `(left == right)`",
+        "This method can only be called by the store owner",
         "Bob tried granting himself minting rights",
       ],
       //  require deposit
@@ -555,7 +560,7 @@ STORE_WORKSPACE.test(
             { account_id: bob.accountId },
             { attachedDeposit: "1" }
           ),
-        "panicked at 'assertion failed: `(left == right)`",
+        "This method can only be called by the store owner",
         "Bob tried to revoke his minting rights",
       ],
       // requires yoctoNEAR deposit
@@ -574,11 +579,7 @@ STORE_WORKSPACE.test(
             { account_id: alice.accountId },
             { attachedDeposit: "1" }
           ),
-        // TODO::testing::low: look for the comment AFTER the failed
-        //  assertion message (in this case: "can't revoke owner")
-        // TODO::testing::low: look for similar test cases where I might
-        //  have missed this
-        "panicked at 'assertion failed: `(left != right)`",
+        "Owner cannot be removed from minters",
         "Alice tried to revoke her own minting rights",
       ],
     ]);
@@ -592,7 +593,119 @@ STORE_WORKSPACE.test(
     test.deepEqual(
       await store.view("list_minters"),
       [alice.accountId],
-      "Bad minters list after granting minting rigths to Bob"
+      "Bad minters list after granting minting rights to Bob"
+    );
+
+    // batch_change_minters: add bob and carol
+    const batchGrantMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { grant: [bob.accountId, carol.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch grant minter rights"));
+
+    // check logs
+    assertEventLogs(
+      test,
+      (batchGrantMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: bob.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: carol.accountId }),
+        },
+      ],
+      "batch grant minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId, bob.accountId, carol.accountId],
+      "Bad minters list after batch granting minter rights"
+    );
+
+    // TODO: batch_change_minters: change carol to dave
+    const batchChangeMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { revoke: [carol.accountId], grant: [dave.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch change minter rights"));
+    // check logs
+    assertEventLogs(
+      test,
+      (batchChangeMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_grant_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: dave.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: carol.accountId }),
+        },
+      ],
+      "batch change minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId, bob.accountId, dave.accountId],
+      "Bad minters list after batch changing minter rights"
+    );
+
+    // batch_change_minters: revoke bob and dave
+    const batchRevokeMinterCall = await alice
+      .call_raw(
+        store,
+        "batch_change_minters",
+        { revoke: [bob.accountId, dave.accountId] },
+        { attachedDeposit: "1" }
+      )
+      .catch(failPromiseRejection("batch revoke minter rights"));
+    // check logs
+    assertEventLogs(
+      test,
+      (batchRevokeMinterCall as TransactionResult).logs,
+      [
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: bob.accountId }),
+        },
+        {
+          standard: "nep171",
+          version: "1.0.0",
+          event: "nft_revoke_minter",
+          // TODO::store::medium: wtf is this format?
+          data: JSON.stringify({ data: dave.accountId }),
+        },
+      ],
+      "batch revoke minter rights"
+    );
+    test.deepEqual(
+      await store.view("list_minters"),
+      [alice.accountId],
+      "Bad minters list after batch revoking minter rights"
     );
   }
 );
@@ -664,7 +777,7 @@ STORE_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'approval_id required'",
+        "Disallowing approvals without approval ID",
         "Bob tried transferring (approved) without approval_id",
       ],
       // require at least one yoctoNEAR to transfer
@@ -690,9 +803,8 @@ STORE_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        // TODO::store::low: better error messages
-        "panicked at 'assertion failed: self.nft_is_approved_internal(&token, env::predecessor_account_id(),",
-        "Bob tried transferring (approved) without yoctoNEAR deposit",
+        `${bob.accountId} has no approval for token 0`,
+        "Bob tried transferring without having approval",
       ],
     ]);
 

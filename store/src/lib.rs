@@ -9,6 +9,7 @@ use mintbase_deps::constants::{
     StorageCosts,
     YOCTO_PER_BYTE,
 };
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::borsh::{
     self,
     BorshDeserialize,
@@ -24,7 +25,6 @@ use mintbase_deps::near_sdk::json_types::{
 };
 use mintbase_deps::near_sdk::{
     self,
-    assert_one_yocto,
     env,
     ext_contract,
     near_bindgen,
@@ -122,7 +122,7 @@ impl MintbaseStore {
         metadata: NFTContractMetadata,
         owner_id: AccountId,
     ) -> Self {
-        assert!(!env::state_exists(), "Already, initialized");
+        near_assert!(!env::state_exists(), "This store is already initialized!");
         let mut minters = UnorderedSet::new(b"a".to_vec());
         minters.insert(&owner_id);
 

@@ -16,7 +16,6 @@ pub mod token_offer;
 // pub use loan::Loan;
 // pub use owner::Owner;
 pub use payouts::{
-    NewSplitOwner,
     OwnershipFractions,
     Payout,
     Royalty,

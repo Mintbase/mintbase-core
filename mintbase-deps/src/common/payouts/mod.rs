@@ -11,7 +11,6 @@ pub use royalty::{
     RoyaltyArgs,
 };
 pub use splits::{
-    NewSplitOwner,
     SplitBetween,
     SplitBetweenUnparsed,
     SplitOwners,

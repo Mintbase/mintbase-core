@@ -32,9 +32,9 @@ impl SafeFraction {
     ///
     /// Upper limit is 10^4 so as to prevent multiplication with overflow.
     pub fn new(numerator: u32) -> Self {
-        assert!(
+        crate::near_assert!(
             (0..=10000).contains(&numerator),
-            "{} not between 0 and 10,000",
+            "{} must be between 0 and 10_000",
             numerator
         );
         SafeFraction { numerator }
@@ -56,7 +56,10 @@ impl std::ops::Sub for SafeFraction {
         self,
         rhs: Self,
     ) -> Self::Output {
-        assert!(self.numerator >= rhs.numerator);
+        crate::near_assert!(
+            self.numerator >= rhs.numerator,
+            "Subtraction result cannot be negative"
+        );
         Self {
             numerator: self.numerator - rhs.numerator,
         }
@@ -68,7 +71,10 @@ impl std::ops::SubAssign for SafeFraction {
         &mut self,
         rhs: Self,
     ) {
-        assert!(self.numerator >= rhs.numerator);
+        crate::near_assert!(
+            self.numerator >= rhs.numerator,
+            "Subtraction result cannot be negative"
+        );
         self.numerator -= rhs.numerator;
     }
 }

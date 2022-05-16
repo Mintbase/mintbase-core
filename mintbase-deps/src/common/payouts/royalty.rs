@@ -39,31 +39,36 @@ impl Royalty {
     /// Validates all arguments. Addresses must be valid and percentages must be
     /// within accepted values. Hashmap percentages must add to 10000.
     pub fn new(royalty_args: RoyaltyArgs) -> Self {
-        assert!(!royalty_args.split_between.is_empty());
         let percentage = royalty_args.percentage;
         let split_between = royalty_args.split_between;
 
-        assert!(
+        crate::near_assert!(
             percentage <= ROYALTY_UPPER_LIMIT,
-            "percentage: {} must be <= 5000",
-            percentage
+            "Royalties must not exceed 50% of a sale",
         );
-        assert!(percentage > 0, "percentage cannot be zero");
-        assert!(!split_between.is_empty(), "royalty mapping is empty");
+        crate::near_assert!(percentage > 0, "Royalty percentage cannot be zero");
+        crate::near_assert!(
+            !split_between.is_empty(),
+            "Royalty mapping may not be empty"
+        );
 
         let mut sum: u32 = 0;
         let split_between: SplitBetween = split_between
             .into_iter()
             .map(|(addr, numerator)| {
-                assert!(AccountId::try_from(addr.to_string()).is_ok());
-                // assert!(env::is_valid_account_id(addr.as_bytes()));
-                assert!(numerator > 0, "percentage cannot be zero");
+                // TODO: different method than splits?
+                crate::near_assert!(
+                    AccountId::try_from(addr.to_string()).is_ok(),
+                    "{} is not a valid account ID on NEAR",
+                    addr
+                );
+                crate::near_assert!(numerator > 0, "Royalty for {} cannot be zero", addr);
                 let sf = SafeFraction::new(numerator);
                 sum += sf.numerator;
                 (addr, sf)
             })
             .collect();
-        assert_eq!(sum, 10_000, "fractions don't add to 10,000");
+        crate::near_assert_eq!(sum, 10_000, "Fractions need to add up to 10_000");
 
         Self {
             percentage: SafeFraction::new(percentage),

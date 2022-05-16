@@ -156,7 +156,7 @@ STORE_WORKSPACE.test(
             { attachedDeposit: "1" }
           );
         },
-        "panicked at 'assertion failed: `(left == right)",
+        "This method can only be called by the store owner",
         "Non-owner tried to transfer store ownership",
       ],
       // require yoctoNEAR deposit
@@ -222,75 +222,3 @@ STORE_WORKSPACE.test(
     );
   }
 );
-
-// TODO::testing::low factory ownership transfer
-// DEFAULT_WORKSPACE.test(
-//   "ownership::transfer-factory",
-//   async (test, { root, alice, bob, carol, store }) => {
-//     await alice.call(store, "grant_minter", {});
-
-//     const transferStoreCall = await alice.call_raw(
-//       store,
-//       "store_ownership",
-//       {}
-//     );
-
-//     // TODO: check logs
-//     // TODO: require ownership
-//     // TODO: require yoctoNEAR deposit
-//   }
-// );
-
-// TODO::testing::low market ownership transfer
-// DEFAULT_WORKSPACE.test(
-//   "ownership::transfer-market",
-//   async (test, { root, alice, bob, carol, store }) => {
-//     await alice.call(store, "grant_minter", {});
-
-//     const transferStoreCall = await alice.call_raw(
-//       store,
-//       "store_ownership",
-//       {}
-//     );
-
-//     // TODO: check logs
-//     // TODO: require ownership
-//     // TODO: require yoctoNEAR deposit
-//   }
-// );
-
-// TODO:
-
-// Things to address in tests
-// - [x] Edge cases should be handled in a `Promise.all`
-// - [x] break into modules and subfunctions
-// - [x] Check logs method
-// - [] subfunctions with the same signature as AvaTestingFn?
-// - [] better test names + more granularity to allow descriptive selections?
-// - [] wrapping the `test` object to do common things (high effort, not urgent)
-//   - [] make the underlying methods available
-//   - [] test.isNftOwner(token_id, owner_id)
-//   - [] test.notIsNftOwner(contract, token_id, owner_id)
-//   - [] test.isNftApproved(contract, token_id, owner_id, approval_id?)
-//   - [] test.notIsNftApproved(contract, token_id, owner_id, approval_id?)
-//   - [] test.isMinter(account_id)
-//   - [] test.notIsMinter(account_id)
-// - []
-// - []
-//
-
-// Things to address in codebase
-//
-// high priority
-// - [] Token doesn't comply with NEP171
-// - [] Events don't comply with NEP297 -> Cannot use impls from
-//      `near_contract_standards`, as we need a version bump for fixing that
-// - [] `nft_tokens` and `nft_tokens_for_owner` are non-compliant
-//   - [] ask frontend if changing them will break things
-// - []
-//
-// low priority
-// - [] decide whether empty fields should show up in the event logs
-// - [] revise the signature of `batch_transfer`
-// - []
-//
