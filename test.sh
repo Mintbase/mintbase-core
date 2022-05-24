@@ -52,6 +52,9 @@ kill_the_damn_sandbox
 # Be a good scripty-boy and clean up!
 kill_the_damn_sandbox
 
-# cargo p2p_indexer || fail "Compiling p2p indexer"
-cargo mintlake || fail "Compiling mintlake"
-# (cd mintbase-near-indexer && ./test.sh)
+# # cargo p2p_indexer || fail "Compiling p2p indexer"
+# cargo mintlake || fail "Compiling mintlake"
+# # (cd mintbase-near-indexer && ./test.sh)
+
+# market prior: 246K (212K)
+# market after: 261K (224K)
