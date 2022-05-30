@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Testing script for quick iteration on code:
-# - does quick checks first
-# - reproduces CI pipeline
-
 fail() {
   echo "$1 failed with code: $?"
   exit 1
