@@ -22,6 +22,7 @@ kill_the_damn_sandbox() {
 }
 
 cargo +nightly fmt || fail "Formatting"
+# FIXME: currently fails on the feature-gating
 # cargo lint || fail "Linting"
 
 # prevent factory checking from failing
@@ -31,7 +32,8 @@ cargo check -p mintbase-deps --features store-wasm --message-format short || fai
 cargo check -p mintbase-deps --features factory-wasm --message-format short || fail "Checking factory"
 cargo check -p mintbase-deps --features helper-wasm --message-format short || fail "Checking helper"
 cargo check -p simple-market-contract --message-format short || fail "Checking market"
-# cargo check -p mintbase-near-indexer || fail "Checking indexer"
+cargo check -p mintbase-near-indexer --bin mintlake --features mintlake || fail "Checking mintlake"
+cargo check -p mintbase-near-indexer --bin p2p_indexer --features p2p_indexer || fail "Checking p2p indexer"
 
 build_wasm store
 build_wasm factory
@@ -52,9 +54,7 @@ kill_the_damn_sandbox
 # Be a good scripty-boy and clean up!
 kill_the_damn_sandbox
 
-# # cargo p2p_indexer || fail "Compiling p2p indexer"
-# cargo mintlake || fail "Compiling mintlake"
-# # (cd mintbase-near-indexer && ./test.sh)
-
-# market prior: 246K (212K)
-# market after: 261K (224K)
+cargo p2p_indexer || fail "Compiling p2p indexer"
+(cd mintbase-near-indexer && ./scripts/test-p2p.sh)
+cargo mintlake || fail "Compiling mintlake"
+# (cd mintbase-near-indexer && ./scripts/test-lake.sh)
