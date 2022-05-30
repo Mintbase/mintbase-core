@@ -100,7 +100,7 @@ pub fn log_batch_listing_created(
 // TODO: test!
 #[cfg_attr(feature = "all", derive(Clone, Debug))]
 #[near_event_data(standard = "mb_market", version = "0.1.0", event = "nft_update_list")]
-pub struct NftUpdateListLog {
+pub struct NftUpdateListData {
     pub list_id: String,
     pub auto_transfer: Option<bool>,
     pub price: Option<String>,
@@ -111,7 +111,7 @@ pub fn log_set_token_autotransfer(
     auto_transfer: bool,
     list_id: &str,
 ) {
-    let data = NftUpdateListLog {
+    let data = NftUpdateListData {
         list_id: list_id.to_string(),
         auto_transfer: Option::from(auto_transfer),
         price: None,
@@ -124,10 +124,51 @@ pub fn log_set_token_asking_price(
     price: &U128,
     list_id: &str,
 ) {
-    let data = NftUpdateListLog {
+    let data = NftUpdateListData {
         list_id: list_id.to_string(),
         auto_transfer: None,
         price: Option::from(price.0.to_string()),
+    };
+    env::log_str(&data.serialize_event());
+}
+
+// ------------------------------- unlisting -------------------------------- //
+#[cfg_attr(feature = "all", derive(Clone, Debug))]
+#[near_event_data_log(standard = "mb_market", version = "0.1.0", event = "nft_unlist")]
+pub struct NftUnlistLog {
+    pub list_id: String,
+}
+
+#[cfg(feature = "ser")]
+pub fn log_token_removed(list_id: &str) {
+    let log = NftUnlistLog {
+        list_id: list_id.to_string(),
+    };
+    env::log_str(&log.serialize_event());
+}
+
+// ------------------------------ sell listing ------------------------------ //
+#[cfg_attr(feature = "all", derive(Clone, Debug))]
+#[near_event_data(standard = "mb_market", version = "0.1.0", event = "nft_sold")]
+pub struct NftSaleData {
+    pub list_id: String,
+    pub offer_num: u64,
+    pub token_key: String,
+    pub payout: HashMap<AccountId, U128>,
+}
+
+#[cfg(feature = "ser")]
+pub fn log_sale(
+    list_id: &str,
+    offer_num: u64,
+    token_key: &str,
+    payout: &HashMap<AccountId, U128>,
+) {
+    let data = NftSaleData {
+        list_id: list_id.to_string(),
+        offer_num,
+        token_key: token_key.to_string(),
+        payout: payout.clone(),
     };
     env::log_str(&data.serialize_event());
 }
@@ -172,9 +213,14 @@ pub fn log_make_offer(
 }
 
 // --------------------------- withdrawing offer ---------------------------- //
+// TODO: testing!
 #[cfg_attr(feature = "all", derive(Clone, Debug))]
-#[near_event_data(standard = "mb_market", version = "0.1.0", event = "nft_update_offer")]
-pub struct NftUpdateOfferData {
+#[near_event_data(
+    standard = "mb_market",
+    version = "0.1.0",
+    event = "nft_withdraw_offer"
+)]
+pub struct NftWithdrawOfferData {
     pub list_id: String,
     pub offer_num: u64,
 }
@@ -184,52 +230,11 @@ pub fn log_withdraw_token_offer(
     list_id: &str,
     offer_num: u64,
 ) {
-    let data = NftUpdateOfferData {
+    let data = NftWithdrawOfferData {
         offer_num,
         list_id: list_id.to_string(),
     };
     env::log_str(&data.serialize_event());
-}
-
-// ------------------------------ sell listing ------------------------------ //
-#[cfg_attr(feature = "all", derive(Clone, Debug))]
-#[near_event_data(standard = "mb_market", version = "0.1.0", event = "nft_sold")]
-pub struct NftSaleData {
-    pub list_id: String,
-    pub offer_num: u64,
-    pub token_key: String,
-    pub payout: HashMap<AccountId, U128>,
-}
-
-#[cfg(feature = "ser")]
-pub fn log_sale(
-    list_id: &str,
-    offer_num: u64,
-    token_key: &str,
-    payout: &HashMap<AccountId, U128>,
-) {
-    let data = NftSaleData {
-        list_id: list_id.to_string(),
-        offer_num,
-        token_key: token_key.to_string(),
-        payout: payout.clone(),
-    };
-    env::log_str(&data.serialize_event());
-}
-
-// ------------------------------- unlisting -------------------------------- //
-#[cfg_attr(feature = "all", derive(Clone, Debug))]
-#[near_event_data_log(standard = "mb_market", version = "0.1.0", event = "nft_unlist")]
-pub struct NftUnlistLog {
-    list_id: String,
-}
-
-#[cfg(feature = "ser")]
-pub fn log_token_removed(list_id: &str) {
-    let log = NftUnlistLog {
-        list_id: list_id.to_string(),
-    };
-    env::log_str(&log.serialize_event());
 }
 
 // ----------------------- updating banlist/allowlist ----------------------- //
