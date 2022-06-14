@@ -32,14 +32,10 @@ MARKET_WORKSPACE.test(
       (updateAllowlistCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_allowlist",
-          // TODO::market::medium: WTF, now we have a stringified array?
-          //  -> the method can only update one account_id at a time
-          data: JSON.stringify([
-            { account_id: factory.accountId, state: true },
-          ]),
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "update_allowlist",
+          data: { account_id: factory.accountId, state: true },
         },
       ],
       "buy now listing with auto transfer"
@@ -81,10 +77,10 @@ MARKET_WORKSPACE.test(
       (auctionApproveCall as TransactionResult).logs.slice(1),
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_1_list",
-          data: JSON.stringify([
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "nft_list",
+          data: [
             {
               // TODO::market::low: why this duplication?
               list_id: `0:0:${store.accountId}`,
@@ -98,7 +94,7 @@ MARKET_WORKSPACE.test(
               store_id: store.accountId,
               // meta_id: null,
             },
-          ]),
+          ],
         },
       ],
       "auction listing"
@@ -171,18 +167,16 @@ MARKET_WORKSPACE.test(
       (buynowApproveCall as TransactionResult).logs.slice(1),
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_removed",
-          // TODO::market::medium: wtf is this format?
-          data: JSON.stringify({ data: `0:0:${store.accountId}` }),
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "nft_unlist",
+          data: [{ list_id: `0:0:${store.accountId}` }],
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_1_list",
-          // TODO::market::medium: why stringified?
-          data: JSON.stringify([
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "nft_list",
+          data: [
             {
               // TODO::market::low: why this duplication?
               list_id: `0:1:${store.accountId}`,
@@ -196,7 +190,7 @@ MARKET_WORKSPACE.test(
               store_id: store.accountId,
               // thing_id: null,
             },
-          ]),
+          ],
         },
       ],
       "buy now listing"
@@ -237,9 +231,6 @@ MARKET_WORKSPACE.test(
       "revoke auction listing"
     );
 
-    // TODO::testing::low check market state -> not possible because market is
-    //  not updated -> might insert a XCC when revoking mintbase-market
-
     // ----------------------------- batch listing -----------------------------
     const batchApproveLogs = await alice.call_raw(
       store,
@@ -262,18 +253,16 @@ MARKET_WORKSPACE.test(
       (batchApproveLogs as TransactionResult).logs.slice(1),
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_removed",
-          // TODO::market::medium: wtf is this format?
-          data: JSON.stringify({ data: `0:1:${store.accountId}` }),
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "nft_unlist",
+          data: [{ list_id: `0:1:${store.accountId}` }],
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_batch_list",
-          // TODO::market::medium: why stringified?
-          data: JSON.stringify([
+          standard: "mb_market",
+          version: "0.1.0",
+          event: "nft_list",
+          data: [
             {
               list_id: `0:2:${store.accountId}`,
               price: NEAR(1).toString(),
@@ -294,7 +283,7 @@ MARKET_WORKSPACE.test(
               token_id: "1",
               store_id: store.accountId,
             },
-          ]),
+          ],
         },
       ],
       "batch approving"

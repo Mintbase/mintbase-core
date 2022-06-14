@@ -200,16 +200,15 @@ MARKET_WORKSPACE.test(
           ],
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_market",
+          version: "0.1.0",
           event: "nft_sold",
-          // TODO::contracts::low: no stringified data
-          data: JSON.stringify({
+          data: {
             list_id: `0:0:${store.accountId}`,
             offer_num: 1,
             token_key: `0:${store.accountId}`,
             payout: createPayout([[alice, NEAR(0.975).toString()]]),
-          }),
+          },
         },
         {
           standard: "nep171",
@@ -226,16 +225,15 @@ MARKET_WORKSPACE.test(
           ],
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_market",
+          version: "0.1.0",
           event: "nft_sold",
-          // TODO::contracts::low: no stringified data
-          data: JSON.stringify({
+          data: {
             list_id: `1:1:${store.accountId}`,
             offer_num: 1,
             token_key: `1:${store.accountId}`,
             payout: createPayout([[alice, mNEAR(1462.5).toString()]]),
-          }),
+          },
         },
       ],
       'making "buy now" offer'
