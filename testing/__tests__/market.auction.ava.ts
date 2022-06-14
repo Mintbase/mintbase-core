@@ -246,15 +246,15 @@ MARKET_WORKSPACE.test(
           ],
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_market",
+          version: "0.1.0",
           event: "nft_sold",
-          data: JSON.stringify({
+          data: {
             list_id: `0:0:${store.accountId}`,
             offer_num: 2,
             token_key: `0:${store.accountId}`,
             payout: createPayout([[alice, NEAR(1.95).toString()]]),
-          }),
+          },
         },
       ],
       "accepting auction offer"
