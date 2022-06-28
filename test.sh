@@ -53,4 +53,4 @@ kill_the_damn_sandbox
 cargo p2p_indexer || fail "Compiling p2p indexer"
 (cd mintbase-near-indexer && ./scripts/test-p2p.sh)
 cargo mintlake || fail "Compiling mintlake"
-# (cd mintbase-near-indexer && ./scripts/test-lake.sh)
+(cd mintbase-near-indexer && ./scripts/test-lake.sh)

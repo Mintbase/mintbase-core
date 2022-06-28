@@ -53,14 +53,6 @@ pub fn log_batch_approve(
     env::log_str(&data.serialize_event());
 }
 
-// #[cfg_attr(feature = "ser", derive(Serialize))]
-// #[cfg_attr(feature = "de", derive(Deserialize))]
-// #[cfg_attr(any(feature = "ser", feature = "de"), serde(crate = "near_sdk::serde"))]
-// pub struct NftRevokeLog {
-//     pub token_id: U64,
-//     pub account_id: String,
-// }
-
 #[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_revoke")]
 pub struct NftRevokeData {
     pub token_id: U64,
