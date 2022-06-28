@@ -34,7 +34,7 @@ impl Default for NftStoreCreateLog {
 
 #[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_grant_minter")]
 pub struct NftGrantMinterData {
-    granted: String,
+    pub granted: String,
 }
 
 pub fn log_grant_minter(account_id: &AccountId) {
@@ -48,7 +48,7 @@ pub fn log_grant_minter(account_id: &AccountId) {
 
 #[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_revoke_minter")]
 pub struct NftRevokeMinterData {
-    revoked: String,
+    pub revoked: String,
 }
 
 pub fn log_revoke_minter(account_id: &AccountId) {

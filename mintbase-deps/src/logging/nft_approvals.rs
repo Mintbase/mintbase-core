@@ -74,7 +74,7 @@ pub fn log_revoke(
 
 #[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_revoke_all")]
 pub struct NftRevokeAllData {
-    token_id: U64,
+    pub token_id: U64,
 }
 
 pub fn log_revoke_all(token_id: u64) {
