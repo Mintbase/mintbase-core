@@ -18,8 +18,7 @@ kill_the_damn_sandbox() {
 }
 
 cargo +nightly fmt || fail "Formatting"
-# FIXME: currently fails on the feature-gating
-# cargo lint || fail "Linting"
+cargo lint || fail "Linting"
 
 # prevent factory checking from failing
 touch wasm/store.wasm
