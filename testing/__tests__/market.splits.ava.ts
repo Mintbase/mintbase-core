@@ -88,28 +88,22 @@ MARKET_WORKSPACE.test(
       )
       .catch(failPromiseRejection(test, "setting splits"));
 
-    const storeFormattedSplits = {
-      // TODO::store::low: why the nesting?
-      split_between: createPayoutNumerators([
-        [alice, 6000],
-        [bob, 4000],
-      ]),
-    };
-
     // check event logs
     assertEventLogs(
       test,
       (setSplitsCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_set_split_owners",
-          // TODO::store::low: unstringify
-          data: JSON.stringify({
-            split_owners: storeFormattedSplits,
+          data: {
+            split_owners: createPayoutPercentage([
+              [alice, 6000],
+              [bob, 4000],
+            ]),
             token_ids: ["0"],
-          }),
+          },
         },
       ],
       "setting splits"
@@ -118,7 +112,12 @@ MARKET_WORKSPACE.test(
     // check chain state: splits in `nft_token`
     test.deepEqual(
       ((await store.view("nft_token", { token_id: "0" })) as any).split_owners,
-      storeFormattedSplits,
+      {
+        split_between: createPayoutNumerators([
+          [alice, 6000],
+          [bob, 4000],
+        ]),
+      },
       "Bad onchain splits (querying `nft_token`)"
     );
     // so far, I cannot find a direct method to query the split owners
