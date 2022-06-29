@@ -1,7 +1,8 @@
-use near_sdk::serde::{
-    Deserialize,
-    Serialize,
-};
+use near_events::near_event_data;
+// #[cfg(feature = "de")]
+use near_sdk::serde::Deserialize;
+// #[cfg(feature = "ser")]
+use near_sdk::serde::Serialize;
 use near_sdk::{
     env,
     AccountId,
@@ -31,30 +32,32 @@ impl Default for NftStoreCreateLog {
     }
 }
 
+#[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_grant_minter")]
+pub struct NftGrantMinterData {
+    pub granted: String,
+}
+
 pub fn log_grant_minter(account_id: &AccountId) {
-    let log = NftStringLog {
-        data: account_id.to_string(),
-    };
-    let event = NearJsonEvent {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event: "nft_grant_minter".to_string(),
-        data: serde_json::to_string(&log).unwrap(),
-    };
-    env::log_str(event.near_json_event().as_str());
+    env::log_str(
+        &NftGrantMinterData {
+            granted: account_id.to_string(),
+        }
+        .serialize_event(),
+    );
+}
+
+#[near_event_data(standard = "mb_store", version = "0.1.0", event = "nft_revoke_minter")]
+pub struct NftRevokeMinterData {
+    pub revoked: String,
 }
 
 pub fn log_revoke_minter(account_id: &AccountId) {
-    let log = NftStringLog {
-        data: account_id.to_string(),
-    };
-    let event = NearJsonEvent {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event: "nft_revoke_minter".to_string(),
-        data: serde_json::to_string(&log).unwrap(),
-    };
-    env::log_str(event.near_json_event().as_str());
+    env::log_str(
+        &NftRevokeMinterData {
+            revoked: account_id.to_string(),
+        }
+        .serialize_event(),
+    );
 }
 
 pub fn log_transfer_store(to: &AccountId) {

@@ -104,23 +104,22 @@ STORE_WORKSPACE.test(
       (transferStoreClearMintersCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: alice.accountId }),
+          data: { revoked: alice.accountId },
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_revoke_minter",
-          data: JSON.stringify({ data: bob.accountId }),
+          data: { revoked: bob.accountId },
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_grant_minter",
-          data: JSON.stringify({ data: carol.accountId }),
+          data: { granted: carol.accountId },
         },
         {
           standard: "nep171",
@@ -193,16 +192,16 @@ STORE_WORKSPACE.test(
       (transferStoreKeepMintersCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: alice.accountId }),
+          data: { granted: alice.accountId },
         },
         {
           standard: "nep171",
           version: "1.0.0",
           event: "nft_transfer_store",
+          // TODO::store::medium: wtf is this format?
           data: JSON.stringify({ data: alice.accountId }),
         },
       ],
