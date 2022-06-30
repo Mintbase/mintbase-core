@@ -13,10 +13,7 @@ use mintbase_deps::constants::{
     YOCTO_PER_BYTE,
 };
 use mintbase_deps::interfaces::factory_self;
-use mintbase_deps::logging::{
-    NearJsonEvent,
-    NftStoreCreateLog,
-};
+use mintbase_deps::logging::MbStoreDeployData;
 use mintbase_deps::near_sdk::borsh::{
     self,
     BorshDeserialize,
@@ -197,22 +194,18 @@ impl MintbaseStoreFactory {
         if is_promise_success() {
             // pay out self and update contract state
             self.stores.insert(&metadata.name);
-            let nscl = NftStoreCreateLog {
-                contract_metadata: metadata,
-                owner_id: owner_id.to_string(),
-                id: store_account_id.to_string(),
-            };
-            let event = NearJsonEvent {
-                standard: "nep171".to_string(),
-                version: "1.0.0".to_string(),
-                event: "nft_store_creation".to_string(),
-                data: serde_json::to_string(&nscl).unwrap(),
-            };
-            env::log_str(event.near_json_event().as_str());
+            env::log_str(
+                &MbStoreDeployData {
+                    contract_metadata: metadata,
+                    owner_id: owner_id.to_string(),
+                    store_id: store_account_id.to_string(),
+                }
+                .serialize_event(),
+            );
             Promise::new(self.owner_id.to_string().parse().unwrap())
                 .transfer(attached_deposit - self.store_cost);
-            #[cfg(feature = "panic-test")]
-            env::panic_str("event.near_json_event().as_str()");
+            // #[cfg(feature = "panic-test")]
+            // env::panic_str("event.near_json_event().as_str()");
         } else {
             // Refunding store cost creation to the store creator
             Promise::new(store_creator_id).transfer(attached_deposit - self.store_cost);
@@ -314,25 +307,3 @@ impl New for NFTContractMetadata {
         }
     }
 }
-
-// --------------------------- logging functions ---------------------------- //
-pub fn log_factory_new(
-    store: &NFTContractMetadata,
-    store_account_id: &str,
-    owner_id: &str,
-) {
-    let nscl = NftStoreCreateLog {
-        contract_metadata: store.clone(),
-        owner_id: owner_id.to_string(),
-        id: store_account_id.to_string(),
-    };
-    let event = NearJsonEvent {
-        standard: "nep171".to_string(),
-        version: "1.0.0".to_string(),
-        event: "nft_store_creation".to_string(),
-        data: serde_json::to_string(&nscl).unwrap(),
-    };
-    env::log_str(event.near_json_event().as_str());
-}
-
-// ---------------------------------- misc ---------------------------------- //
