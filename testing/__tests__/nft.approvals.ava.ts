@@ -12,7 +12,22 @@ import {
   assertContractTokenOwners,
   assertNoApproval,
 } from "./test-utils";
-// import * as ava from "near-workspaces-ava";
+
+const changeSettingsData = (subset: Record<string, string>) => {
+  const data = {
+    granted_minter: null,
+    revoked_minter: null,
+    new_icon_base64: null,
+    new_owner: null,
+    new_base_uri: null,
+  };
+
+  Object.keys(subset).forEach((k) => {
+    data[k] = subset[k];
+  });
+
+  return data;
+};
 
 STORE_WORKSPACE.test(
   "approvals::core",
@@ -420,8 +435,8 @@ STORE_WORKSPACE.test(
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_grant_minter",
-          data: { granted: bob.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: bob.accountId }),
         },
       ],
       "grant minting rights"
@@ -533,8 +548,8 @@ STORE_WORKSPACE.test(
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_revoke_minter",
-          data: { revoked: bob.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: bob.accountId }),
         },
       ],
       "approved minting"
@@ -604,14 +619,14 @@ STORE_WORKSPACE.test(
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_grant_minter",
-          data: { granted: bob.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: bob.accountId }),
         },
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_grant_minter",
-          data: { granted: carol.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: carol.accountId }),
         },
       ],
       "batch grant minter rights"
@@ -639,14 +654,14 @@ STORE_WORKSPACE.test(
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_grant_minter",
-          data: { granted: dave.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: dave.accountId }),
         },
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_revoke_minter",
-          data: { revoked: carol.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: carol.accountId }),
         },
       ],
       "batch change minter rights"
@@ -674,14 +689,14 @@ STORE_WORKSPACE.test(
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_revoke_minter",
-          data: { revoked: bob.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: bob.accountId }),
         },
         {
           standard: "mb_store",
           version: "0.1.0",
-          event: "nft_revoke_minter",
-          data: { revoked: dave.accountId },
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: dave.accountId }),
         },
       ],
       "batch revoke minter rights"

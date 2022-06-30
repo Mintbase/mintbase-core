@@ -44,7 +44,7 @@ pub fn log_batch_approve(
             .iter()
             .zip(tokens.iter())
             .map(|(approval_id, token_id)| NftApproveLog {
-                token_id: token_id.clone(),
+                token_id: *token_id,
                 approval_id: approval_id.0,
                 account_id: account_id.to_string(),
             })
