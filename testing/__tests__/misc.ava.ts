@@ -25,6 +25,22 @@ avaTest("util tests", (test) => {
   // TODO::testing::low: assertEventLogs?
 });
 
+const changeSettingsData = (subset: Record<string, string>) => {
+  const data = {
+    granted_minter: null,
+    revoked_minter: null,
+    new_icon_base64: null,
+    new_owner: null,
+    new_base_uri: null,
+  };
+
+  Object.keys(subset).forEach((k) => {
+    data[k] = subset[k];
+  });
+
+  return data;
+};
+
 // As this tests deployment, we do it in a clean-state environment
 Workspace.init().test("deployment", async (test, { root }) => {
   // TODO::testing::low: edge cases of deployment
@@ -104,29 +120,36 @@ STORE_WORKSPACE.test(
       (transferStoreClearMintersCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: alice.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            revoked_minter: alice.accountId,
+          }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          data: JSON.stringify({ data: bob.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            revoked_minter: bob.accountId,
+          }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          data: JSON.stringify({ data: carol.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            granted_minter: carol.accountId,
+          }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_transfer_store",
-          data: JSON.stringify({ data: carol.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            new_owner: carol.accountId,
+          }),
         },
       ],
       "transferring store ownership (minters cleared)"
@@ -193,17 +216,20 @@ STORE_WORKSPACE.test(
       (transferStoreKeepMintersCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: alice.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            granted_minter: alice.accountId,
+          }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_transfer_store",
-          data: JSON.stringify({ data: alice.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({
+            new_owner: alice.accountId,
+          }),
         },
       ],
       "transferring store ownership (keep minters)"
