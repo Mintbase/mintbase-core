@@ -132,7 +132,7 @@ impl MintbaseStore {
             token.split_owners = Some(splits.clone());
             self.tokens.insert(&token_id.into(), &token);
         });
-        log_set_split_owners(&token_ids, &splits);
+        log_set_split_owners(token_ids, splits);
     }
 
     // -------------------------- view methods -----------------------------

@@ -12,7 +12,22 @@ import {
   assertContractTokenOwners,
   assertNoApproval,
 } from "./test-utils";
-// import * as ava from "near-workspaces-ava";
+
+const changeSettingsData = (subset: Record<string, string>) => {
+  const data = {
+    granted_minter: null,
+    revoked_minter: null,
+    new_icon_base64: null,
+    new_owner: null,
+    new_base_uri: null,
+  };
+
+  Object.keys(subset).forEach((k) => {
+    data[k] = subset[k];
+  });
+
+  return data;
+};
 
 STORE_WORKSPACE.test(
   "approvals::core",
@@ -66,13 +81,10 @@ STORE_WORKSPACE.test(
       (approveCall as TransactionResult).logs,
       [
         {
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_approve",
-          standard: "nep171",
-          version: "1.0.0",
-          // TODO::store::low: unstringify
-          data: JSON.stringify([
-            { token_id: 0, approval_id: 0, account_id: bob.accountId },
-          ]),
+          data: [{ token_id: "0", approval_id: 0, account_id: bob.accountId }],
         },
       ],
       "approving"
@@ -143,16 +155,13 @@ STORE_WORKSPACE.test(
       (batchApproveCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_approve",
-          // TODO::store::low: unstringify
-          data: JSON.stringify([
-            // FIXME::store::medium: token_id should be a string
-            { token_id: 1, approval_id: 1, account_id: bob.accountId },
-            // FIXME::store::medium: token_id should be a string
-            { token_id: 2, approval_id: 2, account_id: bob.accountId },
-          ]),
+          data: [
+            { token_id: "1", approval_id: 1, account_id: bob.accountId },
+            { token_id: "2", approval_id: 2, account_id: bob.accountId },
+          ],
         },
       ],
       "batch approving"
@@ -233,13 +242,12 @@ STORE_WORKSPACE.test(
       (revokeCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_revoke",
-          // FIXME::store::medium: token_id should be a string
           // TODO::store::low: for `nft_approve`, data is an array, here
           //  it's an object -> should have the same predictable structure
-          data: JSON.stringify({ token_id: 2, account_id: bob.accountId }),
+          data: { token_id: "2", account_id: bob.accountId },
         },
       ],
       "revoking"
@@ -337,11 +345,10 @@ STORE_WORKSPACE.test(
       (revokeAllCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
+          standard: "mb_store",
+          version: "0.1.0",
           event: "nft_revoke_all",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: "1" }),
+          data: { token_id: "1" },
         },
       ],
       "revoking all"
@@ -426,11 +433,10 @@ STORE_WORKSPACE.test(
       (grantMinterCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: bob.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: bob.accountId }),
         },
       ],
       "grant minting rights"
@@ -540,11 +546,10 @@ STORE_WORKSPACE.test(
       (revokeMinterCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: bob.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: bob.accountId }),
         },
       ],
       "approved minting"
@@ -612,18 +617,16 @@ STORE_WORKSPACE.test(
       (batchGrantMinterCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: bob.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: bob.accountId }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: carol.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: carol.accountId }),
         },
       ],
       "batch grant minter rights"
@@ -649,18 +652,16 @@ STORE_WORKSPACE.test(
       (batchChangeMinterCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_grant_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: dave.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ granted_minter: dave.accountId }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: carol.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: carol.accountId }),
         },
       ],
       "batch change minter rights"
@@ -686,18 +687,16 @@ STORE_WORKSPACE.test(
       (batchRevokeMinterCall as TransactionResult).logs,
       [
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: bob.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: bob.accountId }),
         },
         {
-          standard: "nep171",
-          version: "1.0.0",
-          event: "nft_revoke_minter",
-          // TODO::store::medium: wtf is this format?
-          data: JSON.stringify({ data: dave.accountId }),
+          standard: "mb_store",
+          version: "0.1.0",
+          event: "change_setting",
+          data: changeSettingsData({ revoked_minter: dave.accountId }),
         },
       ],
       "batch revoke minter rights"

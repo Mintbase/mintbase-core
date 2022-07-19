@@ -13,11 +13,11 @@ crate-type = ["rlib", "cdylib"]
 clap = { version = "3.0.0-beta.2", optional = true }
 near-sdk = { version = "4.0.0-pre.7", optional = true }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = "1.0.81"
 
 [dependencies.near_events]
 git = "https://github.com/mintbase/near-events"
-rev = "6d5fe6eef75d2ac5d67ce01d7219c91219a0c7b7"
+rev = "bd78dcaeaa11f6f6286bbbed97d835370783c30b"
 
 [features]
 ser = ["near_events/ser"]
@@ -27,5 +27,5 @@ factory-wasm = ["wasm"]
 market-wasm = ["wasm"]
 helper-wasm = ["wasm"]
 test = ["clap", "all"]
-wasm = ["near-sdk", "ser"]
+wasm = ["near-sdk", "ser", "serde_json/arbitrary_precision"]
 all = ["wasm", "de"]

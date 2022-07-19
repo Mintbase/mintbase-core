@@ -60,22 +60,22 @@ export function assertMakeOfferEvent(
   test.like(
     event,
     {
-      standard: "nep171",
-      version: "1.0.0",
+      standard: "mb_market",
+      version: "0.1.0",
       event: "nft_make_offer",
     },
     `${msg}: bad event metadata`
   );
 
-  test.is(typeof event.data, "string", `${msg}: event.data is not a string`);
-  const data: any[] = JSON.parse(event.data);
+  // test.is(typeof event.data, "string", `${msg}: event.data is not a string`);
+  // const data: any[] = JSON.parse(event.data);
   test.is(
-    data.length,
+    event.data.length,
     specs.length,
     `${msg}: length of parsed event.data doesn't match expectation`
   );
 
-  data.map((chunk, i) => {
+  event.data.map((chunk, i) => {
     // TODO::testing::low: use the timeout
     const { token_id, approval_id, price, timeout } = specs[i];
     const list_id = `${token_id}:${approval_id}:${store.accountId}`;
