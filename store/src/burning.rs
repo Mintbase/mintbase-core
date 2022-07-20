@@ -36,7 +36,7 @@ impl MintbaseStore {
     /// where the callback prevents the use of
     /// `env::predecessor_account_id()` to determine whether the owner is the
     /// method caller.
-    pub fn burn_triaged(
+    fn burn_triaged(
         &mut self,
         token_ids: Vec<U64>,
         account_id: AccountId,
