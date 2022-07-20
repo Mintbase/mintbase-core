@@ -3,10 +3,7 @@ use mintbase_deps::common::{
     NonFungibleContractMetadata,
     TokenMetadata,
 };
-use mintbase_deps::logging::{
-    log_set_base_uri,
-    log_set_icon_base64,
-};
+use mintbase_deps::logging::log_set_icon_base64;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
@@ -29,25 +26,25 @@ impl NonFungibleContractMetadata for MintbaseStore {
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
 
-    /// The `base_uri` for the `Store` is the identifier used to look up the
-    /// `Store` on Arweave. Changing the `base_uri` requires the `Store`
-    /// owner to be responsible for making sure their `Store` location is
-    /// maintained by their preferred storage provider.
-    ///
-    /// Only the `Store` owner may call this function.
-    #[payable]
-    pub fn set_base_uri(
-        &mut self,
-        base_uri: String,
-    ) {
-        self.assert_store_owner();
-        near_assert!(
-            base_uri.len() <= 100,
-            "Base URI must be less then 100 chars"
-        );
-        log_set_base_uri(&base_uri);
-        self.metadata.base_uri = Some(base_uri);
-    }
+    // /// The `base_uri` for the `Store` is the identifier used to look up the
+    // /// `Store` on Arweave. Changing the `base_uri` requires the `Store`
+    // /// owner to be responsible for making sure their `Store` location is
+    // /// maintained by their preferred storage provider.
+    // ///
+    // /// Only the `Store` owner may call this function.
+    // #[payable]
+    // pub fn set_base_uri(
+    //     &mut self,
+    //     base_uri: String,
+    // ) {
+    //     self.assert_store_owner();
+    //     near_assert!(
+    //         base_uri.len() <= 100,
+    //         "Base URI must be less then 100 chars"
+    //     );
+    //     log_set_base_uri(&base_uri);
+    //     self.metadata.base_uri = Some(base_uri);
+    // }
 
     /// `icon_base64` is best understood as the `Store` logo/icon.
     ///
