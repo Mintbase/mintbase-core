@@ -35,9 +35,8 @@ pub mod gas {
     pub const PAYOUT_RESOLVE: Gas = tgas(30);
 
     /// Gas requirements for transferring an NFT and obtaining the payout.
-    // FIXME: 60 currently deployed to testnet, 15 to mainnet.
-    // -> wait for Amber folks to tell me what they actually need
-    pub const NFT_TRANSFER_PAYOUT: Gas = tgas(50);
+    // TODO: Check back with Amber for requirements
+    pub const NFT_TRANSFER_PAYOUT: Gas = tgas(15);
 
     /// Gas requirements for creating a store.
     pub const CREATE_STORE: Gas = tgas(65 + 5);
