@@ -13,7 +13,7 @@ use near_sdk::Balance;
 /// https://github.com/near/core-contracts/blob/master/staking-pool/src/lib.rs#L127
 /// The numerator is a value between 0 and 10,000. The denominator is
 /// assumed to be 10,000.
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
 #[derive(Deserialize, Serialize)]
 pub struct SafeFraction {

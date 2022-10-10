@@ -152,7 +152,7 @@ MARKET_WORKSPACE.test(
           price: [NEAR(1), NEAR(1.5)],
           timeout: [{ Hours: 1 }, { Hours: 1 }],
         },
-        { attachedDeposit: NEAR(2.5), gas: Tgas(200) }
+        { attachedDeposit: NEAR(2.5), gas: Tgas(225) }
       )
       .catch(failPromiseRejection(test, 'making "buy now" offer'));
 

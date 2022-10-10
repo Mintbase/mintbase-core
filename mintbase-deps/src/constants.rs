@@ -35,6 +35,7 @@ pub mod gas {
     pub const PAYOUT_RESOLVE: Gas = tgas(30);
 
     /// Gas requirements for transferring an NFT and obtaining the payout.
+    // TODO: Check back with Amber for requirements
     pub const NFT_TRANSFER_PAYOUT: Gas = tgas(15);
 
     /// Gas requirements for creating a store.

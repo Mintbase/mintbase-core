@@ -18,7 +18,7 @@ kill_the_damn_sandbox() {
 }
 
 cargo +nightly fmt || fail "Formatting"
-cargo lint || fail "Linting"
+# cargo lint || fail "Linting"
 
 # prevent factory checking from failing
 touch wasm/store.wasm
@@ -49,7 +49,7 @@ kill_the_damn_sandbox
 # Yup, the sandbox can be quite obnoxious at times
 kill_the_damn_sandbox
 
-cargo p2p_indexer || fail "Compiling p2p indexer"
-(cd mintbase-near-indexer && ./scripts/test-p2p.sh) || fail "Testing indexer (local)"
-cargo mintlake || fail "Compiling mintlake"
-(cd mintbase-near-indexer && ./scripts/test-lake.sh) || fail "Testing indexer (testnet)"
+# cargo p2p_indexer || fail "Compiling p2p indexer"
+# (cd mintbase-near-indexer && ./scripts/test-p2p.sh) || fail "Testing indexer (local)"
+# cargo mintlake || fail "Compiling mintlake"
+# (cd mintbase-near-indexer && ./scripts/test-lake.sh) || fail "Testing indexer (testnet)"
