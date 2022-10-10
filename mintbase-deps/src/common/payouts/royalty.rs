@@ -24,7 +24,7 @@ use crate::constants::ROYALTY_UPPER_LIMIT;
 /// the value of the transaction will be paid out to each account in the
 /// `Royalty` mapping. `Royalty` field once set can NEVER change for this
 /// `Token`, even if removed and re-added.
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Royalty {
