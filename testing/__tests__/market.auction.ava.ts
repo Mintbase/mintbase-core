@@ -261,6 +261,7 @@ MARKET_WORKSPACE.test(
           event: "nft_sold",
           data: {
             list_id: `0:0:${store.accountId}`,
+            mintbase_amount: "50000000000000000000000",
             offer_num: 2,
             token_key: `0:${store.accountId}`,
             payout: createPayout([[alice, NEAR(1.95).toString()]]),
