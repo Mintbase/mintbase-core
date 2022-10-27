@@ -101,3 +101,25 @@ export function assertMakeOfferEvent(
     );
   });
 }
+
+export function assertWithdrawOfferEvent(
+  { test, eventLog }: { test: ExecutionContext; eventLog: string },
+  expected_data: { list_id: string; offer_num: number },
+  msg: string
+) {
+  const event: any = parseEvent(test, eventLog, msg);
+  test.true(event instanceof Object, `${msg}: Event is not even an object`);
+  test.like(
+    event,
+    {
+      standard: "mb_market",
+      version: "0.1.0",
+      event: "nft_withdraw_offer",
+    },
+    `${msg}: bad event metadata`
+  );
+
+  // test.is(typeof event.data, "string", `${msg}: event.data is not a string`);
+  // const data: any[] = JSON.parse(event.data);
+  test.deepEqual(event.data, expected_data, `${msg}: list_id doesn't match`);
+}

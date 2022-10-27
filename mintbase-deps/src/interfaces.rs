@@ -24,6 +24,7 @@ mod market_interfaces {
             token_key: String,
             token: TokenListing,
             others_keep: U128,
+            market_keeps: U128,
         ) -> Promise;
     }
 

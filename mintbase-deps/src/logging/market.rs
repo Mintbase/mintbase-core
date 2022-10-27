@@ -155,6 +155,9 @@ pub struct NftSaleData {
     pub offer_num: u64,
     pub token_key: String,
     pub payout: HashMap<AccountId, U128>,
+    // Not originally in 0.1.0, but option makes it backwards compatible with
+    // serde_json
+    pub mintbase_amount: Option<U128>,
 }
 
 #[cfg(feature = "ser")]
@@ -163,12 +166,14 @@ pub fn log_sale(
     offer_num: u64,
     token_key: &str,
     payout: &HashMap<AccountId, U128>,
+    mintbase_amount: U128,
 ) {
     let data = NftSaleData {
         list_id: list_id.to_string(),
         offer_num,
         token_key: token_key.to_string(),
         payout: payout.clone(),
+        mintbase_amount: Some(mintbase_amount),
     };
     env::log_str(&data.serialize_event());
 }

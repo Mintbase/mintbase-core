@@ -4,6 +4,7 @@ import {
   assertContractTokenOwner,
   assertEventLogs,
   assertMakeOfferEvent,
+  assertWithdrawOfferEvent,
   failPromiseRejection,
   MARKET_WORKSPACE,
   mNEAR,
@@ -130,8 +131,17 @@ MARKET_WORKSPACE.test(
       .catch(failPromiseRejection(test, "making second auction offer"));
 
     // check event logs
-    assertMakeOfferEvent(
+    assertWithdrawOfferEvent(
+      // TODO: actually impl this
       { test, eventLog: (makeOfferCall1 as TransactionResult).logs[0] },
+      {
+        list_id: `0:0:${store.accountId}`,
+        offer_num: 1,
+      },
+      "Withdrawing first auction offer"
+    );
+    assertMakeOfferEvent(
+      { test, eventLog: (makeOfferCall1 as TransactionResult).logs[1] },
       {
         id: 2,
         store: store,
@@ -148,9 +158,9 @@ MARKET_WORKSPACE.test(
       "Making second auction offer"
     );
     test.is(
-      (makeOfferCall0 as TransactionResult).logs.length,
-      1,
-      "Emitted too many events on making second auction offer"
+      (makeOfferCall1 as TransactionResult).logs.length,
+      2,
+      "Outbidding offer needs two events to be emitted"
     );
 
     // check chain state: token owner still hasn't changed
@@ -251,6 +261,7 @@ MARKET_WORKSPACE.test(
           event: "nft_sold",
           data: {
             list_id: `0:0:${store.accountId}`,
+            mintbase_amount: "50000000000000000000000",
             offer_num: 2,
             token_key: `0:${store.accountId}`,
             payout: createPayout([[alice, NEAR(1.95).toString()]]),
