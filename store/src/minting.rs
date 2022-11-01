@@ -14,7 +14,6 @@ use mintbase_deps::logging::{
     log_nft_batch_mint,
     log_revoke_minter,
 };
-use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
     env,
@@ -23,6 +22,10 @@ use mintbase_deps::near_sdk::{
     Balance,
 };
 use mintbase_deps::token::Token;
+use mintbase_deps::{
+    assert_yocto_deposit,
+    near_assert,
+};
 
 use crate::*;
 
@@ -198,7 +201,14 @@ impl MintbaseStore {
         &mut self,
         account_id: AccountId,
     ) {
-        self.assert_store_owner();
+        assert_yocto_deposit!();
+        near_assert!(
+            env::predecessor_account_id() == self.owner_id
+                || env::predecessor_account_id() == account_id,
+            "Only the store owner or  {} can revoke minting rights for {}",
+            account_id,
+            account_id
+        );
         self.revoke_minter_internal(&account_id);
     }
 
