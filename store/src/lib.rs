@@ -220,9 +220,9 @@ impl MintbaseStore {
         {
             let metadata_id = self.tokens.get(&token_id).unwrap().metadata_id;
             let (n, mut metadata) = self.token_metadata.get(&metadata_id).unwrap();
-            metadata.reference = Some(format!("{}/{}", base_uri, metadata.reference));
-            metadata.media = Some(format!("{}/{}", base_uri, media));
-            self.token_metadata.insert(&metadata_id, &(n, metadata))
+            metadata.reference = Some(concat_uri(&base_uri, &metadata.reference.unwrap()));
+            metadata.media = Some(concat_uri(&base_uri, &media));
+            self.token_metadata.insert(&metadata_id, &(n, metadata));
         }
     }
 
@@ -393,4 +393,17 @@ pub trait NonFungibleResolveTransfer {
         token_id: String,
         approved_account_ids: Option<Vec<String>>,
     );
+}
+
+fn concat_uri(
+    base: &str,
+    uri: &str,
+) -> String {
+    if uri.starts_with(base) {
+        uri.to_string()
+    } else if base.ends_with('/') {
+        format!("{}{}", base, uri)
+    } else {
+        format!("{}/{}", base, uri)
+    }
 }
