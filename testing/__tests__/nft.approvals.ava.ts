@@ -556,18 +556,6 @@ STORE_WORKSPACE.test(
     );
 
     await assertContractPanics(test, [
-      // only owner can revoke minting rights
-      [
-        async () =>
-          bob.call(
-            store,
-            "revoke_minter",
-            { account_id: bob.accountId },
-            { attachedDeposit: "1" }
-          ),
-        "This method can only be called by the store owner",
-        "Bob tried to revoke his minting rights",
-      ],
       // requires yoctoNEAR deposit
       [
         async () =>
