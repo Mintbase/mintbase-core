@@ -208,6 +208,29 @@ impl MintbaseStore {
         Self { metadata, ..old }
     }
 
+    #[private]
+    pub fn prepend_base_uri(
+        &mut self,
+        base_uri: String,
+        token_ids_with_media: Vec<(String, String)>,
+    ) {
+        for (token_id, media) in token_ids
+            .iter()
+            .map(|(id, media)| (id.parse::<u64>().unwrap(), media))
+        {
+            let metadata_id = self.tokens.get(&token_id).unwrap().metadata_id;
+            let (n, mut metadata) = self.token_metadata.get(&metadata_id).unwrap();
+            metadata.reference = Some(format!("{}/{}", base_uri, metadata.reference));
+            metadata.media = Some(format!("{}/{}", base_uri, media));
+            self.token_metadata.insert(&metadata_id, &(n, metadata))
+        }
+    }
+
+    #[private]
+    pub fn drop_base_uri(&mut self) {
+        self.metadata.base_uri = None;
+    }
+
     // -------------------------- internal methods -------------------------
 
     /// If allow_moves is false, disallow token owners from calling
