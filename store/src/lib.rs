@@ -212,16 +212,16 @@ impl MintbaseStore {
     pub fn prepend_base_uri(
         &mut self,
         base_uri: String,
-        token_ids_with_media: Vec<(String, String)>,
+        token_ids_with_media: Vec<(String, Option<String>)>,
     ) {
-        for (token_id, media) in token_ids
+        for (token_id, media) in token_ids_with_media
             .iter()
             .map(|(id, media)| (id.parse::<u64>().unwrap(), media))
         {
             let metadata_id = self.tokens.get(&token_id).unwrap().metadata_id;
             let (n, mut metadata) = self.token_metadata.get(&metadata_id).unwrap();
-            metadata.reference = Some(concat_uri(&base_uri, &metadata.reference.unwrap()));
-            metadata.media = Some(concat_uri(&base_uri, &media));
+            metadata.reference = concat_uri(&base_uri, &metadata.reference);
+            metadata.media = concat_uri(&base_uri, &media);
             self.token_metadata.insert(&metadata_id, &(n, metadata));
         }
     }
@@ -397,13 +397,12 @@ pub trait NonFungibleResolveTransfer {
 
 fn concat_uri(
     base: &str,
-    uri: &str,
-) -> String {
-    if uri.starts_with(base) {
-        uri.to_string()
-    } else if base.ends_with('/') {
-        format!("{}{}", base, uri)
-    } else {
-        format!("{}/{}", base, uri)
+    uri: &Option<String>,
+) -> Option<String> {
+    match uri {
+        None => None,
+        Some(uri) if uri.starts_with(base) => Some(uri.to_string()),
+        Some(uri) if base.ends_with('/') => Some(format!("{}{}", base, uri)),
+        Some(uri) => Some(format!("{}/{}", base, uri)),
     }
 }
