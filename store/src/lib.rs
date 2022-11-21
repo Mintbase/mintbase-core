@@ -208,6 +208,25 @@ impl MintbaseStore {
         Self { metadata, ..old }
     }
 
+    /// Intended to introduce a consistent storage scheme to all stores.
+    /// This migration is currently paused because of problems with
+    /// MyNearWallet.
+    ///
+    /// Pros for the migration:
+    ///
+    /// - More flexibility
+    /// - Enables usage of multiple storage providers
+    /// - Reduces dependence on arweave
+    /// - Current inconsistency causes a lot of confusion, but all of the NEAR
+    ///   NFT ecosystem is already fragmented in their usage of `base_uri`
+    ///
+    /// Cons for the migration:
+    ///
+    /// - Gas costs
+    /// - Permanently increased storage costs
+    /// - Very slim probability for data corruption (worked fine on testnet),
+    ///   which should also be reversible
+    /// - Will require partial reindexing
     #[private]
     pub fn prepend_base_uri(
         &mut self,
@@ -228,6 +247,12 @@ impl MintbaseStore {
 
     #[private]
     pub fn drop_base_uri(&mut self) {
+        self.metadata.base_uri = None;
+    }
+
+    #[private]
+    pub fn repair_reference(&mut self) {
+        // FIXME: repair nearcon2demo1.minstpace2.testnet -> remove `nan/` prefixes on reference
         self.metadata.base_uri = None;
     }
 

@@ -65,7 +65,8 @@ impl Default for MintbaseStoreFactory {
 
 #[near_bindgen]
 impl MintbaseStoreFactory {
-    pub fn assert_only_owner(&self) {
+    /// Panics if not called by the factory owner
+    fn assert_only_owner(&self) {
         assert_one_yocto();
         assert_eq!(
             env::predecessor_account_id(),
@@ -76,7 +77,7 @@ impl MintbaseStoreFactory {
 
     /// Sufficient attached deposit is defined as enough to deploy a `Store`,
     /// plus enough left over for the mintbase deployment cost.
-    pub fn assert_sufficient_attached_deposit(&self) {
+    fn assert_sufficient_attached_deposit(&self) {
         let min = storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee;
         assert!(
             env::attached_deposit() >= min,
@@ -86,6 +87,7 @@ impl MintbaseStoreFactory {
         );
     }
 
+    /// Panics if a store with the requested ID already exists
     pub fn assert_no_store_with_id(
         &self,
         store_id: String,
@@ -119,7 +121,7 @@ impl MintbaseStoreFactory {
         (storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
     }
 
-    /// The sum of `mintbase_fee` and `STORE_STORAGE`.
+    /// Public key that will be attached to any created store.
     pub fn get_admin_public_key(&self) -> &PublicKey {
         &self.admin_public_key
     }
@@ -213,6 +215,7 @@ impl MintbaseStoreFactory {
         }
     }
 
+    /// Initialization
     #[init(ignore_state)]
     pub fn new() -> Self {
         assert!(!env::state_exists());

@@ -83,7 +83,7 @@ impl MintbaseStore {
         log_nft_batch_burn(&token_ids, account_id.to_string());
     }
 
-    /// Get info about the store.
+    /// Log store info.
     pub fn get_info(&self) {
         let s = format!("owner: {}", self.owner_id);
         env::log_str(s.as_str());
