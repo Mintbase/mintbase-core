@@ -126,6 +126,18 @@ impl MintbaseStoreFactory {
         &self.admin_public_key
     }
 
+    /// Retrieve the storage price per byte in yocotNEAR currently registered
+    /// with the factory.
+    pub fn get_storage_price_per_byte(&self) -> U128 {
+        self.storage_price_per_byte.into()
+    }
+
+    /// Retrieve the store cost in yocotNEAR currently registered with the
+    /// factory.
+    pub fn get_store_cost(&self) -> U128 {
+        self.store_cost.into()
+    }
+
     /// The Near Storage price per byte has changed in the past, and may change in
     /// the future. This method may never be used.
     #[payable]
@@ -249,6 +261,11 @@ impl MintbaseStoreFactory {
         metadata: NFTContractMetadata,
         owner_id: AccountId,
     ) -> Promise {
+        // FIXME: the storage deposit is store size (compile time constant)
+        // * self.storage_price_per_byte + self.mintbase_fee = 5.5 NEAR
+        // further down this method, we forward self.store_cost to the factory
+        // and refund the user any additional NEAR
+        // TODO: figure out what the current store cost is
         self.assert_sufficient_attached_deposit();
         self.assert_no_store_with_id(metadata.name.clone());
         assert_ne!(&metadata.name, "market"); // marketplace lives here
