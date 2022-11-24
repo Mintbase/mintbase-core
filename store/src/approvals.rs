@@ -28,6 +28,8 @@ use crate::*;
 #[near_bindgen]
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
+    /// Granting NFT transfer approval as specified by
+    /// [NEP-178](https://nomicon.io/Standards/Tokens/NonFungibleToken/ApprovalManagement)
     #[payable]
     pub fn nft_approve(
         &mut self,
@@ -38,7 +40,6 @@ impl MintbaseStore {
         // Note: This method only guarantees that the store-storage is covered.
         // The market may still reject.
         assert_storage_deposit!(self.storage_costs.common);
-        // assert!(env::attached_deposit() > self.storage_costs.common);
         let token_idu64 = token_id.into();
         // validates owner and loaned
         let approval_id = self.approve_internal(token_idu64, &account_id);
@@ -60,6 +61,8 @@ impl MintbaseStore {
         }
     }
 
+    /// Revokes NFT transfer approval as specified by
+    /// [NEP-178](https://nomicon.io/Standards/Tokens/NonFungibleToken/ApprovalManagement)
     #[payable]
     pub fn nft_revoke(
         &mut self,
@@ -68,8 +71,6 @@ impl MintbaseStore {
     ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
-        // token.assert_unloaned();
-        // token.assert_owned_by_predecessor();
         assert_token_unloaned!(token);
         assert_token_owned_by_predecessor!(token);
         assert_yocto_deposit!();
@@ -81,6 +82,8 @@ impl MintbaseStore {
         // TODO: refund storage deposit
     }
 
+    /// Revokes all NFT transfer approvals as specified by
+    /// as specified by [NEP-178](https://nomicon.io/Standards/Tokens/NonFungibleToken/ApprovalManagement)
     #[payable]
     pub fn nft_revoke_all(
         &mut self,
@@ -88,8 +91,6 @@ impl MintbaseStore {
     ) {
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
-        // token.assert_unloaned();
-        // token.assert_owned_by_predecessor();
         assert_token_unloaned!(token);
         assert_token_owned_by_predecessor!(token);
         assert_yocto_deposit!();
@@ -121,6 +122,10 @@ impl MintbaseStore {
 #[near_bindgen]
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
+    /// Like `nft_approve`, but it allows approving multiple tokens in one call.
+    /// The `msg` argument will be forwarded towards a `nft_on_batch_approve`.
+    /// As this is not standardized and only supported by the legacy Mintbase
+    /// market.
     #[payable]
     pub fn nft_batch_approve(
         &mut self,
@@ -135,11 +140,6 @@ impl MintbaseStore {
         // Note: This method only guarantees that the store-storage is covered.
         // The financial contract may still reject.
         assert_storage_deposit!(storage_stake);
-        // assert!(
-        //     env::attached_deposit() > store_approval_storage,
-        //     "deposit less than: {}",
-        //     store_approval_storage
-        // );
         let approval_ids: Vec<U64> = token_ids
             .iter()
             // validates owner and loaned

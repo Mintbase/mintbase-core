@@ -29,25 +29,13 @@ impl MintbaseStore {
     ) {
         assert_yocto_deposit!();
         assert!(!token_ids.is_empty());
-        self.burn_triaged(token_ids, env::predecessor_account_id());
-    }
 
-    /// A helper to burn tokens. Necessary to satisfy the `nft_move` method,
-    /// where the callback prevents the use of
-    /// `env::predecessor_account_id()` to determine whether the owner is the
-    /// method caller.
-    fn burn_triaged(
-        &mut self,
-        token_ids: Vec<U64>,
-        account_id: AccountId,
-    ) {
+        let account_id = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&account_id).expect("none owned");
 
         token_ids.iter().for_each(|&token_id| {
             let token_id: u64 = token_id.into();
             let token = self.nft_token_internal(token_id);
-            // token.assert_unloaned();
-            // token.assert_owned_by(&account_id);
             assert_token_unloaned!(token);
             assert_token_owned_by!(token, &account_id);
 

@@ -177,6 +177,23 @@ impl MintbaseStore {
             .0
     }
 
+    /// Get total count of minted NFTs on this smart contracts. Can be used to
+    /// predict next token ID.
+    pub fn get_tokens_minted(&self) -> U64 {
+        self.tokens_minted.into()
+    }
+
+    /// Get total count of burned NFTs on this smart contracts.
+    pub fn get_tokens_burned(&self) -> U64 {
+        self.tokens_burned.into()
+    }
+
+    /// Get count of all issued approvals ever. Can be used to predict next
+    /// approval ID.
+    pub fn get_num_approved(&self) -> u64 {
+        self.num_approved.into()
+    }
+
     // -------------------------- private methods --------------------------
 
     /// Contract metadata and methods in the API may be updated. All other

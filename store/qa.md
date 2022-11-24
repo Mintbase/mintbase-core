@@ -1,12 +1,12 @@
 ## All functions documented
 
-- [ ] `approvals.rs`
-- [ ] `burning.rs`
+- [x] `approvals.rs`
+- [x] `burning.rs`
 - [x] `core.rs`
-- [ ] `enumeration.rs`
+- [x] `enumeration.rs`
 - [x] `lib.rs`
 - [x] `metadata.rs`
-- [ ] `minting.rs`
+- [x] `minting.rs`
 - [x] `ownership.rs`
 - [x] `payout.rs`
 
@@ -19,9 +19,9 @@
 - [x] `tokens`
 - [ ] `tokens_per_owner` -> impossible due to `LookupMap`
 - [ ] `composeables` -> TODO: deprecate
-- [ ] `tokens_minted`
-- [ ] `tokens_burned`
-- [ ] `num_approved`
+- [x] `tokens_minted`
+- [x] `tokens_burned`
+- [x] `num_approved`
 - [x] `owner_id`
 - [x] `storage_costs`
 - [x] `allow_moves` -> TODO: deprecate
