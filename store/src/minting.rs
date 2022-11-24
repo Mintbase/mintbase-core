@@ -172,6 +172,7 @@ impl MintbaseStore {
     ///
     /// This method increases storage costs of the contract, but covering them
     /// is optional.
+    // TODO: deprecate in favor of batch_change_minters
     #[payable]
     pub fn grant_minter(
         &mut self,
@@ -181,6 +182,7 @@ impl MintbaseStore {
         self.grant_minter_internal(&account_id)
     }
 
+    /// Adds an account ID to the minters list and logs the corresponding event.
     fn grant_minter_internal(
         &mut self,
         account_id: &AccountId,
@@ -196,6 +198,7 @@ impl MintbaseStore {
     /// themselves.
     ///
     /// Only the store owner may call this function.
+    // TODO: deprecate in favor of batch_change_minters
     #[payable]
     pub fn revoke_minter(
         &mut self,
@@ -212,6 +215,8 @@ impl MintbaseStore {
         self.revoke_minter_internal(&account_id);
     }
 
+    /// Tries to remove an acount ID from the minters list, will only fail
+    /// if the owner should be removed from the minters list.
     fn revoke_minter_internal(
         &mut self,
         account_id: &AccountId,

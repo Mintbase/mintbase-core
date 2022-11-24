@@ -87,8 +87,16 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
-    // TODO: get_owner
-    // TODO: get_storage_price_per_byte
+    /// Show the current owner of this NFT contract
+    pub fn get_owner_id(&self) -> AccountId {
+        self.owner_id
+    }
+
+    /// Show the current owner of this NFT contract
+    pub fn get_storage_costs(&self) -> StorageCosts {
+        self.storage_costs
+    }
+
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
 

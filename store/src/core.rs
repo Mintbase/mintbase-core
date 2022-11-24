@@ -42,6 +42,7 @@ use crate::*;
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
 
+    /// Transfer function as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[payable]
     pub fn nft_transfer(
         &mut self,
@@ -61,6 +62,7 @@ impl MintbaseStore {
         log_nft_transfer(&receiver_id, token_idu64, &memo, old_owner);
     }
 
+    /// Transfer-and-call function as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[payable]
     pub fn nft_transfer_call(
         &mut self,
@@ -101,6 +103,7 @@ impl MintbaseStore {
 
     // -------------------------- view methods -----------------------------
 
+    /// Token view method as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     pub fn nft_token(
         &self,
         token_id: U64,
@@ -110,6 +113,7 @@ impl MintbaseStore {
 
     // -------------------------- private methods --------------------------
 
+    /// Call back of a transfer-and-call as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[private]
     pub fn nft_resolve_transfer(
         &mut self,
@@ -156,6 +160,28 @@ impl MintbaseStore {
             false
         }
     }
+
+    /// Locking an NFT during a transfer-and-call chain
+    fn lock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
+        if let Owner::Account(ref s) = token.owner_id {
+            token.owner_id = Owner::Lock(s.clone());
+            self.tokens.insert(&token.id, token);
+        }
+    }
+
+    /// Unlocking an NFT after a transfer-and-call chain
+    fn unlock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
+        if let Owner::Lock(ref s) = token.owner_id {
+            token.owner_id = Owner::Account(s.clone());
+            self.tokens.insert(&token.id, token);
+        }
+    }
 }
 
 // --------------------- non-standardized core methods ---------------------- //
@@ -163,6 +189,8 @@ impl MintbaseStore {
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
 
+    /// Like `nft_transfer`, but allows transferring multiple tokens in a
+    /// single call.
     #[payable]
     pub fn nft_batch_transfer(
         &mut self,
@@ -232,7 +260,7 @@ impl MintbaseStore {
         self.tokens.insert(&token.id, token);
     }
 
-    // TODO: documentation
+    /// Gets the token as stored on the smart contract
     pub(crate) fn nft_token_internal(
         &self,
         token_id: u64,
@@ -242,6 +270,7 @@ impl MintbaseStore {
             .unwrap_or_else(|| panic!("token: {} doesn't exist", token_id))
     }
 
+    /// Gets the token as specified by relevant NEPs.
     // TODO: fix this abomination
     pub(crate) fn nft_token_compliant_internal(
         &self,

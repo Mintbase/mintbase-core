@@ -32,6 +32,7 @@ use crate::*;
 #[near_bindgen]
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
+    /// Transfer and return payout according to [NEP-199](https://nomicon.io/Standards/Tokens/NonFungibleToken/Payout)
     #[payable]
     pub fn nft_transfer_payout(
         &mut self,
@@ -48,6 +49,7 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
+    /// Show payout according to [NEP-199](https://nomicon.io/Standards/Tokens/NonFungibleToken/Payout)
     pub fn nft_payout(
         &self,
         token_id: U64,

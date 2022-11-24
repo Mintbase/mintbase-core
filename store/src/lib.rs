@@ -146,25 +146,6 @@ impl MintbaseStore {
     // -------------------------- change methods ---------------------------
     // -------------------------- view methods -----------------------------
 
-    /// Get the holder of the token. The token may be owned by:
-    /// - a normal account: return that account.
-    /// - a lent out account : in that case, return the loan holder.
-    /// - a token on this contract: recursively search for the root token and
-    /// return its owner
-    /// - a token on another contract. Return: "PARENT_TOKEN_ID:CONTRACT_ID".
-    pub fn nft_holder(
-        &self,
-        token_id: U64,
-    ) -> String {
-        let token = self.nft_token_internal(token_id.into());
-        match token.get_owner_or_loaner() {
-            Owner::Account(owner) => owner.to_string(),
-            Owner::TokenId(id) => self.nft_holder(id.into()),
-            Owner::CrossKey(key) => (key.to_string()),
-            Owner::Lock(_) => (env::panic_str("token locked")),
-        }
-    }
-
     /// A non-indexed implementation. `from_index` and `limit are removed, so as
     /// to support the:
     ///
@@ -185,6 +166,7 @@ impl MintbaseStore {
     }
 
     /// Get the number of unburned copies of the token in existance.
+    // FIXME: eventually wrong because of how multiply was implemented
     pub fn get_token_remaining_copies(
         &self,
         token_id: U64,
@@ -245,11 +227,16 @@ impl MintbaseStore {
         }
     }
 
+    /// Drops the base_uri after successfully migration all tokens with
+    /// `prepend_base_uri`
     #[private]
     pub fn drop_base_uri(&mut self) {
         self.metadata.base_uri = None;
     }
 
+    /// While prepending and dropping base_uri, I destroyed
+    /// nearcon2demo1.mintspace2.testnet, and one day I might wish to repair it
+    /// using this method.
     #[private]
     pub fn repair_reference(&mut self) {
         // FIXME: repair nearcon2demo1.minstpace2.testnet -> remove `nan/` prefixes on reference
@@ -262,6 +249,7 @@ impl MintbaseStore {
     /// `nft_move` on this contract, AND on other contracts targetting this
     /// contract. `nft_move` allows the user to burn a token they own on one
     /// contract, and re-mint it on another contract.
+    // TODO: set all to false, then deprecate
     #[payable]
     pub fn set_allow_moves(
         &mut self,
@@ -269,6 +257,11 @@ impl MintbaseStore {
     ) {
         self.assert_store_owner();
         self.allow_moves = state;
+    }
+
+    /// Retrieving wether moving tokens is allowed
+    pub fn get_allow_moves(&self) -> bool {
+        self.allow_moves
     }
 
     /// Internal
@@ -303,44 +296,6 @@ impl MintbaseStore {
         }
     }
 
-    // TODO: unused, deprecated?
-    // /// Internal
-    // /// update the set of tokens composed underneath parent. If insert is
-    // /// true, insert token_id; if false, try to remove it.
-    // fn update_composed_sets(
-    //     &mut self,
-    //     child: String,
-    //     parent: String,
-    //     insert: bool,
-    // ) {
-    //     let mut set = self.get_or_new_composed(parent.to_string());
-    //     if insert {
-    //         set.insert(&child);
-    //     } else {
-    //         set.remove(&child);
-    //     }
-    //     if set.is_empty() {
-    //         self.composeables.remove(&parent);
-    //     } else {
-    //         self.composeables.insert(&parent, &set);
-    //     }
-    // }
-
-    // TODO: unused, deprecated?
-    // /// Internal
-    // /// update the set of tokens composed underneath parent. If insert is
-    // /// true, insert token_id; if false, try to remove it.
-    // pub(crate) fn get_or_new_composed(
-    //     &mut self,
-    //     parent: String,
-    // ) -> UnorderedSet<String> {
-    //     self.composeables.get(&parent).unwrap_or_else(|| {
-    //         let mut prefix: Vec<u8> = vec![b'h'];
-    //         prefix.extend_from_slice(parent.to_string().as_bytes());
-    //         UnorderedSet::new(prefix)
-    //     })
-    // }
-
     /// If an account_id has never owned tokens on this store, we must
     /// construct an `UnorderedSet` for them. If they have owned tokens on
     /// this store, get that set.
@@ -354,28 +309,6 @@ impl MintbaseStore {
             prefix.extend_from_slice(account_id.as_bytes());
             UnorderedSet::new(prefix)
         })
-    }
-
-    /// Internal
-    fn lock_token(
-        &mut self,
-        token: &mut Token,
-    ) {
-        if let Owner::Account(ref s) = token.owner_id {
-            token.owner_id = Owner::Lock(s.clone());
-            self.tokens.insert(&token.id, token);
-        }
-    }
-
-    /// Internal
-    fn unlock_token(
-        &mut self,
-        token: &mut Token,
-    ) {
-        if let Owner::Lock(ref s) = token.owner_id {
-            token.owner_id = Owner::Account(s.clone());
-            self.tokens.insert(&token.id, token);
-        }
     }
 }
 

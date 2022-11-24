@@ -83,20 +83,6 @@ impl MintbaseStore {
         log_nft_batch_burn(&token_ids, account_id.to_string());
     }
 
-    /// Log store info.
-    pub fn get_info(&self) {
-        let s = format!("owner: {}", self.owner_id);
-        env::log_str(s.as_str());
-        let s = format!("minted: {}", self.tokens_minted);
-        env::log_str(s.as_str());
-        let s = format!("burned: {}", self.tokens_burned);
-        env::log_str(s.as_str());
-        let s = format!("approved: {}", self.num_approved);
-        env::log_str(s.as_str());
-        let s = format!("allow_moves: {}", self.allow_moves);
-        env::log_str(s.as_str());
-    }
-
     // -------------------------- view methods -----------------------------
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
