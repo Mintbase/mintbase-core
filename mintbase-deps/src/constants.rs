@@ -141,7 +141,7 @@ pub const MINIMUM_FREE_STORAGE_STAKE: near_sdk::Balance = 50 * YOCTO_PER_BYTE;
 // #[cfg_attr(feature = "all", derive(Deserialize, Serialize))]
 #[cfg_attr(
     feature = "store-wasm",
-    derive(BorshDeserialize, BorshSerialize, Serialize)
+    derive(BorshDeserialize, BorshSerialize, near_sdk::serde::Serialize, Clone)
 )]
 pub struct StorageCosts {
     /// The Near-denominated price-per-byte of storage. As of April 2021, the

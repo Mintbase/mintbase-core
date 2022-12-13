@@ -4,7 +4,6 @@ use mintbase_deps::near_sdk::{
     self,
     env,
     near_bindgen,
-    AccountId,
 };
 use mintbase_deps::{
     assert_token_owned_by,
