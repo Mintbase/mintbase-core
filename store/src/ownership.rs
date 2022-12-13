@@ -89,12 +89,12 @@ impl MintbaseStore {
     // -------------------------- view methods -----------------------------
     /// Show the current owner of this NFT contract
     pub fn get_owner_id(&self) -> AccountId {
-        self.owner_id
+        self.owner_id.clone()
     }
 
     /// Show the current owner of this NFT contract
     pub fn get_storage_costs(&self) -> StorageCosts {
-        self.storage_costs
+        self.storage_costs.clone()
     }
 
     // -------------------------- private methods --------------------------

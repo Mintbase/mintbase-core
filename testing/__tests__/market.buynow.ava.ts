@@ -206,6 +206,7 @@ MARKET_WORKSPACE.test(
           data: {
             list_id: `0:0:${store.accountId}`,
             mintbase_amount: "25000000000000000000000",
+            new_owner_id: bob.accountId,
             offer_num: 1,
             token_key: `0:${store.accountId}`,
             payout: createPayout([[alice, NEAR(0.975).toString()]]),
@@ -232,6 +233,7 @@ MARKET_WORKSPACE.test(
           data: {
             list_id: `1:1:${store.accountId}`,
             mintbase_amount: "37500000000000000000000",
+            new_owner_id: bob.accountId,
             offer_num: 1,
             token_key: `1:${store.accountId}`,
             payout: createPayout([[alice, mNEAR(1462.5).toString()]]),

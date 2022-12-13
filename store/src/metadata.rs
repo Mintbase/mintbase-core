@@ -7,7 +7,6 @@ use mintbase_deps::logging::log_set_icon_base64;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
-    env,
     near_bindgen,
 };
 

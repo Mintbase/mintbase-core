@@ -31,10 +31,7 @@ use mintbase_deps::near_sdk::{
     AccountId,
     StorageUsage,
 };
-use mintbase_deps::token::{
-    Owner,
-    Token,
-};
+use mintbase_deps::token::Token;
 
 /// Implementing approval management as [described in the Nomicon](https://nomicon.io/Standards/NonFungibleToken/ApprovalManagement).
 mod approvals;
