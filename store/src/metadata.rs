@@ -4,6 +4,7 @@ use mintbase_deps::common::{
     TokenMetadata,
 };
 use mintbase_deps::logging::log_set_icon_base64;
+use mintbase_deps::near_panic;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
@@ -65,17 +66,21 @@ impl MintbaseStore {
     /// The Token URI is generated to index the token on whatever distributed
     /// storage platform this `Store` uses. Mintbase publishes token data on
     /// Arweave. `Store` owners may opt to use their own storage platform.
-    pub fn nft_token_uri(
+    pub fn nft_token_reference_uri(
         &self,
         token_id: U64,
     ) -> String {
-        // FIXME: this is doomed to fail since all recent contracts do not have
-        // a base_uri
-        let base = &self.metadata.base_uri.as_ref().expect("no base_uri");
-        let metadata_reference = self
-            .nft_token_metadata(token_id)
-            .reference
-            .expect("no reference");
-        format!("{}/{}", base, metadata_reference)
+        let base = self.metadata.base_uri.clone();
+        let reference = self.nft_token_metadata(token_id).reference;
+        match (base, reference) {
+            (Some(b), Some(r)) if r.starts_with(&b) => r,
+            (Some(b), Some(r)) if b.ends_with('/') => format!("{}{}", b, r),
+            (Some(b), Some(r)) => format!("{}/{}", b, r),
+            (Some(b), None) => b,
+            (None, Some(r)) => r,
+            (None, None) => {
+                near_panic!("Cannot construct URI, as neither base_uri nor reference exist.")
+            },
+        }
     }
 }
