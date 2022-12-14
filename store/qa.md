@@ -18,7 +18,7 @@
 - [ ] `token_royalty` -> impossible due to `LookupMap`
 - [x] `tokens`
 - [ ] `tokens_per_owner` -> impossible due to `LookupMap`
-- [ ] `composeables` -> TODO: deprecate
+- [x] `composeables` -> TODO: deprecate
 - [x] `tokens_minted`
 - [x] `tokens_burned`
 - [x] `num_approved`

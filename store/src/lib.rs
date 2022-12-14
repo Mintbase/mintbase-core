@@ -79,6 +79,8 @@ pub struct MintbaseStore {
     /// A mapping from each user to the tokens owned by that user. The owner
     /// of the token is also stored on the token itself.
     pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<u64>>,
+    /// DEPRECATED. Kept to avoid storage migrations.
+    ///
     /// A map from a token_id of a token on THIS contract to a set of tokens,
     /// that may be on ANY contract. If the owned-token is on this contract,
     /// the id will have format "<u64>". If the token is on another contract,
@@ -99,6 +101,8 @@ pub struct MintbaseStore {
     /// to 10^19, but this may change in the future, thus this
     /// future-proofing field.
     pub storage_costs: StorageCosts,
+    /// DEPRECATED. Kept to avoid storage migrations.
+    ///
     /// If false, disallow users to call `nft_move`.
     pub allow_moves: bool,
 }
@@ -160,18 +164,6 @@ impl MintbaseStore {
             .expect("no tokens")
             .iter()
             .collect()
-    }
-
-    /// Get the number of unburned copies of the token in existance.
-    // FIXME: eventually wrong because of how multiply was implemented
-    pub fn get_token_remaining_copies(
-        &self,
-        token_id: U64,
-    ) -> u16 {
-        self.token_metadata
-            .get(&self.nft_token_internal(token_id.into()).metadata_id)
-            .expect("bad metadata_id")
-            .0
     }
 
     /// Get total count of minted NFTs on this smart contracts. Can be used to
@@ -258,25 +250,6 @@ impl MintbaseStore {
     }
 
     // -------------------------- internal methods -------------------------
-
-    /// If allow_moves is false, disallow token owners from calling
-    /// `nft_move` on this contract, AND on other contracts targetting this
-    /// contract. `nft_move` allows the user to burn a token they own on one
-    /// contract, and re-mint it on another contract.
-    // TODO: set all to false, then deprecate
-    #[payable]
-    pub fn set_allow_moves(
-        &mut self,
-        state: bool,
-    ) {
-        self.assert_store_owner();
-        self.allow_moves = state;
-    }
-
-    /// Retrieving wether moving tokens is allowed
-    pub fn get_allow_moves(&self) -> bool {
-        self.allow_moves
-    }
 
     /// Internal
     /// Transfer a token_id from one account's owned-token-set to another's.
