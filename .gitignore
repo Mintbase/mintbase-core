@@ -6,10 +6,9 @@
 _scripts
 .postgres.sh
 wasm
-error.log
-out.log
 bin
 *.log
+tmp.sh
 
 Dockerfile
 

@@ -75,18 +75,6 @@ impl MintbaseStoreFactory {
         );
     }
 
-    /// Sufficient attached deposit is defined as enough to deploy a `Store`,
-    /// plus enough left over for the mintbase deployment cost.
-    fn assert_sufficient_attached_deposit(&self) {
-        let min = storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee;
-        assert!(
-            env::attached_deposit() >= min,
-            "Not enough attached deposit to complete store deployment. Need: {}, got: {}",
-            min,
-            env::attached_deposit()
-        );
-    }
-
     /// Panics if a store with the requested ID already exists
     pub fn assert_no_store_with_id(
         &self,
@@ -261,12 +249,7 @@ impl MintbaseStoreFactory {
         metadata: NFTContractMetadata,
         owner_id: AccountId,
     ) -> Promise {
-        // FIXME: the storage deposit is store size (compile time constant)
-        // * self.storage_price_per_byte + self.mintbase_fee = 5.5 NEAR
-        // further down this method, we forward self.store_cost to the factory
-        // and refund the user any additional NEAR
-        // TODO: figure out what the current store cost is
-        self.assert_sufficient_attached_deposit();
+        assert!(env::attached_deposit() >= self.store_cost);
         self.assert_no_store_with_id(metadata.name.clone());
         assert_ne!(&metadata.name, "market"); // marketplace lives here
         assert_ne!(&metadata.name, "loan"); // loan lives here
