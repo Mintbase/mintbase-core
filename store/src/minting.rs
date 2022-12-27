@@ -264,6 +264,10 @@ impl MintbaseStore {
         }
     }
 
+    pub fn withdraw_minter(&mut self) {
+        self.revoke_minter_internal(&env::predecessor_account_id())
+    }
+
     // -------------------------- view methods -----------------------------
 
     /// Check if `account_id` is a minter.
