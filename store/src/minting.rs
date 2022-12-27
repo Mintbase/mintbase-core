@@ -265,6 +265,7 @@ impl MintbaseStore {
     }
 
     pub fn withdraw_minter(&mut self) {
+        assert_yocto_deposit!();
         self.revoke_minter_internal(&env::predecessor_account_id())
     }
 
