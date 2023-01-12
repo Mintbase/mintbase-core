@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use mintbase_deps::constants::{
-    gas,
-    NO_DEPOSIT,
-};
+use mintbase_deps::constants::gas;
 // contract interface modules
 use mintbase_deps::interfaces::ext_on_transfer;
 // logging functions
@@ -81,24 +78,14 @@ impl MintbaseStore {
         let owner_id = AccountId::new_unchecked(token.owner_id.to_string());
         self.lock_token(&mut token);
 
-        ext_on_transfer::nft_on_transfer(
-            pred,
-            owner_id.clone(),
-            token_id,
-            msg,
-            receiver_id.clone(),
-            NO_DEPOSIT,
-            gas::NFT_TRANSFER_CALL,
-        )
-        .then(store_self::nft_resolve_transfer(
-            owner_id,
-            receiver_id,
-            token_id.0.to_string(),
-            None,
-            env::current_account_id(),
-            NO_DEPOSIT,
-            gas::NFT_TRANSFER_CALL,
-        ))
+        ext_on_transfer::ext(receiver_id.clone())
+            .with_static_gas(gas::NFT_TRANSFER_CALL)
+            .nft_on_transfer(pred, owner_id.clone(), token_id, msg)
+            .then(
+                store_self::ext(env::current_account_id())
+                    .with_static_gas(gas::NFT_TRANSFER_CALL)
+                    .nft_resolve_transfer(owner_id, receiver_id, token_id.0.to_string(), None),
+            )
     }
 
     // -------------------------- view methods -----------------------------

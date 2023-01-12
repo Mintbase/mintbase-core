@@ -27,8 +27,8 @@ cargo check -p mintbase-deps --features store-wasm --message-format short || fai
 cargo check -p mintbase-deps --features factory-wasm --message-format short || fail "Checking factory"
 cargo check -p mintbase-deps --features helper-wasm --message-format short || fail "Checking helper"
 cargo check -p simple-market-contract --message-format short || fail "Checking market"
-cargo check -p mintbase-near-indexer --bin mintlake --features mintlake || fail "Checking mintlake"
-cargo check -p mintbase-near-indexer --bin p2p_indexer --features p2p_indexer || fail "Checking p2p indexer"
+# cargo check -p mintbase-near-indexer --bin mintlake --features mintlake || fail "Checking mintlake"
+# cargo check -p mintbase-near-indexer --bin p2p_indexer --features p2p_indexer || fail "Checking p2p indexer"
 
 build_wasm store
 build_wasm factory

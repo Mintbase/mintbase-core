@@ -271,16 +271,17 @@ impl MintbaseStoreFactory {
             .add_full_access_key(self.admin_public_key.clone())
             .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
             .function_call("new".to_string(), init_args, 0, gas::CREATE_STORE)
-            .then(factory_self::on_create(
-                env::predecessor_account_id(),
-                metadata,
-                owner_id,
-                store_account_id,
-                env::attached_deposit().into(),
-                env::current_account_id(),
-                NO_DEPOSIT,
-                gas::ON_CREATE_CALLBACK,
-            ))
+            .then(
+                factory_self::ext(env::current_account_id())
+                    .with_static_gas(gas::ON_CREATE_CALLBACK)
+                    .on_create(
+                        env::predecessor_account_id(),
+                        metadata,
+                        owner_id,
+                        store_account_id,
+                        env::attached_deposit().into(),
+                    ),
+            )
     }
 }
 

@@ -46,16 +46,10 @@ impl MintbaseStore {
         log_approve(token_idu64, approval_id, &account_id);
 
         if let Some(msg) = msg {
-            ext_on_approve::nft_on_approve(
-                token_id,
-                env::predecessor_account_id(),
-                approval_id,
-                msg,
-                account_id,
-                0,
-                gas::NFT_ON_APPROVE,
-            )
-            .into()
+            ext_on_approve::ext(account_id)
+                .with_static_gas(gas::NFT_ON_APPROVE)
+                .nft_on_approve(token_id, env::predecessor_account_id(), approval_id, msg)
+                .into()
         } else {
             None
         }
@@ -148,16 +142,11 @@ impl MintbaseStore {
         log_batch_approve(&token_ids, &approval_ids, &account_id);
 
         if let Some(msg) = msg {
-            ext_on_approve::nft_on_batch_approve(
-                token_ids,
-                approval_ids,
-                env::predecessor_account_id(),
-                msg,
-                account_id,
-                env::attached_deposit() - storage_stake,
-                gas::NFT_BATCH_APPROVE,
-            )
-            .into()
+            ext_on_approve::ext(account_id)
+                .with_attached_deposit(env::attached_deposit() - storage_stake)
+                .with_static_gas(gas::NFT_BATCH_APPROVE)
+                .nft_on_batch_approve(token_ids, approval_ids, env::predecessor_account_id(), msg)
+                .into()
         } else {
             None
         }

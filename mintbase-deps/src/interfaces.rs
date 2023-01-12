@@ -13,6 +13,8 @@ mod market_interfaces {
     use near_sdk::{
         self,
         ext_contract,
+        AccountId,
+        Promise,
     };
 
     use crate::common::TokenListing;
@@ -57,6 +59,8 @@ mod store_interfaces {
     use near_sdk::{
         self,
         ext_contract,
+        AccountId,
+        Promise,
     };
 
     /// Non-Fungible Token Approval NEP 178. Ref:
@@ -135,6 +139,7 @@ mod factory_interfaces {
     use near_sdk::{
         self,
         ext_contract,
+        AccountId,
     };
 
     use crate::common::NFTContractMetadata;
