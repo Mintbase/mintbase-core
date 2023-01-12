@@ -1,4 +1,4 @@
-import { NearAccount } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
 import { ExecutionContext } from "ava";
 
 interface ApprovalSpec {

@@ -1,6 +1,11 @@
-import { batchMint, failPromiseRejection, STORE_WORKSPACE } from "./test-utils";
+import avaTest from "ava";
+import { failPromiseRejection } from "./utils/index.js";
+import { setup } from "./setup.js";
 
-STORE_WORKSPACE.test("metadata", async (test, { alice, store }) => {
+const test = setup(avaTest);
+
+test("metadata", async (test) => {
+  const { alice, store } = test.context.accounts;
   test.deepEqual(await store.view("nft_metadata"), {
     base_uri: null,
     icon: null,

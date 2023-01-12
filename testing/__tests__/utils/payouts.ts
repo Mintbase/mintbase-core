@@ -1,7 +1,7 @@
-import { NearAccount } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
 
 export function createPayout(spec: [NearAccount, string][]) {
-  const payout = {};
+  const payout: Record<string, string> = {};
   spec.forEach(([account, amount]) => {
     payout[account.accountId] = amount;
   });
@@ -9,7 +9,7 @@ export function createPayout(spec: [NearAccount, string][]) {
 }
 
 export function createPayoutPercentage(spec: [NearAccount, number][]) {
-  const payout = {};
+  const payout: Record<string, number> = {};
   spec.forEach(([account, amount]) => {
     payout[account.accountId] = amount;
   });
@@ -17,7 +17,7 @@ export function createPayoutPercentage(spec: [NearAccount, number][]) {
 }
 
 export function createPayoutNumerators(spec: [NearAccount, number][]) {
-  const payout = {};
+  const payout: Record<string, { numerator: number }> = {};
   spec.forEach(([account, amount]) => {
     payout[account.accountId] = { numerator: amount };
   });

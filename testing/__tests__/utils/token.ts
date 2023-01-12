@@ -1,4 +1,4 @@
-import { NearAccount } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
 import { ExecutionContext } from "ava";
 
 /** The current interface of a token as described in NEP171 */
@@ -33,8 +33,8 @@ export function assertTokensAre(
   expected: Nep171Token[],
   msg: string
 ) {
-  test.log("Actual token list:", actual);
-  test.log("Expected token list:", expected);
+  // test.log("Actual token list:", actual);
+  // test.log("Expected token list:", expected);
   test.is(
     actual.length,
     expected.length,

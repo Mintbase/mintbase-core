@@ -1,8 +1,8 @@
-import { ava, TransactionResult } from "near-workspaces-ava";
+import { TransactionResult } from "near-workspaces";
+import avaTest from "ava";
 import {
   batchMint,
   failPromiseRejection,
-  MARKET_WORKSPACE,
   mNEAR,
   NEAR,
   Tgas,
@@ -12,215 +12,217 @@ import {
   createPayoutNumerators,
   assertEventLogs,
   assertContractPanics,
-} from "./test-utils";
+} from "./utils/index.js";
+import { setup } from "./setup.js";
 
-MARKET_WORKSPACE.test(
-  "market::splits",
-  async (test, { root, factory, store, market, alice, bob, carol, dave }) => {
-    // cannot use `prepareTokenListing`, because royalties need to be set
-    // during minting
-    await root
-      .call(
-        market,
-        "update_allowlist",
-        { account_id: factory.accountId, state: true },
-        { attachedDeposit: "1" }
-      )
-      .catch(failPromiseRejection(test, "allowing store on market"));
+const test = setup(avaTest);
 
-    await batchMint({ owner: alice, store, num_to_mint: 1 }).catch(
-      failPromiseRejection(test, "minting")
-    );
+test("market::splits", async (test) => {
+  const { factory, store, market, alice, bob, carol, dave } =
+    test.context.accounts;
+  // cannot use `prepareTokenListing`, because royalties need to be set
+  // during minting
+  await market
+    .call(
+      market,
+      "update_allowlist",
+      { account_id: factory.accountId, state: true },
+      { attachedDeposit: "1" }
+    )
+    .catch(failPromiseRejection(test, "allowing store on market"));
 
-    // ---------------------------- setting splits -----------------------------
-    await assertContractPanics(test, [
-      // only token owner can set
-      [
-        async () => {
-          await bob.call(
-            store,
-            "set_split_owners",
-            {
-              token_ids: ["0"],
-              split_between: createPayoutPercentage([
-                [alice, 6000],
-                [bob, 4000],
-              ]),
-            },
-            { attachedDeposit: mNEAR(1.6) }
-          );
-        },
-        `${bob.accountId} is required to own token 0`,
-        "Bob tried setting splits on Alice's token",
-      ],
-      [
-        // requires storage deposit
-        async () => {
-          await alice.call(
-            store,
-            "set_split_owners",
-            {
-              token_ids: ["0"],
-              split_between: createPayoutPercentage([
-                [alice, 6000],
-                [bob, 4000],
-              ]),
-            },
-            { attachedDeposit: mNEAR(1.59) }
-          );
-        },
-        `Requires storage deposit of at least ${mNEAR(1.6)}`,
-        "Alice tried setting splits with insufficient storage deposit",
-      ],
-    ]);
-    const setSplitsCall = await alice
-      .call_raw(
-        store,
-        "set_split_owners",
-        {
-          token_ids: ["0"],
-          split_between: createPayoutPercentage([
-            [alice, 6000],
-            [bob, 4000],
-          ]),
-        },
-        { attachedDeposit: mNEAR(1.6) }
-      )
-      .catch(failPromiseRejection(test, "setting splits"));
+  await batchMint({ owner: alice, store, num_to_mint: 1 }).catch(
+    failPromiseRejection(test, "minting")
+  );
 
-    // check event logs
-    assertEventLogs(
-      test,
-      (setSplitsCall as TransactionResult).logs,
-      [
-        {
-          standard: "mb_store",
-          version: "0.1.0",
-          event: "nft_set_split_owners",
-          data: {
-            split_owners: createPayoutPercentage([
+  // ---------------------------- setting splits -----------------------------
+  await assertContractPanics(test, [
+    // only token owner can set
+    [
+      async () => {
+        await bob.call(
+          store,
+          "set_split_owners",
+          {
+            token_ids: ["0"],
+            split_between: createPayoutPercentage([
               [alice, 6000],
               [bob, 4000],
             ]),
-            token_ids: ["0"],
           },
-        },
-      ],
-      "setting splits"
-    );
-
-    // check chain state: splits in `nft_token`
-    test.deepEqual(
-      ((await store.view("nft_token", { token_id: "0" })) as any).split_owners,
+          { attachedDeposit: mNEAR(1.6) }
+        );
+      },
+      `${bob.accountId} is required to own token 0`,
+      "Bob tried setting splits on Alice's token",
+    ],
+    [
+      // requires storage deposit
+      async () => {
+        await alice.call(
+          store,
+          "set_split_owners",
+          {
+            token_ids: ["0"],
+            split_between: createPayoutPercentage([
+              [alice, 6000],
+              [bob, 4000],
+            ]),
+          },
+          { attachedDeposit: mNEAR(1.59) }
+        );
+      },
+      `Requires storage deposit of at least ${mNEAR(1.6)}`,
+      "Alice tried setting splits with insufficient storage deposit",
+    ],
+  ]);
+  const setSplitsCall = await alice
+    .callRaw(
+      store,
+      "set_split_owners",
       {
-        split_between: createPayoutNumerators([
+        token_ids: ["0"],
+        split_between: createPayoutPercentage([
           [alice, 6000],
           [bob, 4000],
         ]),
       },
-      "Bad onchain splits (querying `nft_token`)"
-    );
-    // so far, I cannot find a direct method to query the split owners
+      { attachedDeposit: mNEAR(1.6) }
+    )
+    .catch(failPromiseRejection(test, "setting splits"));
 
-    // ------------------- executing transfer with royalties -------------------
-    await alice
-      .call(
-        store,
-        "nft_approve",
-        {
-          token_id: "0",
-          account_id: market.accountId,
-          msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
+  // check event logs
+  assertEventLogs(
+    test,
+    (setSplitsCall as TransactionResult).logs,
+    [
+      {
+        standard: "mb_store",
+        version: "0.1.0",
+        event: "nft_set_split_owners",
+        data: {
+          split_owners: createPayoutPercentage([
+            [alice, 6000],
+            [bob, 4000],
+          ]),
+          token_ids: ["0"],
         },
-        { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
-      )
-      .catch(failPromiseRejection(test, "listing token"));
-    // events have been checked previously -> no need here
-    const tokenKey = `0:${store.accountId}`;
+      },
+    ],
+    "setting splits"
+  );
 
-    const aliceBalance0 = await getBalance(alice);
-    const bobBalance0 = await getBalance(bob);
-    await carol
-      .call(
-        market,
-        "make_offer",
-        {
-          token_key: [tokenKey],
-          price: [NEAR(1)],
-          timeout: [{ Hours: 24 }],
-        },
-        { attachedDeposit: NEAR(1), gas: Tgas(200) }
-      )
-      .catch(failPromiseRejection(test, "making offer"));
-    // events have been checked previously -> no need here
+  // check chain state: splits in `nft_token`
+  test.deepEqual(
+    ((await store.view("nft_token", { token_id: "0" })) as any).split_owners,
+    {
+      split_between: createPayoutNumerators([
+        [alice, 6000],
+        [bob, 4000],
+      ]),
+    },
+    "Bad onchain splits (querying `nft_token`)"
+  );
+  // so far, I cannot find a direct method to query the split owners
 
-    // check chain state: alice received 0.75 * 0.975 NEAR
-    await assertBalanceChange(
-      test,
-      { account: alice, ref: aliceBalance0, diff: mNEAR(0.6 * 975) },
-      "Checking royalties (without splits)"
-    );
-    // check chain state: bob received 0.25 * 0.975 NEAR
-    await assertBalanceChange(
-      test,
-      { account: bob, ref: bobBalance0, diff: mNEAR(0.4 * 975) },
-      "Checking royalties (without splits)"
-    );
+  // ------------------- executing transfer with royalties -------------------
+  await alice
+    .call(
+      store,
+      "nft_approve",
+      {
+        token_id: "0",
+        account_id: market.accountId,
+        msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
+      },
+      { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
+    )
+    .catch(failPromiseRejection(test, "listing token"));
+  // events have been checked previously -> no need here
+  const tokenKey = `0:${store.accountId}`;
 
-    // --------------------- redo, splits should be reset ----------------------
-    test.deepEqual(
-      ((await store.view("nft_token", { token_id: "0" })) as any).split_owners,
-      null,
-      "Bad onchain splits after transfer (querying `nft_token`)"
-    );
+  const aliceBalance0 = await getBalance(alice);
+  const bobBalance0 = await getBalance(bob);
+  await carol
+    .call(
+      market,
+      "make_offer",
+      {
+        token_key: [tokenKey],
+        price: [NEAR(1)],
+        timeout: [{ Hours: 24 }],
+      },
+      { attachedDeposit: NEAR(1), gas: Tgas(200) }
+    )
+    .catch(failPromiseRejection(test, "making offer"));
+  // events have been checked previously -> no need here
 
-    await carol
-      .call(
-        store,
-        "nft_approve",
-        {
-          token_id: "0",
-          account_id: market.accountId,
-          msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
-        },
-        { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
-      )
-      .catch(failPromiseRejection(test, "listing token again"));
+  // check chain state: alice received 0.75 * 0.975 NEAR
+  await assertBalanceChange(
+    test,
+    { account: alice, ref: aliceBalance0, diff: mNEAR(0.6 * 975) },
+    "Checking royalties (without splits)"
+  );
+  // check chain state: bob received 0.25 * 0.975 NEAR
+  await assertBalanceChange(
+    test,
+    { account: bob, ref: bobBalance0, diff: mNEAR(0.4 * 975) },
+    "Checking royalties (without splits)"
+  );
 
-    const aliceBalance1 = await getBalance(alice);
-    const bobBalance1 = await getBalance(bob);
-    const carolBalance1 = await getBalance(carol);
+  // --------------------- redo, splits should be reset ----------------------
+  test.deepEqual(
+    ((await store.view("nft_token", { token_id: "0" })) as any).split_owners,
+    null,
+    "Bad onchain splits after transfer (querying `nft_token`)"
+  );
 
-    await dave
-      .call(
-        market,
-        "make_offer",
-        {
-          token_key: [tokenKey],
-          price: [NEAR(1)],
-          timeout: [{ Hours: 24 }],
-        },
-        { attachedDeposit: NEAR(1), gas: Tgas(200) }
-      )
-      .catch(failPromiseRejection(test, "making offer again"));
+  await carol
+    .call(
+      store,
+      "nft_approve",
+      {
+        token_id: "0",
+        account_id: market.accountId,
+        msg: JSON.stringify({ price: NEAR(1), autotransfer: true }),
+      },
+      { attachedDeposit: mNEAR(0.81), gas: Tgas(200) }
+    )
+    .catch(failPromiseRejection(test, "listing token again"));
 
-    // check chain state: alice received nothing
-    await assertBalanceChange(
-      test,
-      { account: alice, ref: aliceBalance1, diff: NEAR(0) },
-      "Checking royalties (without splits)"
-    );
-    // check chain state: bob received nothing
-    await assertBalanceChange(
-      test,
-      { account: bob, ref: bobBalance1, diff: NEAR(0) },
-      "Checking royalties (without splits)"
-    );
-    // check chain state: carol received 0.975 NEAR
-    await assertBalanceChange(
-      test,
-      { account: carol, ref: carolBalance1, diff: mNEAR(975) },
-      "Checking royalties (without splits)"
-    );
-  }
-);
+  const aliceBalance1 = await getBalance(alice);
+  const bobBalance1 = await getBalance(bob);
+  const carolBalance1 = await getBalance(carol);
+
+  await dave
+    .call(
+      market,
+      "make_offer",
+      {
+        token_key: [tokenKey],
+        price: [NEAR(1)],
+        timeout: [{ Hours: 24 }],
+      },
+      { attachedDeposit: NEAR(1), gas: Tgas(200) }
+    )
+    .catch(failPromiseRejection(test, "making offer again"));
+
+  // check chain state: alice received nothing
+  await assertBalanceChange(
+    test,
+    { account: alice, ref: aliceBalance1, diff: NEAR(0) },
+    "Checking royalties (without splits)"
+  );
+  // check chain state: bob received nothing
+  await assertBalanceChange(
+    test,
+    { account: bob, ref: bobBalance1, diff: NEAR(0) },
+    "Checking royalties (without splits)"
+  );
+  // check chain state: carol received 0.975 NEAR
+  await assertBalanceChange(
+    test,
+    { account: carol, ref: carolBalance1, diff: mNEAR(975) },
+    "Checking royalties (without splits)"
+  );
+});

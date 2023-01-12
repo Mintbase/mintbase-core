@@ -33,18 +33,13 @@ export function assertContractPanicMsg(
     // The slicing assures we don't assert against source location, the comma at
     // the message end assures that we capture everything but source location
     const expectedPanicMsg = `Smart contract panicked: ${panicMsg}`;
-    const actualPanicMsg = error.kind.ExecutionError.slice(
+    const actualPanicMsg = JSON.parse(
+      error.message
+    ).result.status.Failure.ActionError.kind.FunctionCallError.ExecutionError.slice(
       0,
       expectedPanicMsg.length
     );
-    // // log full error message in case anything goes wrong
-    // test.log(error.kind.ExecutionError);
 
-    test.is(
-      error.type,
-      "FunctionCallError",
-      `Wrong error/panic type when ${assertMsg}`
-    );
     test.is(
       actualPanicMsg,
       expectedPanicMsg,
