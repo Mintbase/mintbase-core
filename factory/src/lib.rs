@@ -9,7 +9,6 @@ use mintbase_deps::constants::{
     gas,
     storage_bytes,
     storage_stake,
-    NO_DEPOSIT,
     YOCTO_PER_BYTE,
 };
 use mintbase_deps::interfaces::factory_self;

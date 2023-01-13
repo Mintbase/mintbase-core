@@ -216,19 +216,19 @@ impl MintbaseStore {
     ///   which should also be reversible
     /// - Will require partial reindexing
     #[private]
-    pub fn prepend_base_uri(
+    pub fn set_reference_media(
         &mut self,
-        base_uri: String,
-        token_ids_with_media: Vec<(String, Option<String>)>,
+        specs: Vec<(String, Option<String>, Option<String>)>,
     ) {
-        for (token_id, media) in token_ids_with_media
-            .iter()
-            .map(|(id, media)| (id.parse::<u64>().unwrap(), media))
-        {
-            let metadata_id = self.tokens.get(&token_id).unwrap().metadata_id;
+        for (token_id, reference, media) in specs {
+            let metadata_id = self
+                .tokens
+                .get(&token_id.parse().unwrap())
+                .unwrap()
+                .metadata_id;
             let (n, mut metadata) = self.token_metadata.get(&metadata_id).unwrap();
-            metadata.reference = concat_uri(&base_uri, &metadata.reference);
-            metadata.media = concat_uri(&base_uri, &media);
+            metadata.reference = reference;
+            metadata.media = media;
             self.token_metadata.insert(&metadata_id, &(n, metadata));
         }
     }
@@ -236,17 +236,11 @@ impl MintbaseStore {
     /// Drops the base_uri after successfully migration all tokens with
     /// `prepend_base_uri`
     #[private]
-    pub fn drop_base_uri(&mut self) {
-        self.metadata.base_uri = None;
-    }
-
-    /// While prepending and dropping base_uri, I destroyed
-    /// nearcon2demo1.mintspace2.testnet, and one day I might wish to repair it
-    /// using this method.
-    #[private]
-    pub fn repair_reference(&mut self) {
-        // FIXME: repair nearcon2demo1.minstpace2.testnet -> remove `nan/` prefixes on reference
-        self.metadata.base_uri = None;
+    pub fn set_base_uri(
+        &mut self,
+        base_uri: Option<String>,
+    ) {
+        self.metadata.base_uri = base_uri;
     }
 
     // -------------------------- internal methods -------------------------
@@ -338,16 +332,4 @@ pub trait NonFungibleResolveTransfer {
         token_id: String,
         approved_account_ids: Option<Vec<String>>,
     );
-}
-
-fn concat_uri(
-    base: &str,
-    uri: &Option<String>,
-) -> Option<String> {
-    match uri {
-        None => None,
-        Some(uri) if uri.starts_with(base) => Some(uri.to_string()),
-        Some(uri) if base.ends_with('/') => Some(format!("{}{}", base, uri)),
-        Some(uri) => Some(format!("{}/{}", base, uri)),
-    }
 }
