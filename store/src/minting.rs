@@ -50,6 +50,7 @@ impl MintbaseStore {
     pub fn nft_batch_mint(
         &mut self,
         owner_id: AccountId,
+        #[allow(unused_mut)] // cargo complains, but it's required
         mut metadata: TokenMetadata,
         num_to_mint: u64,
         royalty_args: Option<RoyaltyArgs>,

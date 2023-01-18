@@ -18,21 +18,3 @@ pub const fn ntot(near_amount: Gas) -> Gas {
 pub const fn ntoy(near_amount: Balance) -> Balance {
     near_amount * 10u128.pow(24)
 }
-
-// // TODO: unused, deprecated?
-// pub fn to_yocto(value: &str) -> u128 {
-//     let vals: Vec<_> = value.split('.').collect();
-//     let part1 = vals[0].parse::<u128>().unwrap() * 10u128.pow(24);
-//     if vals.len() > 1 {
-//         let power = vals[1].len() as u32;
-//         let part2 = vals[1].parse::<u128>().unwrap() * 10u128.pow(24 - power);
-//         part1 + part2
-//     } else {
-//         part1
-//     }
-// }
-
-// // TODO: unused, deprecated?
-// pub fn to_near(n: u128) -> u128 {
-//     n * 10u128.pow(24)
-// }

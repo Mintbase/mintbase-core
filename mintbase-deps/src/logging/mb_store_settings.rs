@@ -69,23 +69,9 @@ pub fn log_transfer_store(account_id: &AccountId) {
 }
 
 pub fn log_set_icon_base64(base64: &Option<String>) {
-    // this will not take care of icon deletion -> no accessible via UI
-    // TODO: document for coders that deletion will happen e.g. by inserting
-    //  empty icon
     env::log_str(
         &MbStoreChangeSettingData {
             new_icon_base64: base64.clone(),
-            ..MbStoreChangeSettingData::empty()
-        }
-        .serialize_event(),
-    );
-}
-
-pub fn log_set_base_uri(base_uri: &str) {
-    // TODO: disallow this setting anyhow -> configurable on deploy only
-    env::log_str(
-        &MbStoreChangeSettingData {
-            new_base_uri: Some(base_uri.to_string()),
             ..MbStoreChangeSettingData::empty()
         }
         .serialize_event(),

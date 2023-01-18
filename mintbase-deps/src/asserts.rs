@@ -54,8 +54,6 @@ macro_rules! near_assert_ne {
     };
 }
 
-// TODO: near_assert_range
-
 // ------------- specific asserts for mintbase smart contracts -------------- //
 
 // Theoretically a duplicate for `near_sdk::assert_one_yocto`, but this version
