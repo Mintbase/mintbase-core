@@ -1,10 +1,3 @@
 [workspace]
 
-members = [
-	"mintbase-deps",
-	"store",
-	"factory",
-	"helper",
-	"simple-market-contract",
-	"mintbase-near-indexer",
-]
+members = ["mintbase-deps", "store", "factory", "simple-market-contract"]
