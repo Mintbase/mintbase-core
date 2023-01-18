@@ -50,7 +50,7 @@ impl MintbaseStore {
     pub fn nft_batch_mint(
         &mut self,
         owner_id: AccountId,
-        metadata: TokenMetadata,
+        mut metadata: TokenMetadata,
         num_to_mint: u64,
         royalty_args: Option<RoyaltyArgs>,
         split_owners: Option<SplitBetweenUnparsed>,
@@ -71,11 +71,29 @@ impl MintbaseStore {
             minter_id
         );
 
+        near_assert!(
+            !option_string_starts_with(&metadata.reference, &self.metadata.base_uri),
+            "`metadata.reference` must not start with contract base URI"
+        );
+        near_assert!(
+            !option_string_starts_with(&metadata.media, &self.metadata.base_uri),
+            "`metadata.media` must not start with contract base URI"
+        );
+        near_assert!(
+            option_string_is_u64(&metadata.starts_at),
+            "`metadata.starts_at` needs to parse to a u64"
+        );
+        near_assert!(
+            option_string_is_u64(&metadata.expires_at),
+            "`metadata.expires_at` needs to parse to a u64"
+        );
+
         // Calculating storage consuption upfront saves gas if the transaction
         // were to fail later.
         let covered_storage = env::account_balance()
             - (env::storage_usage() as u128 * self.storage_costs.storage_price_per_byte);
-        let (metadata, md_size) = TokenMetadata::from_with_size(metadata, num_to_mint);
+        metadata.copies = metadata.copies.or(Some(num_to_mint as u16));
+        let md_size = borsh::to_vec(&metadata).unwrap().len() as u64;
         let roy_len = royalty_args
             .as_ref()
             .map(|pre_roy| {
@@ -310,4 +328,21 @@ impl MintbaseStore {
             // create n tokens each with splits stored on-token
             + num_tokens as u128 * (self.storage_costs.token + num_splits as u128 * self.storage_costs.common)
     }
+}
+
+fn option_string_starts_with(
+    string: &Option<String>,
+    prefix: &Option<String>,
+) -> bool {
+    match (string, prefix) {
+        (Some(s), Some(p)) => s.starts_with(p),
+        _ => false,
+    }
+}
+
+fn option_string_is_u64(opt_s: &Option<String>) -> bool {
+    opt_s
+        .as_ref()
+        .map(|s| s.parse::<u64>().is_ok())
+        .unwrap_or(true)
 }

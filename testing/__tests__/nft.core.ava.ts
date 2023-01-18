@@ -7,6 +7,7 @@ import {
   assertContractTokenOwners,
   assertEventLogs,
   failPromiseRejection,
+  Tgas,
 } from "./utils/index.js";
 import { setup } from "./setup.js";
 
@@ -379,4 +380,27 @@ test("core", async (test) => {
 
   // TODO::testing::low: try to undeploy contract (random bob)
   // TODO::testing::low: undeploy contract (store owner)
+});
+
+test("batch-mint", async (test) => {
+  const { alice, store } = test.context.accounts;
+
+  const mintCall = await alice.callRaw(
+    store,
+    "nft_batch_mint",
+    {
+      owner_id: alice.accountId,
+      metadata: {
+        reference: "x".repeat(43), // 43 chars hash, would be 63 with arweave base URI included
+        media: "x".repeat(43),
+        starts_at: "1672531200000000000",
+        expires_at: "1672531200000000000",
+      },
+      num_to_mint: 125,
+    },
+    { attachedDeposit: "1", gas: Tgas(225) }
+  );
+
+  // @ts-ignore
+  test.is(typeof mintCall.status.SuccessValue, "string");
 });

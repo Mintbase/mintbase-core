@@ -29,8 +29,8 @@ test("metadata", async (test) => {
           reference_hash: "cmVmZXJlbmNl",
           media: "media",
           media_hash: "bWVkaWE=",
-          starts_at: "2022-02-02T02:02:02Z+02",
-          expires_at: "3033-03-03T03:03:03Z+03",
+          starts_at: "1672531200000000000",
+          expires_at: "1672531200000000000",
           extra: "No more extras for you!",
         },
         num_to_mint: 2,
@@ -47,8 +47,8 @@ test("metadata", async (test) => {
     reference_hash: "cmVmZXJlbmNl",
     media: "media",
     media_hash: "bWVkaWE=",
-    starts_at: "2022-02-02T02:02:02Z+02",
-    expires_at: "3033-03-03T03:03:03Z+03",
+    starts_at: "1672531200000000000",
+    expires_at: "1672531200000000000",
     extra: "No more extras for you!",
   });
 

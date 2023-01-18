@@ -98,7 +98,7 @@ test("market::royalties", async (test) => {
     storeFormattedRoyalties,
     "Bad onchain royalties (querying `nft_token_royalty`)"
   );
-  test.log("royalties as known by store:", storeFormattedRoyalties);
+  // test.log("royalties as known by store:", storeFormattedRoyalties);
   // // check chain state: royalties in payout info
   // // FIXME::store::medium: these shouldn't be zero
   // test.deepEqual(

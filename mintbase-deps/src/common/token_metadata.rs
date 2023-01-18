@@ -40,46 +40,33 @@ pub struct TokenMetadata {
     pub reference_hash: Option<Base64VecU8>,
 }
 
-impl TokenMetadata {
-    /// Get the metadata and its size in bytes.
-    pub fn from_with_size(
-        args: TokenMetadata,
-        copies: u64,
-    ) -> (Self, u64) {
-        // if args.media.is_some() {
-        //     crate::near_assert!(
-        //         args.media_hash.is_some(),
-        //         "Cannot specificy metadata.media without metadata.media_hash"
-        //     );
-        // }
+// impl TokenMetadata {
+//     /// Get the metadata and its size in bytes.
+//     pub fn from_with_size(
+//         mut metadata: TokenMetadata,
+//         copies: u64,
+//     ) -> (Self, u64) {
+//         // if args.media.is_some() {
+//         //     crate::near_assert!(
+//         //         args.media_hash.is_some(),
+//         //         "Cannot specificy metadata.media without metadata.media_hash"
+//         //     );
+//         // }
 
-        // if args.reference.is_some() {
-        //     crate::near_assert!(
-        //         args.reference_hash.is_some(),
-        //         "Cannot specificy metadata.reference without metadata.reference_hash"
-        //     );
-        // }
+//         // if args.reference.is_some() {
+//         //     crate::near_assert!(
+//         //         args.reference_hash.is_some(),
+//         //         "Cannot specificy metadata.reference without metadata.reference_hash"
+//         //     );
+//         // }
 
-        let metadata = Self {
-            title: args.title,
-            description: args.description,
-            media: args.media,
-            media_hash: args.media_hash,
-            copies: (copies as u16).into(),
-            expires_at: args.expires_at,
-            starts_at: args.starts_at,
-            extra: args.extra,
-            reference: args.reference,
-            reference_hash: args.reference_hash,
-        };
+//         // If `metadata.copies` isn't supplied, use computed copies
+//         metadata.copies.or(Some(copies));
+//         let size = borsh::to_vec(&metadata).unwrap().len();
 
-        let size = serde_json::to_vec(&metadata).unwrap().len();
-
-        // let size = metadata.try_to_vec().unwrap().len();
-
-        (metadata, size as u64)
-    }
-}
+//         (metadata, size as u64)
+//     }
+// }
 
 // NON-COMPLIANT https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Metadata.md
 /// ref:

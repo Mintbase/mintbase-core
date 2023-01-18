@@ -18,7 +18,6 @@ test("market::core", async (test) => {
     failPromiseRejection(test, "minting")
   );
 
-  test.log(await market.view("get_owner"));
   // ----------- allow the store to list tokens to the marketplace -----------
   const updateAllowlistCall = await market
     .callRaw(
@@ -29,7 +28,6 @@ test("market::core", async (test) => {
     )
     .catch(failPromiseRejection(test, "updating allowlist"));
 
-  test.log(updateAllowlistCall);
   // check event logs
   assertEventLogs(
     test,
