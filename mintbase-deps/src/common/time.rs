@@ -9,6 +9,7 @@ use serde::{
     Serialize,
 };
 
+/// Time duration.
 /// This enum used to support other time denominations, which were dropped
 /// for simplicity.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -17,19 +18,24 @@ pub enum TimeUnit {
     Hours(u64),
 }
 
+/// Time instant, the u64 is in nanoseconds since epoch.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
 pub struct NearTime(pub u64);
 
 impl NearTime {
     pub fn is_before_timeout(&self) -> bool {
-        now().0 < self.0
+        env::block_timestamp() < self.0
     }
 
     pub fn new(span: TimeUnit) -> Self {
         match span {
             TimeUnit::Hours(n) => Self::now_plus_n_hours(n),
         }
+    }
+
+    pub fn now() -> Self {
+        Self(env::block_timestamp())
     }
 
     fn now_plus_n_hours(n: u64) -> Self {
@@ -42,11 +48,4 @@ impl NearTime {
         let hour_ns = 10u64.pow(9) * 3600;
         Self(now + n * hour_ns)
     }
-}
-
-/// An alias for env::block_timestamp. Note that block_timestamp returns
-/// the number of **nanoseconds since Jan 1 1970 UTC**. Note that each day
-/// is 8.64*10^14 nanoseconds.
-pub fn now() -> NearTime {
-    NearTime(env::block_timestamp())
 }

@@ -13,7 +13,6 @@ use serde::{
 };
 
 use crate::common::time::{
-    now,
     NearTime,
     TimeUnit,
 };
@@ -42,13 +41,12 @@ impl TokenOffer {
         timeout: TimeUnit,
         id: u64,
     ) -> Self {
-        let timeout = NearTime::new(timeout);
         Self {
             id,
             price,
             from: env::predecessor_account_id(),
-            timestamp: now(),
-            timeout,
+            timestamp: NearTime::now(),
+            timeout: NearTime::new(timeout),
         }
     }
 

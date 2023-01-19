@@ -1,10 +1,12 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use near_sdk::borsh::{
     self,
     BorshDeserialize,
     BorshSerialize,
 };
+use near_sdk::serde::ser::Serializer;
 use near_sdk::serde::{
     Deserialize,
     Serialize,
@@ -17,13 +19,6 @@ use crate::common::{
     TokenKey,
     TokenMetadataCompliant,
 };
-
-mod composeable_stats;
-pub use composeable_stats::ComposeableStats;
-mod loan;
-pub use loan::Loan;
-mod owner;
-pub use owner::Owner;
 
 /// Supports NEP-171, 177, 178, 181. Ref:
 /// https://github.com/near/NEPs/blob/master/specs/Standards/NonFungibleToken/Core.md
@@ -152,4 +147,100 @@ pub struct TokenCompliant {
     /// If the token originated on another contract and was `nft_move`d to
     /// this contract, this field will be non-nil.
     pub origin_key: Option<TokenKey>,
+}
+
+// --------------------------------- owner ---------------------------------- //
+// This is mostly kept here to avoid storage migrations, but this should always
+// be the `Account` variant.
+#[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
+#[derive(Deserialize, Clone, Debug)]
+pub enum Owner {
+    /// Standard pattern: owned by a user.
+    Account(AccountId),
+    /// Compose pattern: owned by a token on this contract.
+    TokenId(u64),
+    /// Cross-compose pattern: owned by a token on another contract.
+    CrossKey(crate::common::TokenKey),
+    /// Lock: temporarily locked until some callback returns.
+    Lock(AccountId),
+}
+
+impl Serialize for Owner {
+    fn serialize<S: Serializer>(
+        &self,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        // TODO: create string and then clone?
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+impl fmt::Display for Owner {
+    fn fmt(
+        &self,
+        f: &mut fmt::Formatter,
+    ) -> fmt::Result {
+        match self {
+            Owner::Account(s) => write!(f, "{}", s),
+            Owner::TokenId(n) => write!(f, "{}", n),
+            Owner::CrossKey(key) => write!(f, "{}", key),
+            Owner::Lock(_) => panic!("locked"),
+        }
+    }
+}
+
+// ---------------------------------- loan ---------------------------------- //
+// This is only kept here to avoid storage migrations, it is no longer used
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
+pub struct Loan {
+    pub holder: AccountId,
+    pub loan_contract: AccountId,
+}
+
+impl Loan {
+    pub fn new(
+        holder: AccountId,
+        loan_contract: AccountId,
+    ) -> Self {
+        Self {
+            holder,
+            loan_contract,
+        }
+    }
+}
+
+// ----------------------------- composability ------------------------------ //
+// This is only kept here to avoid storage migrations, it is no longer used
+/// To enable recursive composeability, need to track:
+/// 1. How many levels deep a token is recursively composed
+/// 2. Whether and how many cross-contract children a token has.
+///
+/// Tracking depth limits potential bugs around recursive ownership
+/// consuming excessive amounts of gas.
+///
+/// Tracking the number of cross-contract children a token has prevents
+/// breaking of the Only-One-Cross-Linkage Invariant.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "wasm", derive(BorshDeserialize, BorshSerialize))]
+pub struct ComposeableStats {
+    /// How deep this token is in a chain of composeability on THIS contract.
+    /// If this token is cross-composed, it's depth will STILL be 0. `depth`
+    /// equal to the parent's `depth`+1. If this is a top level token, this
+    /// number is 0.
+    pub local_depth: u8,
+    /// How many cross contract children this token has, direct AND indirect.
+    /// That is, any parent's `cross_contract_children` value equals the sum
+    /// of of its children's values. If this number is non-zero, deny calls
+    /// to `nft_cross_compose`.
+    pub cross_contract_children: u8,
+}
+
+impl ComposeableStats {
+    pub(super) fn new() -> Self {
+        Self {
+            local_depth: 0,
+            cross_contract_children: 0,
+        }
+    }
 }

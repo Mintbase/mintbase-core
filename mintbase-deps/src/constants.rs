@@ -6,12 +6,6 @@ use near_sdk::borsh::{
 };
 use near_sdk::Balance;
 
-// #[cfg(feature = "all")]
-// use near_sdk::serde::{
-//     Deserialize,
-//     Serialize,
-// };
-
 /// Current price for one byte of on-chain storage, denominated in yoctoNEAR.
 pub const YOCTO_PER_BYTE: Balance = 10_000_000_000_000_000_000;
 
@@ -103,13 +97,6 @@ pub mod storage_stake {
     pub const CUSHION: Balance = 10u128.pow(23);
 }
 
-// /// The amount of Storage in bytes consumed by a maximal sized Token with NO
-// /// metadata and NO Royalty field. Rounded to 360 for extra cushion.
-// pub const LIST_STORAGE: near_sdk::StorageUsage = 360;
-
-// storage
-// pub const STORE_STORAGE: u64 = 550_000; // 499kB
-
 /// Royalty upper limit is 50%.
 pub const ROYALTY_UPPER_LIMIT: u32 = 5000;
 
@@ -119,25 +106,6 @@ pub const MAX_LEN_PAYOUT: u32 = 50;
 /// Minimum storage stake required to allow updates
 pub const MINIMUM_FREE_STORAGE_STAKE: near_sdk::Balance = 50 * YOCTO_PER_BYTE;
 
-//?
-
-// /// The amount of Storage in bytes consumed by a maximal sized Token with NO
-// /// metadata and NO Royalty field. Rounded to 360 for extra cushion.
-// pub const TOKEN_STORAGE: near_sdk::StorageUsage = 360;
-
-// /// The storage in bytes (with a little padding) for:
-// /// - a single royalty
-// /// - a single approval
-// /// - adding a new entry to the `tokens_per_account` map
-// /// - adding a new entry to the `composeables` map
-// pub const COMMON_STORAGE: near_sdk::StorageUsage = 80;
-
-// // ref: https://github.com/near-apps/nft-market/blob/main/contracts/nft-simple/src/nft_core.rs
-// pub const GAS_RESOLVE_TRANSFER: u64 = 10_000_000_000_000;
-// pub const GAS_NFT_TRANSFER_CALL: u64 = 25_000_000_000_000 + GAS_RESOLVE_TRANSFER;
-
-// #[derive(Clone, Debug)]
-// #[cfg_attr(feature = "all", derive(Deserialize, Serialize))]
 #[cfg_attr(
     feature = "store-wasm",
     derive(BorshDeserialize, BorshSerialize, near_sdk::serde::Serialize, Clone)
@@ -181,7 +149,6 @@ impl StorageCostsMarket {
     pub fn new(storage_price_per_byte: u128) -> Self {
         Self {
             storage_price_per_byte,
-            // list: storage_price_per_byte * LIST_STORAGE as u128,
             list: storage_stake::TOKEN,
         }
     }
