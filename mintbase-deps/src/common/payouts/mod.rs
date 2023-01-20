@@ -2,10 +2,7 @@ pub mod payout;
 pub mod royalty;
 pub mod splits;
 
-pub use payout::{
-    OwnershipFractions,
-    Payout,
-};
+pub use payout::Payout;
 pub use royalty::{
     Royalty,
     RoyaltyArgs,

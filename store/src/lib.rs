@@ -180,7 +180,7 @@ impl MintbaseStore {
     /// Get count of all issued approvals ever. Can be used to predict next
     /// approval ID.
     pub fn get_num_approved(&self) -> u64 {
-        self.num_approved.into()
+        self.num_approved
     }
 
     // -------------------------- private methods --------------------------

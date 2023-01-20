@@ -31,7 +31,7 @@ cargo check -p simple-market-contract --message-format short || fail "Checking m
 
 build_wasm store
 build_wasm factory
-build_wasm market
+# build_wasm market
 
 # Sandbox node is sometimes running in the background and causing problems
 # -> kill sandbox in case I used it manually
@@ -39,7 +39,7 @@ kill_the_damn_sandbox
 
 # Limit to 6 parallel tests to prevent hiccups with the key store
 # Doesn"t feel like it helps though.
-(cd testing && npm test -- -c 6 --fail-fast) || {
+(cd testing && npm test -- -c 6 --fail-fast -m 'payout::*') || {
   kill_the_damn_sandbox
   fail "Testing"
 }

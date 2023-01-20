@@ -14,7 +14,6 @@ pub mod token_metadata;
 pub mod token_offer;
 
 pub use payouts::{
-    OwnershipFractions,
     Payout,
     Royalty,
     RoyaltyArgs,
