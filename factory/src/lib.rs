@@ -1,10 +1,6 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    StoreInitArgs,
-};
 use mintbase_deps::constants::{
     gas,
     storage_bytes,
@@ -32,6 +28,10 @@ use mintbase_deps::near_sdk::{
     PublicKey,
 };
 use mintbase_deps::serde_json;
+use mintbase_deps::store_data::{
+    NFTContractMetadata,
+    StoreInitArgs,
+};
 // ------------------------------- constants -------------------------------- //
 
 // ----------------------------- smart contract ----------------------------- //

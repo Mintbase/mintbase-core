@@ -14,7 +14,7 @@ use mintbase_deps::near_sdk::{
     AccountId,
     Promise,
 };
-use mintbase_deps::token::Token;
+use mintbase_deps::store_data::Token;
 use mintbase_deps::{
     assert_storage_deposit,
     assert_token_owned_by_predecessor,

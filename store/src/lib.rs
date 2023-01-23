@@ -1,9 +1,3 @@
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    Royalty,
-    TokenMetadata,
-    TokenMetadataCompliant,
-};
 use mintbase_deps::constants::{
     storage_stake,
     StorageCosts,
@@ -31,7 +25,13 @@ use mintbase_deps::near_sdk::{
     AccountId,
     StorageUsage,
 };
-use mintbase_deps::token::Token;
+use mintbase_deps::store_data::{
+    NFTContractMetadata,
+    Royalty,
+    Token,
+    TokenMetadata,
+    TokenMetadataCompliant,
+};
 
 /// Implementing approval management as [described in the Nomicon](https://nomicon.io/Standards/NonFungibleToken/ApprovalManagement).
 mod approvals;

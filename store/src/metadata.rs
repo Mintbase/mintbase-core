@@ -1,8 +1,3 @@
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    NonFungibleContractMetadata,
-    TokenMetadata,
-};
 use mintbase_deps::logging::MbStoreChangeSettingData;
 use mintbase_deps::near_panic;
 use mintbase_deps::near_sdk::json_types::U64;
@@ -10,15 +5,19 @@ use mintbase_deps::near_sdk::{
     self,
     near_bindgen,
 };
+use mintbase_deps::store_data::{
+    NFTContractMetadata,
+    TokenMetadata,
+};
 
 use crate::*;
 
 // --------------------- standardized metadata methods ---------------------- //
 #[near_bindgen]
-impl NonFungibleContractMetadata for MintbaseStore {
+impl MintbaseStore {
     /// Contract-level metadata view method as described in
     /// [NEP-177](https://nomicon.io/Standards/Tokens/NonFungibleToken/Metadata)
-    fn nft_metadata(&self) -> &NFTContractMetadata {
+    pub fn nft_metadata(&self) -> &NFTContractMetadata {
         &self.metadata
     }
 }

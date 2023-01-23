@@ -1,11 +1,5 @@
 use std::collections::HashMap;
 
-use mintbase_deps::common::{
-    Payout,
-    Royalty,
-    SplitBetweenUnparsed,
-    SplitOwners,
-};
 use mintbase_deps::constants::MAX_LEN_PAYOUT;
 use mintbase_deps::near_sdk::json_types::{
     U128,
@@ -18,7 +12,13 @@ use mintbase_deps::near_sdk::{
     AccountId,
     Balance,
 };
-use mintbase_deps::token::Owner;
+use mintbase_deps::store_data::{
+    Owner,
+    Payout,
+    Royalty,
+    SplitBetweenUnparsed,
+    SplitOwners,
+};
 use mintbase_deps::{
     assert_storage_deposit,
     assert_token_owned_by_predecessor,
@@ -264,7 +264,7 @@ impl OwnershipFractions {
 
 fn log_set_split_owners(
     token_ids: Vec<U64>,
-    mut split_owners: mintbase_deps::common::SplitOwners,
+    mut split_owners: SplitOwners,
 ) {
     env::log_str(
         &mintbase_deps::logging::NftSetSplitOwnerData {

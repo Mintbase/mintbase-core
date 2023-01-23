@@ -18,7 +18,7 @@ use mintbase_deps::near_sdk::{
     Promise,
     PromiseResult,
 };
-use mintbase_deps::token::{
+use mintbase_deps::store_data::{
     Owner,
     Token,
     TokenCompliant,

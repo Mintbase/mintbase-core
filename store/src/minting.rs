@@ -1,10 +1,3 @@
-use mintbase_deps::common::{
-    Royalty,
-    RoyaltyArgs,
-    SplitBetweenUnparsed,
-    SplitOwners,
-    TokenMetadata,
-};
 use mintbase_deps::constants::{
     MAX_LEN_PAYOUT,
     MINIMUM_FREE_STORAGE_STAKE,
@@ -22,7 +15,14 @@ use mintbase_deps::near_sdk::{
     AccountId,
     Balance,
 };
-use mintbase_deps::token::Token;
+use mintbase_deps::store_data::{
+    Royalty,
+    RoyaltyArgs,
+    SplitBetweenUnparsed,
+    SplitOwners,
+    Token,
+    TokenMetadata,
+};
 use mintbase_deps::{
     assert_yocto_deposit,
     near_assert,
@@ -355,8 +355,8 @@ fn log_nft_batch_mint(
     last_token_id: u64,
     minter: &str,
     owner: &str,
-    royalty: &Option<mintbase_deps::common::Royalty>,
-    split_owners: &Option<mintbase_deps::common::SplitOwners>,
+    royalty: &Option<mintbase_deps::store_data::Royalty>,
+    split_owners: &Option<mintbase_deps::store_data::SplitOwners>,
     meta_ref: &Option<String>,
     meta_extra: &Option<String>,
 ) {

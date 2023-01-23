@@ -4,7 +4,7 @@ use mintbase_deps::near_sdk::{
     near_bindgen,
     AccountId,
 };
-use mintbase_deps::token::TokenCompliant;
+use mintbase_deps::store_data::TokenCompliant;
 
 use crate::*;
 

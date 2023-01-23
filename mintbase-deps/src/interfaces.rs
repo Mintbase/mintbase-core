@@ -17,7 +17,7 @@ mod market_interfaces {
         Promise,
     };
 
-    use crate::common::TokenListing;
+    use crate::market_data::TokenListing;
 
     #[ext_contract(ext_self)]
     pub trait ExtSelf {
@@ -142,7 +142,7 @@ mod factory_interfaces {
         AccountId,
     };
 
-    use crate::common::NFTContractMetadata;
+    use crate::store_data::NFTContractMetadata;
 
     #[ext_contract(factory_self)]
     pub trait OnCreateCallback {
@@ -243,5 +243,5 @@ pub trait NonFungibleContractCore {
     fn nft_token(
         &self,
         token_id: near_sdk::json_types::U64,
-    ) -> Option<crate::token::Token>;
+    ) -> Option<crate::store_data::Token>;
 }
