@@ -350,7 +350,7 @@ fn option_string_is_u64(opt_s: &Option<String>) -> bool {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn log_nft_batch_mint(
+fn log_nft_batch_mint(
     first_token_id: u64,
     last_token_id: u64,
     minter: &str,
@@ -380,7 +380,7 @@ pub fn log_nft_batch_mint(
     env::log_str(log.serialize_event().as_str());
 }
 
-pub fn log_grant_minter(account_id: &AccountId) {
+pub(crate) fn log_grant_minter(account_id: &AccountId) {
     env::log_str(
         &MbStoreChangeSettingData {
             granted_minter: Some(account_id.to_string()),
@@ -390,7 +390,7 @@ pub fn log_grant_minter(account_id: &AccountId) {
     );
 }
 
-pub fn log_revoke_minter(account_id: &AccountId) {
+pub(crate) fn log_revoke_minter(account_id: &AccountId) {
     env::log_str(
         &MbStoreChangeSettingData {
             revoked_minter: Some(account_id.to_string()),

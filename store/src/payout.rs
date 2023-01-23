@@ -262,7 +262,7 @@ impl OwnershipFractions {
     }
 }
 
-pub fn log_set_split_owners(
+fn log_set_split_owners(
     token_ids: Vec<U64>,
     mut split_owners: mintbase_deps::common::SplitOwners,
 ) {

@@ -111,7 +111,7 @@ impl MintbaseStore {
     }
 }
 
-pub fn log_transfer_store(account_id: &AccountId) {
+fn log_transfer_store(account_id: &AccountId) {
     env::log_str(
         &MbStoreChangeSettingData {
             new_owner: Some(account_id.to_string()),

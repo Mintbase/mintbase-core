@@ -75,7 +75,7 @@ impl MintbaseStore {
     // -------------------------- internal methods -------------------------
 }
 
-pub fn log_nft_batch_burn(
+fn log_nft_batch_burn(
     token_ids: &[U64],
     owner_id: String,
 ) {

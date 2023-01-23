@@ -210,7 +210,7 @@ impl MintbaseStore {
     }
 }
 
-pub fn log_approve(
+fn log_approve(
     token_id: u64,
     approval_id: u64,
     account_id: &AccountId,
@@ -223,7 +223,7 @@ pub fn log_approve(
     env::log_str(&data.serialize_event());
 }
 
-pub fn log_batch_approve(
+fn log_batch_approve(
     tokens: &[U64],
     approvals: &[U64],
     account_id: &AccountId,
@@ -242,7 +242,7 @@ pub fn log_batch_approve(
     env::log_str(&data.serialize_event());
 }
 
-pub fn log_revoke(
+fn log_revoke(
     token_id: u64,
     account_id: &AccountId,
 ) {
@@ -255,7 +255,7 @@ pub fn log_revoke(
     );
 }
 
-pub fn log_revoke_all(token_id: u64) {
+fn log_revoke_all(token_id: u64) {
     env::log_str(
         &NftRevokeAllData {
             token_id: token_id.into(),

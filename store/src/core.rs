@@ -296,7 +296,7 @@ impl MintbaseStore {
     }
 }
 
-pub fn log_nft_transfer(
+fn log_nft_transfer(
     to: &AccountId,
     token_id: u64,
     memo: &Option<String>,
@@ -313,7 +313,7 @@ pub fn log_nft_transfer(
     env::log_str(data.serialize_event().as_str());
 }
 
-pub fn log_nft_batch_transfer(
+fn log_nft_batch_transfer(
     tokens: &[U64],
     accounts: &[AccountId],
     old_owners: Vec<String>,
