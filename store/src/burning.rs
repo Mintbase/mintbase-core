@@ -1,4 +1,4 @@
-use mintbase_deps::logging::log_nft_batch_burn;
+use mintbase_deps::logging::NftBurnLog;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
@@ -73,4 +73,22 @@ impl MintbaseStore {
     // -------------------------- view methods -----------------------------
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
+}
+
+pub fn log_nft_batch_burn(
+    token_ids: &[U64],
+    owner_id: String,
+) {
+    let token_ids = token_ids
+        .iter()
+        .map(|x| x.0.to_string())
+        .collect::<Vec<_>>();
+    let log = NftBurnLog {
+        owner_id,
+        authorized_id: None,
+        token_ids,
+        memo: None,
+    };
+
+    env::log_str(log.serialize_event().as_str());
 }

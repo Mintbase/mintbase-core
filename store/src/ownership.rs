@@ -1,8 +1,4 @@
-use mintbase_deps::logging::{
-    log_grant_minter,
-    log_revoke_minter,
-    log_transfer_store,
-};
+use mintbase_deps::logging::MbStoreChangeSettingData;
 use mintbase_deps::near_sdk::{
     self,
     near_bindgen,
@@ -14,6 +10,10 @@ use mintbase_deps::{
     near_assert_ne,
 };
 
+use crate::minting::{
+    log_grant_minter,
+    log_revoke_minter,
+};
 use crate::*;
 
 #[near_bindgen]
@@ -109,4 +109,14 @@ impl MintbaseStore {
             "This method can only be called by the store owner"
         );
     }
+}
+
+pub fn log_transfer_store(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            new_owner: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
 }

@@ -6,8 +6,8 @@ use mintbase_deps::constants::gas;
 use mintbase_deps::interfaces::ext_on_transfer;
 // logging functions
 use mintbase_deps::logging::{
-    log_nft_batch_transfer,
-    log_nft_transfer,
+    NftTransferData,
+    NftTransferLog,
 };
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
@@ -294,4 +294,43 @@ impl MintbaseStore {
             }
         })
     }
+}
+
+pub fn log_nft_transfer(
+    to: &AccountId,
+    token_id: u64,
+    memo: &Option<String>,
+    old_owner: String,
+) {
+    let data = NftTransferData(vec![NftTransferLog {
+        authorized_id: None,
+        old_owner_id: old_owner,
+        new_owner_id: to.to_string(),
+        token_ids: vec![token_id.to_string()],
+        memo: memo.clone(),
+    }]);
+
+    env::log_str(data.serialize_event().as_str());
+}
+
+pub fn log_nft_batch_transfer(
+    tokens: &[U64],
+    accounts: &[AccountId],
+    old_owners: Vec<String>,
+) {
+    let data = NftTransferData(
+        accounts
+            .iter()
+            .enumerate()
+            .map(|(u, x)| NftTransferLog {
+                authorized_id: None,
+                old_owner_id: old_owners[u].clone(),
+                new_owner_id: x.to_string(),
+                token_ids: vec![tokens[u].0.to_string()],
+                memo: None,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    env::log_str(data.serialize_event().as_str());
 }

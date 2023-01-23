@@ -7,7 +7,6 @@ use mintbase_deps::common::{
     SplitOwners,
 };
 use mintbase_deps::constants::MAX_LEN_PAYOUT;
-use mintbase_deps::logging::log_set_split_owners;
 use mintbase_deps::near_sdk::json_types::{
     U128,
     U64,
@@ -261,4 +260,21 @@ impl OwnershipFractions {
 
         Payout { payout }
     }
+}
+
+pub fn log_set_split_owners(
+    token_ids: Vec<U64>,
+    mut split_owners: mintbase_deps::common::SplitOwners,
+) {
+    env::log_str(
+        &mintbase_deps::logging::NftSetSplitOwnerData {
+            token_ids,
+            split_owners: split_owners
+                .split_between
+                .drain()
+                .map(|(acc, fraction)| (acc, fraction.numerator as u16))
+                .collect(),
+        }
+        .serialize_event(),
+    );
 }

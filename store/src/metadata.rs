@@ -3,7 +3,7 @@ use mintbase_deps::common::{
     NonFungibleContractMetadata,
     TokenMetadata,
 };
-use mintbase_deps::logging::log_set_icon_base64;
+use mintbase_deps::logging::MbStoreChangeSettingData;
 use mintbase_deps::near_panic;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
@@ -83,4 +83,14 @@ impl MintbaseStore {
             },
         }
     }
+}
+
+fn log_set_icon_base64(base64: &Option<String>) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            new_icon_base64: base64.clone(),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
 }

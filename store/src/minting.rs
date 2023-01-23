@@ -10,14 +10,15 @@ use mintbase_deps::constants::{
     MINIMUM_FREE_STORAGE_STAKE,
 };
 use mintbase_deps::logging::{
-    log_grant_minter,
-    log_nft_batch_mint,
-    log_revoke_minter,
+    MbStoreChangeSettingData,
+    NftMintLog,
+    NftMintLogMemo,
 };
 use mintbase_deps::near_sdk::{
     self,
     env,
     near_bindgen,
+    serde_json,
     AccountId,
     Balance,
 };
@@ -346,4 +347,55 @@ fn option_string_is_u64(opt_s: &Option<String>) -> bool {
         .as_ref()
         .map(|s| s.parse::<u64>().is_ok())
         .unwrap_or(true)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn log_nft_batch_mint(
+    first_token_id: u64,
+    last_token_id: u64,
+    minter: &str,
+    owner: &str,
+    royalty: &Option<mintbase_deps::common::Royalty>,
+    split_owners: &Option<mintbase_deps::common::SplitOwners>,
+    meta_ref: &Option<String>,
+    meta_extra: &Option<String>,
+) {
+    let memo = serde_json::to_string(&NftMintLogMemo {
+        royalty: royalty.clone(),
+        split_owners: split_owners.clone(),
+        meta_id: meta_ref.clone(),
+        meta_extra: meta_extra.clone(),
+        minter: minter.to_string(),
+    })
+    .unwrap();
+    let token_ids = (first_token_id..=last_token_id)
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>();
+    let log = NftMintLog {
+        owner_id: owner.to_string(),
+        token_ids,
+        memo: Option::from(memo),
+    };
+
+    env::log_str(log.serialize_event().as_str());
+}
+
+pub fn log_grant_minter(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            granted_minter: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
+}
+
+pub fn log_revoke_minter(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            revoked_minter: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
 }

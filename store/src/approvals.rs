@@ -1,10 +1,10 @@
 use mintbase_deps::constants::gas;
 use mintbase_deps::interfaces::ext_on_approve;
 use mintbase_deps::logging::{
-    log_approve,
-    log_batch_approve,
-    log_revoke,
-    log_revoke_all,
+    NftApproveData,
+    NftApproveLog,
+    NftRevokeAllData,
+    NftRevokeData,
 };
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
@@ -208,4 +208,58 @@ impl MintbaseStore {
             }
         }
     }
+}
+
+pub fn log_approve(
+    token_id: u64,
+    approval_id: u64,
+    account_id: &AccountId,
+) {
+    let data = NftApproveData(vec![NftApproveLog {
+        token_id: token_id.into(),
+        approval_id,
+        account_id: account_id.to_string(),
+    }]);
+    env::log_str(&data.serialize_event());
+}
+
+pub fn log_batch_approve(
+    tokens: &[U64],
+    approvals: &[U64],
+    account_id: &AccountId,
+) {
+    let data = NftApproveData(
+        approvals
+            .iter()
+            .zip(tokens.iter())
+            .map(|(approval_id, token_id)| NftApproveLog {
+                token_id: *token_id,
+                approval_id: approval_id.0,
+                account_id: account_id.to_string(),
+            })
+            .collect::<Vec<_>>(),
+    );
+    env::log_str(&data.serialize_event());
+}
+
+pub fn log_revoke(
+    token_id: u64,
+    account_id: &AccountId,
+) {
+    env::log_str(
+        &NftRevokeData {
+            token_id: token_id.into(),
+            account_id: account_id.to_string(),
+        }
+        .serialize_event(),
+    );
+}
+
+pub fn log_revoke_all(token_id: u64) {
+    env::log_str(
+        &NftRevokeAllData {
+            token_id: token_id.into(),
+        }
+        .serialize_event(),
+    );
 }
