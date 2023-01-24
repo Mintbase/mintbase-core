@@ -14,7 +14,6 @@ pub mod logging;
 pub mod utils;
 
 /// Types that the market uses to interface with the blockchain or with callers
-#[cfg(feature = "market-wasm")]
 pub mod market_data;
 /// Types that the store uses to interface with the blockchain or with callers
 // #[cfg(any(feature = "market-wasm", feature = "factory-wasm"))]

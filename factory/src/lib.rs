@@ -7,7 +7,7 @@ use mintbase_deps::constants::{
     storage_stake,
     YOCTO_PER_BYTE,
 };
-use mintbase_deps::interfaces::factory_self;
+use mintbase_deps::interfaces::ext_factory;
 use mintbase_deps::logging::MbStoreDeployData;
 use mintbase_deps::near_sdk::borsh::{
     self,
@@ -271,7 +271,7 @@ impl MintbaseStoreFactory {
             .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
             .function_call("new".to_string(), init_args, 0, gas::CREATE_STORE)
             .then(
-                factory_self::ext(env::current_account_id())
+                ext_factory::ext(env::current_account_id())
                     .with_static_gas(gas::ON_CREATE_CALLBACK)
                     .on_create(
                         env::predecessor_account_id(),

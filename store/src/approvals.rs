@@ -1,5 +1,5 @@
 use mintbase_deps::constants::gas;
-use mintbase_deps::interfaces::ext_on_approve;
+use mintbase_deps::interfaces::ext_nft_on_approve;
 use mintbase_deps::logging::{
     NftApproveData,
     NftApproveLog,
@@ -46,7 +46,7 @@ impl MintbaseStore {
         log_approve(token_idu64, approval_id, &account_id);
 
         if let Some(msg) = msg {
-            ext_on_approve::ext(account_id)
+            ext_nft_on_approve::ext(account_id)
                 .with_static_gas(gas::NFT_ON_APPROVE)
                 .nft_on_approve(token_id, env::predecessor_account_id(), approval_id, msg)
                 .into()
@@ -142,7 +142,7 @@ impl MintbaseStore {
         log_batch_approve(&token_ids, &approval_ids, &account_id);
 
         if let Some(msg) = msg {
-            ext_on_approve::ext(account_id)
+            ext_nft_on_approve::ext(account_id)
                 .with_attached_deposit(env::attached_deposit() - storage_stake)
                 .with_static_gas(gas::NFT_BATCH_APPROVE)
                 .nft_on_batch_approve(token_ids, approval_ids, env::predecessor_account_id(), msg)
