@@ -7,6 +7,7 @@ use mintbase_deps::near_sdk::json_types::{
 };
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
@@ -23,7 +24,6 @@ use mintbase_deps::{
     assert_storage_deposit,
     assert_token_owned_by_predecessor,
     assert_token_unloaned,
-    assert_yocto_deposit,
     near_assert,
 };
 
@@ -44,7 +44,7 @@ impl MintbaseStore {
         balance: near_sdk::json_types::U128,
         max_len_payout: Option<u32>,
     ) -> Payout {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         let payout = self.nft_payout(token_id, balance, max_len_payout);
         self.nft_transfer(receiver_id, token_id, approval_id, memo);
         payout

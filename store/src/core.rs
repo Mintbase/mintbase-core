@@ -12,6 +12,7 @@ use mintbase_deps::logging::{
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
@@ -27,9 +28,7 @@ use mintbase_deps::{
     assert_token_owned_by,
     assert_token_owned_or_approved,
     assert_token_unloaned,
-    assert_yocto_deposit,
-    near_assert_eq,
-    near_assert_ne,
+    near_assert,
 };
 
 use crate::*;
@@ -48,7 +47,7 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         let old_owner = token.owner_id.to_string();
@@ -68,7 +67,7 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         msg: String,
     ) -> Promise {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         let pred = env::predecessor_account_id();
@@ -122,9 +121,8 @@ impl MintbaseStore {
         let token_id_u64 = token_id.parse::<u64>().unwrap();
         let mut token = self.nft_token_internal(token_id_u64);
         self.unlock_token(&mut token);
-        near_assert_eq!(
-            env::promise_results_count(),
-            1,
+        near_assert!(
+            env::promise_results_count() == 1,
             "Wtf? Had more than one DataReceipt to process"
         );
         // Get whether token should be returned
@@ -183,7 +181,7 @@ impl MintbaseStore {
         &mut self,
         token_ids: Vec<(U64, AccountId)>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         near_assert!(!token_ids.is_empty(), "Token IDs cannot be empty");
         let pred = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&pred).expect("none owned");
@@ -195,9 +193,8 @@ impl MintbaseStore {
                 let old_owner = token.owner_id.to_string();
                 assert_token_unloaned!(token);
                 assert_token_owned_by!(token, &pred);
-                near_assert_ne!(
-                    account_id.to_string(),
-                    token.owner_id.to_string(),
+                near_assert!(
+                    account_id.to_string() != token.owner_id.to_string(),
                     "Token {} is already owned by {}",
                     token.id,
                     account_id

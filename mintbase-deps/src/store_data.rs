@@ -459,7 +459,7 @@ impl Royalty {
                 (addr, sf)
             })
             .collect();
-        crate::near_assert_eq!(sum, 10_000, "Fractions need to add up to 10_000");
+        crate::near_assert!(sum == 10_000, "Fractions need to add up to 10_000");
 
         Self {
             percentage: SafeFraction::new(percentage),

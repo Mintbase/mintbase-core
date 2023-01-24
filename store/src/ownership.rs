@@ -1,13 +1,10 @@
 use mintbase_deps::logging::MbStoreChangeSettingData;
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     near_bindgen,
     AccountId,
-};
-use mintbase_deps::{
-    assert_yocto_deposit,
-    near_assert_eq,
-    near_assert_ne,
 };
 
 use crate::minting::{
@@ -31,9 +28,8 @@ impl MintbaseStore {
         keep_old_minters: bool,
     ) {
         self.assert_store_owner();
-        near_assert_ne!(
-            new_owner,
-            self.owner_id,
+        near_assert!(
+            new_owner != self.owner_id,
             "{} already owns this store",
             new_owner
         );
@@ -102,10 +98,9 @@ impl MintbaseStore {
 
     /// Validate the caller of this method matches the owner of this `Store`.
     pub(crate) fn assert_store_owner(&self) {
-        assert_yocto_deposit!();
-        near_assert_eq!(
-            self.owner_id,
-            env::predecessor_account_id(),
+        assert_one_yocto();
+        near_assert!(
+            self.owner_id == env::predecessor_account_id(),
             "This method can only be called by the store owner"
         );
     }

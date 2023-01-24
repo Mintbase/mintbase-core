@@ -2,13 +2,13 @@ use mintbase_deps::logging::NftBurnLog;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
 };
 use mintbase_deps::{
     assert_token_owned_by,
     assert_token_unloaned,
-    assert_yocto_deposit,
 };
 
 use crate::*;
@@ -26,7 +26,7 @@ impl MintbaseStore {
         &mut self,
         token_ids: Vec<U64>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         assert!(!token_ids.is_empty());
 
         let account_id = env::predecessor_account_id();

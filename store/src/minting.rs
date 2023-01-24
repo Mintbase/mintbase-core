@@ -7,8 +7,10 @@ use mintbase_deps::logging::{
     NftMintLog,
     NftMintLogMemo,
 };
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
     serde_json,
@@ -22,10 +24,6 @@ use mintbase_deps::store_data::{
     SplitOwners,
     Token,
     TokenMetadata,
-};
-use mintbase_deps::{
-    assert_yocto_deposit,
-    near_assert,
 };
 
 use crate::*;
@@ -224,7 +222,7 @@ impl MintbaseStore {
         &mut self,
         account_id: AccountId,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         near_assert!(
             env::predecessor_account_id() == self.owner_id
                 || env::predecessor_account_id() == account_id,
@@ -288,7 +286,7 @@ impl MintbaseStore {
     /// contract. If the calling account is not a minter on the NFT smart
     /// contract, this will still succeed but have no effect.
     pub fn withdraw_minter(&mut self) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         self.revoke_minter_internal(&env::predecessor_account_id())
     }
 

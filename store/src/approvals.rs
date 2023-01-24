@@ -9,6 +9,7 @@ use mintbase_deps::logging::{
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
@@ -19,7 +20,6 @@ use mintbase_deps::{
     assert_storage_deposit,
     assert_token_owned_by_predecessor,
     assert_token_unloaned,
-    assert_yocto_deposit,
 };
 
 use crate::*;
@@ -67,7 +67,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert_token_unloaned!(token);
         assert_token_owned_by_predecessor!(token);
-        assert_yocto_deposit!();
+        assert_one_yocto();
 
         if token.approvals.remove(&account_id).is_some() {
             self.tokens.insert(&token_idu64, &token);
@@ -87,7 +87,7 @@ impl MintbaseStore {
         let mut token = self.nft_token_internal(token_idu64);
         assert_token_unloaned!(token);
         assert_token_owned_by_predecessor!(token);
-        assert_yocto_deposit!();
+        assert_one_yocto();
 
         if !token.approvals.is_empty() {
             token.approvals.clear();
