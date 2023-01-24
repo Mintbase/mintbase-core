@@ -1,30 +1,29 @@
-use mintbase_deps::common::{
-    Royalty,
-    RoyaltyArgs,
-    SplitBetweenUnparsed,
-    SplitOwners,
-    TokenMetadata,
-};
 use mintbase_deps::constants::{
     MAX_LEN_PAYOUT,
     MINIMUM_FREE_STORAGE_STAKE,
 };
 use mintbase_deps::logging::{
-    log_grant_minter,
-    log_nft_batch_mint,
-    log_revoke_minter,
+    MbStoreChangeSettingData,
+    NftMintLog,
+    NftMintLogMemo,
 };
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
+    serde_json,
     AccountId,
     Balance,
 };
-use mintbase_deps::token::Token;
-use mintbase_deps::{
-    assert_yocto_deposit,
-    near_assert,
+use mintbase_deps::store_data::{
+    Royalty,
+    RoyaltyArgs,
+    SplitBetweenUnparsed,
+    SplitOwners,
+    Token,
+    TokenMetadata,
 };
 
 use crate::*;
@@ -50,7 +49,8 @@ impl MintbaseStore {
     pub fn nft_batch_mint(
         &mut self,
         owner_id: AccountId,
-        metadata: TokenMetadata,
+        #[allow(unused_mut)] // cargo complains, but it's required
+        mut metadata: TokenMetadata,
         num_to_mint: u64,
         royalty_args: Option<RoyaltyArgs>,
         split_owners: Option<SplitBetweenUnparsed>,
@@ -71,11 +71,29 @@ impl MintbaseStore {
             minter_id
         );
 
+        near_assert!(
+            !option_string_starts_with(&metadata.reference, &self.metadata.base_uri),
+            "`metadata.reference` must not start with contract base URI"
+        );
+        near_assert!(
+            !option_string_starts_with(&metadata.media, &self.metadata.base_uri),
+            "`metadata.media` must not start with contract base URI"
+        );
+        near_assert!(
+            option_string_is_u64(&metadata.starts_at),
+            "`metadata.starts_at` needs to parse to a u64"
+        );
+        near_assert!(
+            option_string_is_u64(&metadata.expires_at),
+            "`metadata.expires_at` needs to parse to a u64"
+        );
+
         // Calculating storage consuption upfront saves gas if the transaction
         // were to fail later.
         let covered_storage = env::account_balance()
             - (env::storage_usage() as u128 * self.storage_costs.storage_price_per_byte);
-        let (metadata, md_size) = TokenMetadata::from_with_size(metadata, num_to_mint);
+        metadata.copies = metadata.copies.or(Some(num_to_mint as u16));
+        let md_size = borsh::to_vec(&metadata).unwrap().len() as u64;
         let roy_len = royalty_args
             .as_ref()
             .map(|pre_roy| {
@@ -172,6 +190,7 @@ impl MintbaseStore {
     ///
     /// This method increases storage costs of the contract, but covering them
     /// is optional.
+    // TODO: deprecate in favor of batch_change_minters
     #[payable]
     pub fn grant_minter(
         &mut self,
@@ -181,6 +200,7 @@ impl MintbaseStore {
         self.grant_minter_internal(&account_id)
     }
 
+    /// Adds an account ID to the minters list and logs the corresponding event.
     fn grant_minter_internal(
         &mut self,
         account_id: &AccountId,
@@ -196,12 +216,13 @@ impl MintbaseStore {
     /// themselves.
     ///
     /// Only the store owner may call this function.
+    // TODO: deprecate in favor of batch_change_minters
     #[payable]
     pub fn revoke_minter(
         &mut self,
         account_id: AccountId,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         near_assert!(
             env::predecessor_account_id() == self.owner_id
                 || env::predecessor_account_id() == account_id,
@@ -212,6 +233,8 @@ impl MintbaseStore {
         self.revoke_minter_internal(&account_id);
     }
 
+    /// Tries to remove an acount ID from the minters list, will only fail
+    /// if the owner should be removed from the minters list.
     fn revoke_minter_internal(
         &mut self,
         account_id: &AccountId,
@@ -259,6 +282,14 @@ impl MintbaseStore {
         }
     }
 
+    /// The calling account will try to withdraw as minter from this NFT smart
+    /// contract. If the calling account is not a minter on the NFT smart
+    /// contract, this will still succeed but have no effect.
+    pub fn withdraw_minter(&mut self) {
+        assert_one_yocto();
+        self.revoke_minter_internal(&env::predecessor_account_id())
+    }
+
     // -------------------------- view methods -----------------------------
 
     /// Check if `account_id` is a minter.
@@ -297,4 +328,72 @@ impl MintbaseStore {
             // create n tokens each with splits stored on-token
             + num_tokens as u128 * (self.storage_costs.token + num_splits as u128 * self.storage_costs.common)
     }
+}
+
+fn option_string_starts_with(
+    string: &Option<String>,
+    prefix: &Option<String>,
+) -> bool {
+    match (string, prefix) {
+        (Some(s), Some(p)) => s.starts_with(p),
+        _ => false,
+    }
+}
+
+fn option_string_is_u64(opt_s: &Option<String>) -> bool {
+    opt_s
+        .as_ref()
+        .map(|s| s.parse::<u64>().is_ok())
+        .unwrap_or(true)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn log_nft_batch_mint(
+    first_token_id: u64,
+    last_token_id: u64,
+    minter: &str,
+    owner: &str,
+    royalty: &Option<mintbase_deps::store_data::Royalty>,
+    split_owners: &Option<mintbase_deps::store_data::SplitOwners>,
+    meta_ref: &Option<String>,
+    meta_extra: &Option<String>,
+) {
+    let memo = serde_json::to_string(&NftMintLogMemo {
+        royalty: royalty.clone(),
+        split_owners: split_owners.clone(),
+        meta_id: meta_ref.clone(),
+        meta_extra: meta_extra.clone(),
+        minter: minter.to_string(),
+    })
+    .unwrap();
+    let token_ids = (first_token_id..=last_token_id)
+        .map(|x| x.to_string())
+        .collect::<Vec<_>>();
+    let log = NftMintLog {
+        owner_id: owner.to_string(),
+        token_ids,
+        memo: Option::from(memo),
+    };
+
+    env::log_str(log.serialize_event().as_str());
+}
+
+pub(crate) fn log_grant_minter(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            granted_minter: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
+}
+
+pub(crate) fn log_revoke_minter(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            revoked_minter: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
 }

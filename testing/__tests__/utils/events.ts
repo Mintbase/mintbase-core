@@ -1,4 +1,4 @@
-import { NearAccount } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
 import { ExecutionContext } from "ava";
 
 export function assertEventLogs(
@@ -75,7 +75,7 @@ export function assertMakeOfferEvent(
     `${msg}: length of parsed event.data doesn't match expectation`
   );
 
-  event.data.map((chunk, i) => {
+  event.data.map((chunk: any, i: number) => {
     // TODO::testing::low: use the timeout
     const { token_id, approval_id, price, timeout } = specs[i];
     const list_id = `${token_id}:${approval_id}:${store.accountId}`;
@@ -96,7 +96,7 @@ export function assertMakeOfferEvent(
     const chunkTimeout = chunk.offer.timeout;
     test.is(
       chunkTimeout - chunkTimestamp,
-      timeout,
+      timeout as number,
       `${msg}: data chunk ${i} has bad timeout`
     );
   });

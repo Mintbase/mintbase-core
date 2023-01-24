@@ -1,15 +1,14 @@
-use mintbase_deps::logging::log_nft_batch_burn;
+use mintbase_deps::logging::NftBurnLog;
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
-    AccountId,
 };
 use mintbase_deps::{
     assert_token_owned_by,
     assert_token_unloaned,
-    assert_yocto_deposit,
 };
 
 use crate::*;
@@ -27,27 +26,15 @@ impl MintbaseStore {
         &mut self,
         token_ids: Vec<U64>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         assert!(!token_ids.is_empty());
-        self.burn_triaged(token_ids, env::predecessor_account_id());
-    }
 
-    /// A helper to burn tokens. Necessary to satisfy the `nft_move` method,
-    /// where the callback prevents the use of
-    /// `env::predecessor_account_id()` to determine whether the owner is the
-    /// method caller.
-    fn burn_triaged(
-        &mut self,
-        token_ids: Vec<U64>,
-        account_id: AccountId,
-    ) {
+        let account_id = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&account_id).expect("none owned");
 
         token_ids.iter().for_each(|&token_id| {
             let token_id: u64 = token_id.into();
             let token = self.nft_token_internal(token_id);
-            // token.assert_unloaned();
-            // token.assert_owned_by(&account_id);
             assert_token_unloaned!(token);
             assert_token_owned_by!(token, &account_id);
 
@@ -83,21 +70,25 @@ impl MintbaseStore {
         log_nft_batch_burn(&token_ids, account_id.to_string());
     }
 
-    /// Get info about the store.
-    pub fn get_info(&self) {
-        let s = format!("owner: {}", self.owner_id);
-        env::log_str(s.as_str());
-        let s = format!("minted: {}", self.tokens_minted);
-        env::log_str(s.as_str());
-        let s = format!("burned: {}", self.tokens_burned);
-        env::log_str(s.as_str());
-        let s = format!("approved: {}", self.num_approved);
-        env::log_str(s.as_str());
-        let s = format!("allow_moves: {}", self.allow_moves);
-        env::log_str(s.as_str());
-    }
-
     // -------------------------- view methods -----------------------------
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
+}
+
+fn log_nft_batch_burn(
+    token_ids: &[U64],
+    owner_id: String,
+) {
+    let token_ids = token_ids
+        .iter()
+        .map(|x| x.0.to_string())
+        .collect::<Vec<_>>();
+    let log = NftBurnLog {
+        owner_id,
+        authorized_id: None,
+        token_ids,
+        memo: None,
+    };
+
+    env::log_str(log.serialize_event().as_str());
 }

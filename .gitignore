@@ -6,16 +6,16 @@
 _scripts
 .postgres.sh
 wasm
-error.log
-out.log
 bin
 *.log
+tmp.sh
+
+**/TODO.md
 
 Dockerfile
 
 tills-notes.md
 testing/node_modules
-testing/TODO
 testing/downloads
 
 .DS_Store

@@ -1,19 +1,16 @@
-use mintbase_deps::logging::{
-    log_grant_minter,
-    log_revoke_minter,
-    log_transfer_store,
-};
+use mintbase_deps::logging::MbStoreChangeSettingData;
+use mintbase_deps::near_assert;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     near_bindgen,
     AccountId,
 };
-use mintbase_deps::{
-    assert_yocto_deposit,
-    near_assert_eq,
-    near_assert_ne,
-};
 
+use crate::minting::{
+    log_grant_minter,
+    log_revoke_minter,
+};
 use crate::*;
 
 #[near_bindgen]
@@ -31,9 +28,8 @@ impl MintbaseStore {
         keep_old_minters: bool,
     ) {
         self.assert_store_owner();
-        near_assert_ne!(
-            new_owner,
-            self.owner_id,
+        near_assert!(
+            new_owner != self.owner_id,
             "{} already owns this store",
             new_owner
         );
@@ -87,18 +83,35 @@ impl MintbaseStore {
     }
 
     // -------------------------- view methods -----------------------------
-    // TODO: get_owner
-    // TODO: get_storage_price_per_byte
+    /// Show the current owner of this NFT contract
+    pub fn get_owner_id(&self) -> AccountId {
+        self.owner_id.clone()
+    }
+
+    /// Show the current owner of this NFT contract
+    pub fn get_storage_costs(&self) -> StorageCosts {
+        self.storage_costs.clone()
+    }
+
     // -------------------------- private methods --------------------------
     // -------------------------- internal methods -------------------------
 
     /// Validate the caller of this method matches the owner of this `Store`.
     pub(crate) fn assert_store_owner(&self) {
-        assert_yocto_deposit!();
-        near_assert_eq!(
-            self.owner_id,
-            env::predecessor_account_id(),
+        assert_one_yocto();
+        near_assert!(
+            self.owner_id == env::predecessor_account_id(),
             "This method can only be called by the store owner"
         );
     }
+}
+
+fn log_transfer_store(account_id: &AccountId) {
+    env::log_str(
+        &MbStoreChangeSettingData {
+            new_owner: Some(account_id.to_string()),
+            ..MbStoreChangeSettingData::empty()
+        }
+        .serialize_event(),
+    );
 }

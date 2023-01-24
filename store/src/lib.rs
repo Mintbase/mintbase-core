@@ -1,9 +1,3 @@
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    Royalty,
-    TokenMetadata,
-    TokenMetadataCompliant,
-};
 use mintbase_deps::constants::{
     storage_stake,
     StorageCosts,
@@ -31,9 +25,12 @@ use mintbase_deps::near_sdk::{
     AccountId,
     StorageUsage,
 };
-use mintbase_deps::token::{
-    Owner,
+use mintbase_deps::store_data::{
+    NFTContractMetadata,
+    Royalty,
     Token,
+    TokenMetadata,
+    TokenMetadataCompliant,
 };
 
 /// Implementing approval management as [described in the Nomicon](https://nomicon.io/Standards/NonFungibleToken/ApprovalManagement).
@@ -82,6 +79,8 @@ pub struct MintbaseStore {
     /// A mapping from each user to the tokens owned by that user. The owner
     /// of the token is also stored on the token itself.
     pub tokens_per_owner: LookupMap<AccountId, UnorderedSet<u64>>,
+    /// DEPRECATED. Kept to avoid storage migrations.
+    ///
     /// A map from a token_id of a token on THIS contract to a set of tokens,
     /// that may be on ANY contract. If the owned-token is on this contract,
     /// the id will have format "<u64>". If the token is on another contract,
@@ -102,6 +101,8 @@ pub struct MintbaseStore {
     /// to 10^19, but this may change in the future, thus this
     /// future-proofing field.
     pub storage_costs: StorageCosts,
+    /// DEPRECATED. Kept to avoid storage migrations.
+    ///
     /// If false, disallow users to call `nft_move`.
     pub allow_moves: bool,
 }
@@ -146,25 +147,6 @@ impl MintbaseStore {
     // -------------------------- change methods ---------------------------
     // -------------------------- view methods -----------------------------
 
-    /// Get the holder of the token. The token may be owned by:
-    /// - a normal account: return that account.
-    /// - a lent out account : in that case, return the loan holder.
-    /// - a token on this contract: recursively search for the root token and
-    /// return its owner
-    /// - a token on another contract. Return: "PARENT_TOKEN_ID:CONTRACT_ID".
-    pub fn nft_holder(
-        &self,
-        token_id: U64,
-    ) -> String {
-        let token = self.nft_token_internal(token_id.into());
-        match token.get_owner_or_loaner() {
-            Owner::Account(owner) => owner.to_string(),
-            Owner::TokenId(id) => self.nft_holder(id.into()),
-            Owner::CrossKey(key) => (key.to_string()),
-            Owner::Lock(_) => (env::panic_str("token locked")),
-        }
-    }
-
     /// A non-indexed implementation. `from_index` and `limit are removed, so as
     /// to support the:
     ///
@@ -184,15 +166,21 @@ impl MintbaseStore {
             .collect()
     }
 
-    /// Get the number of unburned copies of the token in existance.
-    pub fn get_token_remaining_copies(
-        &self,
-        token_id: U64,
-    ) -> u16 {
-        self.token_metadata
-            .get(&self.nft_token_internal(token_id.into()).metadata_id)
-            .expect("bad metadata_id")
-            .0
+    /// Get total count of minted NFTs on this smart contracts. Can be used to
+    /// predict next token ID.
+    pub fn get_tokens_minted(&self) -> U64 {
+        self.tokens_minted.into()
+    }
+
+    /// Get total count of burned NFTs on this smart contracts.
+    pub fn get_tokens_burned(&self) -> U64 {
+        self.tokens_burned.into()
+    }
+
+    /// Get count of all issued approvals ever. Can be used to predict next
+    /// approval ID.
+    pub fn get_num_approved(&self) -> u64 {
+        self.num_approved
     }
 
     // -------------------------- private methods --------------------------
@@ -208,43 +196,54 @@ impl MintbaseStore {
         Self { metadata, ..old }
     }
 
+    /// Intended to introduce a consistent storage scheme to all stores.
+    /// This migration is currently paused because of problems with
+    /// MyNearWallet.
+    ///
+    /// Pros for the migration:
+    ///
+    /// - More flexibility
+    /// - Enables usage of multiple storage providers
+    /// - Reduces dependence on arweave
+    /// - Current inconsistency causes a lot of confusion, but all of the NEAR
+    ///   NFT ecosystem is already fragmented in their usage of `base_uri`
+    ///
+    /// Cons for the migration:
+    ///
+    /// - Gas costs
+    /// - Permanently increased storage costs
+    /// - Very slim probability for data corruption (worked fine on testnet),
+    ///   which should also be reversible
+    /// - Will require partial reindexing
     #[private]
-    pub fn prepend_base_uri(
+    pub fn set_reference_media(
         &mut self,
-        base_uri: String,
-        token_ids_with_media: Vec<(String, Option<String>)>,
+        specs: Vec<(String, Option<String>, Option<String>)>,
     ) {
-        for (token_id, media) in token_ids_with_media
-            .iter()
-            .map(|(id, media)| (id.parse::<u64>().unwrap(), media))
-        {
-            let metadata_id = self.tokens.get(&token_id).unwrap().metadata_id;
+        for (token_id, reference, media) in specs {
+            let metadata_id = self
+                .tokens
+                .get(&token_id.parse().unwrap())
+                .unwrap()
+                .metadata_id;
             let (n, mut metadata) = self.token_metadata.get(&metadata_id).unwrap();
-            metadata.reference = concat_uri(&base_uri, &metadata.reference);
-            metadata.media = concat_uri(&base_uri, &media);
+            metadata.reference = reference;
+            metadata.media = media;
             self.token_metadata.insert(&metadata_id, &(n, metadata));
         }
     }
 
+    /// Drops the base_uri after successfully migration all tokens with
+    /// `prepend_base_uri`
     #[private]
-    pub fn drop_base_uri(&mut self) {
-        self.metadata.base_uri = None;
+    pub fn set_base_uri(
+        &mut self,
+        base_uri: Option<String>,
+    ) {
+        self.metadata.base_uri = base_uri;
     }
 
     // -------------------------- internal methods -------------------------
-
-    /// If allow_moves is false, disallow token owners from calling
-    /// `nft_move` on this contract, AND on other contracts targetting this
-    /// contract. `nft_move` allows the user to burn a token they own on one
-    /// contract, and re-mint it on another contract.
-    #[payable]
-    pub fn set_allow_moves(
-        &mut self,
-        state: bool,
-    ) {
-        self.assert_store_owner();
-        self.allow_moves = state;
-    }
 
     /// Internal
     /// Transfer a token_id from one account's owned-token-set to another's.
@@ -278,44 +277,6 @@ impl MintbaseStore {
         }
     }
 
-    // TODO: unused, deprecated?
-    // /// Internal
-    // /// update the set of tokens composed underneath parent. If insert is
-    // /// true, insert token_id; if false, try to remove it.
-    // fn update_composed_sets(
-    //     &mut self,
-    //     child: String,
-    //     parent: String,
-    //     insert: bool,
-    // ) {
-    //     let mut set = self.get_or_new_composed(parent.to_string());
-    //     if insert {
-    //         set.insert(&child);
-    //     } else {
-    //         set.remove(&child);
-    //     }
-    //     if set.is_empty() {
-    //         self.composeables.remove(&parent);
-    //     } else {
-    //         self.composeables.insert(&parent, &set);
-    //     }
-    // }
-
-    // TODO: unused, deprecated?
-    // /// Internal
-    // /// update the set of tokens composed underneath parent. If insert is
-    // /// true, insert token_id; if false, try to remove it.
-    // pub(crate) fn get_or_new_composed(
-    //     &mut self,
-    //     parent: String,
-    // ) -> UnorderedSet<String> {
-    //     self.composeables.get(&parent).unwrap_or_else(|| {
-    //         let mut prefix: Vec<u8> = vec![b'h'];
-    //         prefix.extend_from_slice(parent.to_string().as_bytes());
-    //         UnorderedSet::new(prefix)
-    //     })
-    // }
-
     /// If an account_id has never owned tokens on this store, we must
     /// construct an `UnorderedSet` for them. If they have owned tokens on
     /// this store, get that set.
@@ -329,28 +290,6 @@ impl MintbaseStore {
             prefix.extend_from_slice(account_id.as_bytes());
             UnorderedSet::new(prefix)
         })
-    }
-
-    /// Internal
-    fn lock_token(
-        &mut self,
-        token: &mut Token,
-    ) {
-        if let Owner::Account(ref s) = token.owner_id {
-            token.owner_id = Owner::Lock(s.clone());
-            self.tokens.insert(&token.id, token);
-        }
-    }
-
-    /// Internal
-    fn unlock_token(
-        &mut self,
-        token: &mut Token,
-    ) {
-        if let Owner::Lock(ref s) = token.owner_id {
-            token.owner_id = Owner::Account(s.clone());
-            self.tokens.insert(&token.id, token);
-        }
     }
 }
 
@@ -393,16 +332,4 @@ pub trait NonFungibleResolveTransfer {
         token_id: String,
         approved_account_ids: Option<Vec<String>>,
     );
-}
-
-fn concat_uri(
-    base: &str,
-    uri: &Option<String>,
-) -> Option<String> {
-    match uri {
-        None => None,
-        Some(uri) if uri.starts_with(base) => Some(uri.to_string()),
-        Some(uri) if base.ends_with('/') => Some(format!("{}{}", base, uri)),
-        Some(uri) => Some(format!("{}/{}", base, uri)),
-    }
 }

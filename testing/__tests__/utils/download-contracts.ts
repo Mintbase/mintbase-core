@@ -2,18 +2,7 @@ import { Near, keyStores } from "near-api-js";
 import { writeFile } from "fs/promises";
 
 function getNear(network: string): Near {
-  if (network === "mainnet") {
-    return new Near({
-      networkId: "mainnet",
-      keyStore: new keyStores.InMemoryKeyStore(),
-      nodeUrl: "https://rpc.mainnet.near.org",
-      // archivalUrl: "https://archival-rpc.mainnet.near.org",
-      walletUrl: "https://wallet.mainnet.near.org",
-      helperUrl: "https://helper.mainnet.near.org",
-      headers: {},
-      // explorerUrl: "https://explorer.mainnet.near.org",
-    });
-  } else if (network === "testnet") {
+  if (network === "testnet") {
     return new Near({
       networkId: "testnet",
       keyStore: new keyStores.InMemoryKeyStore(),
@@ -24,6 +13,16 @@ function getNear(network: string): Near {
       // explorerUrl: "https://explorer.testnet.near.org",
     });
   }
+  return new Near({
+    networkId: "mainnet",
+    keyStore: new keyStores.InMemoryKeyStore(),
+    nodeUrl: "https://rpc.mainnet.near.org",
+    // archivalUrl: "https://archival-rpc.mainnet.near.org",
+    walletUrl: "https://wallet.mainnet.near.org",
+    helperUrl: "https://helper.mainnet.near.org",
+    headers: {},
+    // explorerUrl: "https://explorer.mainnet.near.org",
+  });
 }
 
 function base64ToBytes(strb64: string): Uint8Array {

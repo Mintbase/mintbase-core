@@ -4,18 +4,21 @@ use mintbase_deps::near_sdk::{
     near_bindgen,
     AccountId,
 };
-use mintbase_deps::token::TokenCompliant;
+use mintbase_deps::store_data::TokenCompliant;
 
 use crate::*;
 
 // -------------------- standardized enumeration methods -------------------- //
 #[near_bindgen]
 impl MintbaseStore {
+    /// Total number of available NFTs on this smart contract according to
+    /// [NEP-181](https://nomicon.io/Standards/Tokens/NonFungibleToken/Enumeration)
     pub fn nft_total_supply(&self) -> U64 {
-        // TODO: shouldn't this subtract all burned tokens?
-        self.tokens_minted.into()
+        (self.tokens_minted - self.tokens_burned).into()
     }
 
+    /// List NFTs according to
+    /// [NEP-181](https://nomicon.io/Standards/Tokens/NonFungibleToken/Enumeration)
     pub fn nft_tokens(
         &self,
         from_index: Option<String>, // default: "0"
@@ -32,6 +35,8 @@ impl MintbaseStore {
             .collect()
     }
 
+    /// Total number of available NFTs for specified owner according to
+    /// [NEP-181](https://nomicon.io/Standards/Tokens/NonFungibleToken/Enumeration)
     pub fn nft_supply_for_owner(
         &self,
         account_id: AccountId,
@@ -43,6 +48,8 @@ impl MintbaseStore {
             .into()
     }
 
+    /// List NFTs for specified owner according to
+    /// [NEP-181](https://nomicon.io/Standards/Tokens/NonFungibleToken/Enumeration)
     pub fn nft_tokens_for_owner(
         &self,
         account_id: AccountId,
@@ -64,7 +71,3 @@ impl MintbaseStore {
             .collect::<Vec<_>>()
     }
 }
-
-// ------------------ non-standardized enumeration methods ------------------ //
-#[near_bindgen]
-impl MintbaseStore {}

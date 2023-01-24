@@ -1,6 +1,12 @@
-import { STORE_WORKSPACE, assertTokensAre, batchMint } from "./test-utils";
+import avaTest from "ava";
+import { assertTokensAre, batchMint } from "./utils/index.js";
+import { setup } from "./setup.js";
 
-STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
+const test = setup(avaTest);
+
+test("enumeration", async (test) => {
+  const { alice, bob, store } = test.context.accounts;
+
   const failPromiseRejection = (msg: string) => (e: any) => {
     test.log(`Promise rejected while ${msg}:`);
     test.log(e);
@@ -136,7 +142,3 @@ STORE_WORKSPACE.test("enumeration", async (test, { alice, bob, store }) => {
     "`nft_tokens_for_owner({})` output is wrong after burning"
   );
 });
-
-// TODO:
-// - [] test `nft_tokens_for_owner_set`, but only after syncing back wether it
-//      is used e.g. in mintbase-js, otherwise make it private

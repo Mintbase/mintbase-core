@@ -1,47 +1,50 @@
-import { Workspace, NearAccount } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
+import avaTest from "ava";
 import {
   batchMint,
-  createAccounts,
   downloadContracts,
   failPromiseRejection,
   mNEAR,
   NEAR,
   Tgas,
-} from "./test-utils";
+} from "./utils/index.js";
+import { readFile } from "fs/promises";
 
-Workspace.init().test("upgrade::mainnet", async (test, { root }) => {
+import { setup, createAndDeploy } from "./setup.js";
+
+const test = setup(avaTest);
+
+test("upgrade::mainnet", async (test) => {
+  const { root, alice } = test.context.accounts;
   // download current contracts from blockchain
   await downloadContracts();
 
-  // create accounts
-  const [alice] = await createAccounts(root);
-
   // deploy old factory + store + market
-  const factory = await root.createAndDeploy(
-    "factory",
-    "./downloads/mainnet-factory.wasm",
-    { method: "new", args: {} }
-  );
-  const store = await root.createAndDeploy(
-    "store",
-    "./downloads/mainnet-store.wasm",
-    {
-      method: "new",
-      args: {
-        owner_id: alice.accountId,
-        metadata: {
-          spec: "nft-1.0.0",
-          name: "store",
-          symbol: "ALICE",
-        },
+  const factory = await createAndDeploy(root, "f", {
+    initialBalanceNear: "10",
+    codePath: "./downloads/mainnet-factory.wasm",
+    initMethod: "new",
+    initArgs: {},
+  });
+  const store = await createAndDeploy(root, "s", {
+    initialBalanceNear: "10",
+    codePath: "./downloads/mainnet-store.wasm",
+    initMethod: "new",
+    initArgs: {
+      owner_id: alice.accountId,
+      metadata: {
+        spec: "nft-1.0.0",
+        name: "store",
+        symbol: "ALICE",
       },
-    }
-  );
-  const market = await root.createAndDeploy(
-    "market",
-    "./downloads/mainnet-market.wasm",
-    { method: "new", args: { init_allowlist: [] } }
-  );
+    },
+  });
+  const market = await createAndDeploy(root, "m", {
+    initialBalanceNear: "10",
+    codePath: "./downloads/mainnet-market.wasm",
+    initMethod: "new",
+    initArgs: { init_allowlist: [] },
+  });
 
   const accounts = {
     root,
@@ -110,13 +113,13 @@ interface Accounts {
 }
 
 async function createState(accounts: Accounts): Promise<StateSnapshot> {
-  const { root, alice, store, market, factory } = accounts;
+  const { root, alice, store, market } = accounts;
 
   // mint some tokens
   await batchMint({ owner: alice, store, num_to_mint: 2 });
 
   // set allowlist on market
-  await root.call(
+  await market.call(
     market,
     "update_allowlist",
     { account_id: root.accountId, state: true },
@@ -173,8 +176,13 @@ async function queryState(accounts: Accounts): Promise<StateSnapshot> {
 }
 
 async function updateContract(contract: NearAccount, what: string) {
-  const tx = await contract
-    .createTransaction(contract)
-    .deployContractFile(`../wasm/${what}.wasm`);
-  await tx.signAndSend();
+  const wasmPath = `../wasm/${what}.wasm`;
+  const wasmBlob = await readFile(wasmPath);
+  await contract.deploy(wasmBlob);
 }
+// async function updateContract(contract: NearAccount, what: string) {
+//   const tx = await contract
+//     .createTransaction(contract)
+//     .deployContractFile(`../wasm/${what}.wasm`);
+//   await tx.signAndSend();
+// }

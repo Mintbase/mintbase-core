@@ -1,27 +1,25 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
-use mintbase_deps::constants::{
-    gas,
-    NO_DEPOSIT,
-};
+use mintbase_deps::constants::gas;
 // contract interface modules
-use mintbase_deps::interfaces::ext_on_transfer;
+use mintbase_deps::interfaces::ext_nft_on_transfer;
 // logging functions
 use mintbase_deps::logging::{
-    log_nft_batch_transfer,
-    log_nft_transfer,
+    NftTransferData,
+    NftTransferLog,
 };
 use mintbase_deps::near_sdk::json_types::U64;
 use mintbase_deps::near_sdk::{
     self,
+    assert_one_yocto,
     env,
     near_bindgen,
     AccountId,
     Promise,
     PromiseResult,
 };
-use mintbase_deps::token::{
+use mintbase_deps::store_data::{
     Owner,
     Token,
     TokenCompliant,
@@ -30,9 +28,7 @@ use mintbase_deps::{
     assert_token_owned_by,
     assert_token_owned_or_approved,
     assert_token_unloaned,
-    assert_yocto_deposit,
-    near_assert_eq,
-    near_assert_ne,
+    near_assert,
 };
 
 use crate::*;
@@ -42,6 +38,7 @@ use crate::*;
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
 
+    /// Transfer function as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[payable]
     pub fn nft_transfer(
         &mut self,
@@ -50,7 +47,7 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         memo: Option<String>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         let old_owner = token.owner_id.to_string();
@@ -61,6 +58,7 @@ impl MintbaseStore {
         log_nft_transfer(&receiver_id, token_idu64, &memo, old_owner);
     }
 
+    /// Transfer-and-call function as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[payable]
     pub fn nft_transfer_call(
         &mut self,
@@ -69,7 +67,7 @@ impl MintbaseStore {
         approval_id: Option<u64>,
         msg: String,
     ) -> Promise {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         let token_idu64 = token_id.into();
         let mut token = self.nft_token_internal(token_idu64);
         let pred = env::predecessor_account_id();
@@ -79,28 +77,19 @@ impl MintbaseStore {
         let owner_id = AccountId::new_unchecked(token.owner_id.to_string());
         self.lock_token(&mut token);
 
-        ext_on_transfer::nft_on_transfer(
-            pred,
-            owner_id.clone(),
-            token_id,
-            msg,
-            receiver_id.clone(),
-            NO_DEPOSIT,
-            gas::NFT_TRANSFER_CALL,
-        )
-        .then(store_self::nft_resolve_transfer(
-            owner_id,
-            receiver_id,
-            token_id.0.to_string(),
-            None,
-            env::current_account_id(),
-            NO_DEPOSIT,
-            gas::NFT_TRANSFER_CALL,
-        ))
+        ext_nft_on_transfer::ext(receiver_id.clone())
+            .with_static_gas(gas::NFT_TRANSFER_CALL)
+            .nft_on_transfer(pred, owner_id.clone(), token_id, msg)
+            .then(
+                store_self::ext(env::current_account_id())
+                    .with_static_gas(gas::NFT_TRANSFER_CALL)
+                    .nft_resolve_transfer(owner_id, receiver_id, token_id.0.to_string(), None),
+            )
     }
 
     // -------------------------- view methods -----------------------------
 
+    /// Token view method as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     pub fn nft_token(
         &self,
         token_id: U64,
@@ -110,6 +99,7 @@ impl MintbaseStore {
 
     // -------------------------- private methods --------------------------
 
+    /// Call back of a transfer-and-call as specified by [NEP-171](https://nomicon.io/Standards/Tokens/NonFungibleToken/Core).
     #[private]
     pub fn nft_resolve_transfer(
         &mut self,
@@ -131,9 +121,8 @@ impl MintbaseStore {
         let token_id_u64 = token_id.parse::<u64>().unwrap();
         let mut token = self.nft_token_internal(token_id_u64);
         self.unlock_token(&mut token);
-        near_assert_eq!(
-            env::promise_results_count(),
-            1,
+        near_assert!(
+            env::promise_results_count() == 1,
             "Wtf? Had more than one DataReceipt to process"
         );
         // Get whether token should be returned
@@ -156,6 +145,28 @@ impl MintbaseStore {
             false
         }
     }
+
+    /// Locking an NFT during a transfer-and-call chain
+    fn lock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
+        if let Owner::Account(ref s) = token.owner_id {
+            token.owner_id = Owner::Lock(s.clone());
+            self.tokens.insert(&token.id, token);
+        }
+    }
+
+    /// Unlocking an NFT after a transfer-and-call chain
+    fn unlock_token(
+        &mut self,
+        token: &mut Token,
+    ) {
+        if let Owner::Lock(ref s) = token.owner_id {
+            token.owner_id = Owner::Account(s.clone());
+            self.tokens.insert(&token.id, token);
+        }
+    }
 }
 
 // --------------------- non-standardized core methods ---------------------- //
@@ -163,12 +174,14 @@ impl MintbaseStore {
 impl MintbaseStore {
     // -------------------------- change methods ---------------------------
 
+    /// Like `nft_transfer`, but allows transferring multiple tokens in a
+    /// single call.
     #[payable]
     pub fn nft_batch_transfer(
         &mut self,
         token_ids: Vec<(U64, AccountId)>,
     ) {
-        assert_yocto_deposit!();
+        assert_one_yocto();
         near_assert!(!token_ids.is_empty(), "Token IDs cannot be empty");
         let pred = env::predecessor_account_id();
         let mut set_owned = self.tokens_per_owner.get(&pred).expect("none owned");
@@ -180,9 +193,8 @@ impl MintbaseStore {
                 let old_owner = token.owner_id.to_string();
                 assert_token_unloaned!(token);
                 assert_token_owned_by!(token, &pred);
-                near_assert_ne!(
-                    account_id.to_string(),
-                    token.owner_id.to_string(),
+                near_assert!(
+                    account_id.to_string() != token.owner_id.to_string(),
                     "Token {} is already owned by {}",
                     token.id,
                     account_id
@@ -232,7 +244,7 @@ impl MintbaseStore {
         self.tokens.insert(&token.id, token);
     }
 
-    // TODO: documentation
+    /// Gets the token as stored on the smart contract
     pub(crate) fn nft_token_internal(
         &self,
         token_id: u64,
@@ -242,6 +254,7 @@ impl MintbaseStore {
             .unwrap_or_else(|| panic!("token: {} doesn't exist", token_id))
     }
 
+    /// Gets the token as specified by relevant NEPs.
     // TODO: fix this abomination
     pub(crate) fn nft_token_compliant_internal(
         &self,
@@ -278,4 +291,43 @@ impl MintbaseStore {
             }
         })
     }
+}
+
+fn log_nft_transfer(
+    to: &AccountId,
+    token_id: u64,
+    memo: &Option<String>,
+    old_owner: String,
+) {
+    let data = NftTransferData(vec![NftTransferLog {
+        authorized_id: None,
+        old_owner_id: old_owner,
+        new_owner_id: to.to_string(),
+        token_ids: vec![token_id.to_string()],
+        memo: memo.clone(),
+    }]);
+
+    env::log_str(data.serialize_event().as_str());
+}
+
+fn log_nft_batch_transfer(
+    tokens: &[U64],
+    accounts: &[AccountId],
+    old_owners: Vec<String>,
+) {
+    let data = NftTransferData(
+        accounts
+            .iter()
+            .enumerate()
+            .map(|(u, x)| NftTransferLog {
+                authorized_id: None,
+                old_owner_id: old_owners[u].clone(),
+                new_owner_id: x.to_string(),
+                token_ids: vec![tokens[u].0.to_string()],
+                memo: None,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    env::log_str(data.serialize_event().as_str());
 }

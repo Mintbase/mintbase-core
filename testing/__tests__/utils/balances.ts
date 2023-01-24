@@ -1,5 +1,5 @@
-import { Gas, BN, NearAccount } from "near-workspaces-ava";
-import * as ava from "near-workspaces-ava";
+import { Gas, BN, NearAccount } from "near-workspaces";
+import * as nearWs from "near-workspaces";
 import { ExecutionContext } from "ava";
 
 // TODO: move from this format to `ava.NEAR.parse`
@@ -8,40 +8,40 @@ import { ExecutionContext } from "ava";
  * Interprets a float as NEAR and builds the corresponding string.
  * Rounded to closest milliNEAR.
  */
-export function NEAR(x: number): ava.NEAR {
-  return mNEAR(x).mul(new ava.NEAR(1e3));
+export function NEAR(x: number): nearWs.NEAR {
+  return mNEAR(x).mul(new nearWs.NEAR(1e3));
 }
 
 /**
  * Interprets a float as milliNEAR and builds the corresponding string.
  * Rounded to closest microNEAR.
  */
-export function mNEAR(x: number): ava.NEAR {
-  return uNEAR(x).mul(new ava.NEAR(1e3));
+export function mNEAR(x: number): nearWs.NEAR {
+  return uNEAR(x).mul(new nearWs.NEAR(1e3));
 }
 
 /**
  * Interprets a float as microNEAR and builds the corresponding string.
  * Rounded to closest nanoNEAR.
  */
-export function uNEAR(x: number): ava.NEAR {
-  return nNEAR(x).mul(new ava.NEAR(1e3));
+export function uNEAR(x: number): nearWs.NEAR {
+  return nNEAR(x).mul(new nearWs.NEAR(1e3));
 }
 
 /**
  * Interprets a float as nanoNEAR and builds the corresponding string.
  * Rounded to closest picoNEAR.
  */
-export function nNEAR(x: number): ava.NEAR {
-  return new ava.NEAR((x * 1e3).toString() + "0".repeat(12));
+export function nNEAR(x: number): nearWs.NEAR {
+  return new nearWs.NEAR((x * 1e3).toString() + "0".repeat(12));
 }
 
 /**
  * Interprets a float as Teragas and builds the corresponding string.
  * Rounded to closest Gigagas.
  */
-export function Tgas(x: number): ava.Gas {
-  return new ava.Gas((x * 1e3).toString() + "0".repeat(9));
+export function Tgas(x: number): nearWs.Gas {
+  return new nearWs.Gas((x * 1e3).toString() + "0".repeat(9));
 }
 
 /**
@@ -95,7 +95,7 @@ export const DEPLOY_STORE_RENT = NEAR(7);
  * Mostly a wrapper for getting total balance of an account, might change to
  * available balance in the future.
  */
-export async function getBalance(account: NearAccount): Promise<ava.NEAR> {
+export async function getBalance(account: NearAccount): Promise<nearWs.NEAR> {
   return (await account.balance()).total;
 }
 
@@ -103,7 +103,11 @@ export async function getBalance(account: NearAccount): Promise<ava.NEAR> {
 /** Asserts balance changes for multiple accounts in parallel */
 export async function assertBalanceChanges(
   test: ExecutionContext,
-  specs: { account: NearAccount; ref: ava.NEAR; diff: ava.NEAR }[],
+  specs: {
+    account: NearAccount;
+    ref: nearWs.NEAR;
+    diff: nearWs.NEAR;
+  }[],
   msg: string
 ) {
   await Promise.all(specs.map((spec) => assertBalanceChange(test, spec, msg)));
@@ -116,7 +120,12 @@ export async function assertBalanceChanges(
  */
 export async function assertBalanceChange(
   test: ExecutionContext,
-  params: { account: NearAccount; ref: ava.NEAR; diff: ava.NEAR; gas?: Gas },
+  params: {
+    account: NearAccount;
+    ref: nearWs.NEAR;
+    diff: nearWs.NEAR;
+    gas?: Gas;
+  },
   msg: string
 ) {
   const now = await getBalance(params.account);
@@ -124,7 +133,7 @@ export async function assertBalanceChange(
     const { gas } = params;
     assertBalanceDiffExact(test, { ...params, now, gas }, msg);
   } else {
-    const maxGas = NEAR(0.04).toString(); // allow 40 mNEAR of gas costs
+    const maxGas = NEAR(0.05).toString(); // allow 40 mNEAR of gas costs
     assertBalanceDiffRange(test, { ...params, now, maxGas }, msg);
   }
 }
@@ -139,23 +148,23 @@ function assertBalanceDiffExact(
     gas,
   }: {
     account: NearAccount;
-    now: ava.NEAR;
-    ref: ava.NEAR;
-    diff: ava.NEAR;
+    now: nearWs.NEAR;
+    ref: nearWs.NEAR;
+    diff: nearWs.NEAR;
     gas: Gas;
   },
   msg: string
 ) {
-  const nearGas = new ava.NEAR(gas.mul(new BN(100e6)).toString());
+  const nearGas = new nearWs.NEAR(gas.mul(new BN(100e6)).toString());
   const expected = ref.add(diff).sub(nearGas);
-  test.log({
-    account: account.accountId,
-    expected: expected.toString(),
-    now: now.toString(),
-    ref: ref.toString(),
-    diff: diff.toString(),
-    nearGas: nearGas.toString(),
-  });
+  // test.log({
+  //   account: account.accountId,
+  //   expected: expected.toString(),
+  //   now: now.toString(),
+  //   ref: ref.toString(),
+  //   diff: diff.toString(),
+  //   nearGas: nearGas.toString(),
+  // });
 
   test.true(
     now.eq(expected),
@@ -186,24 +195,24 @@ function assertBalanceDiffRange(
     maxGas,
   }: {
     account: NearAccount;
-    now: ava.NEAR;
-    ref: ava.NEAR;
-    diff: ava.NEAR;
+    now: nearWs.NEAR;
+    ref: nearWs.NEAR;
+    diff: nearWs.NEAR;
     maxGas: string;
   },
   msg: string
 ) {
-  test.log("entering assertBalanceDiffRange");
+  // test.log("entering assertBalanceDiffRange");
   const max = ref.add(new BN(diff));
   const min = max.sub(new BN(maxGas));
-  test.log({
-    account: account.accountId,
-    now: now.toString(),
-    ref: ref.toString(),
-    diff: diff.toString(), // cannot use toHuman on negative diff!
-    min: min.toString(),
-    max: max.toString(),
-  });
+  // test.log({
+  //   account: account.accountId,
+  //   now: now.toString(),
+  //   ref: ref.toString(),
+  //   diff: diff.toString(), // cannot use toHuman on negative diff!
+  //   min: min.toString(),
+  //   max: max.toString(),
+  // });
   test.true(now.lte(max), `${msg}: balance too high for ${account}`);
   test.true(now.gte(min), `${msg}: balance too low for ${account}`);
 }

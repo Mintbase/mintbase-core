@@ -1,16 +1,15 @@
-import { NearAccount, TestnetRpc } from "near-workspaces-ava";
+import { NearAccount } from "near-workspaces";
 import { ExecutionContext } from "ava";
 
 // TODO::testing::low: commenting all my test utils
 
-export * from "./balances";
-export * from "./workspaces";
-export * from "./panics";
-export * from "./token";
-export * from "./approvals";
-export * from "./events";
-export * from "./payouts";
-export * from "./download-contracts";
+export * from "./balances.js";
+export * from "./panics.js";
+export * from "./token.js";
+export * from "./approvals.js";
+export * from "./events.js";
+export * from "./payouts.js";
+export * from "./download-contracts.js";
 
 // ---------------------------------- misc ---------------------------------- //
 export async function batchMint({
@@ -39,13 +38,14 @@ export async function batchMint({
 
 export async function prepareTokenListing(
   test: ExecutionContext,
-  { root, alice, store, market, factory }
+  accounts: Record<string, NearAccount>
 ) {
+  const { alice, store, market, factory } = accounts;
   await batchMint({ owner: alice, store, num_to_mint: 2 }).catch(
     failPromiseRejection(test, "minting")
   );
 
-  await root
+  await market
     .call(
       market,
       "update_allowlist",
@@ -70,5 +70,3 @@ export function failPromiseRejection(
 export function hours(x: number): number {
   return Math.round(x * 3600 * 1e9);
 }
-
-// ---- xxxx ---- //

@@ -1,6 +1,11 @@
-import { batchMint, failPromiseRejection, STORE_WORKSPACE } from "./test-utils";
+import avaTest from "ava";
+import { failPromiseRejection } from "./utils/index.js";
+import { setup } from "./setup.js";
 
-STORE_WORKSPACE.test("metadata", async (test, { alice, store }) => {
+const test = setup(avaTest);
+
+test("metadata", async (test) => {
+  const { alice, store } = test.context.accounts;
   test.deepEqual(await store.view("nft_metadata"), {
     base_uri: null,
     icon: null,
@@ -24,8 +29,8 @@ STORE_WORKSPACE.test("metadata", async (test, { alice, store }) => {
           reference_hash: "cmVmZXJlbmNl",
           media: "media",
           media_hash: "bWVkaWE=",
-          starts_at: "2022-02-02T02:02:02Z+02",
-          expires_at: "3033-03-03T03:03:03Z+03",
+          starts_at: "1672531200000000000",
+          expires_at: "1672531200000000000",
           extra: "No more extras for you!",
         },
         num_to_mint: 2,
@@ -42,8 +47,8 @@ STORE_WORKSPACE.test("metadata", async (test, { alice, store }) => {
     reference_hash: "cmVmZXJlbmNl",
     media: "media",
     media_hash: "bWVkaWE=",
-    starts_at: "2022-02-02T02:02:02Z+02",
-    expires_at: "3033-03-03T03:03:03Z+03",
+    starts_at: "1672531200000000000",
+    expires_at: "1672531200000000000",
     extra: "No more extras for you!",
   });
 

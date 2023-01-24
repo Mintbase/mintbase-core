@@ -15,11 +15,7 @@ overflow-checks = true # enable safety checks for arithmetic operations
 [alias]
 wasm = "rustc --target wasm32-unknown-unknown --profile wasm-release"
 doc-all = "doc -p mintbase-deps --release --features store-wasm --features factory-wasm --lib --no-deps --target-dir mintbase-core-docs"
-helper-wasm = "wasm -p helper -- --emit link=wasm/helper.wasm"
 store-wasm = "wasm -p store -- --emit link=wasm/store.wasm"
 factory-wasm = "wasm -p factory -- --emit link=wasm/factory.wasm"
 market-wasm = "wasm -p simple-market-contract -- --emit link=wasm/market.wasm"
-p2p_indexer = "rustc -p mintbase-near-indexer --release --bin p2p_indexer --features p2p_indexer -- --emit link=bin/p2p_indexer"
-mintlake = "rustc -p mintbase-near-indexer --release --bin mintlake --features mintlake -- --emit link=bin/mintlake"
-#indexer = "rustc -p mintbase-near-indexer --release --bin mintbase-near-indexer -- --emit link=bin/indexer"
 lint = "clippy -- -D warnings"

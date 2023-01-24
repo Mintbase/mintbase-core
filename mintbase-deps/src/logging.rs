@@ -1,41 +1,22 @@
-use near_sdk::serde::{
-    Deserialize,
-    Serialize,
-};
+// TODO: specify in near events so import is not required here
+#[cfg(feature = "factory-wasm")]
+use near_sdk::serde::Serialize;
 
-mod market;
-mod mb_store_settings;
-mod nft_approvals;
-mod nft_core;
-mod nft_payouts;
-pub use market::*;
-pub use mb_store_settings::*;
-pub use nft_approvals::*;
-pub use nft_core::*;
-pub use nft_payouts::*;
+#[cfg(feature = "market-wasm")]
+pub mod market_events;
+#[cfg(feature = "store-wasm")]
+pub mod store_events;
 
-// TODO: probably unused -> deprecate?
-mod nft_composition;
-mod nft_loan;
-mod nft_move;
-pub use nft_composition::*;
-pub use nft_loan::*;
-pub use nft_move::*;
+#[cfg(feature = "market-wasm")]
+pub use market_events::*;
+#[cfg(feature = "store-wasm")]
+pub use store_events::*;
 
-// ------------------ general event according to standard ------------------- //
-
-// TODO: deprecate this abomination
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NearJsonEvent {
-    pub standard: String,
-    pub version: String,
-    pub event: String,
-    pub data: String,
-}
-
-impl NearJsonEvent {
-    pub fn near_json_event(&self) -> String {
-        let json = serde_json::to_string(&self).unwrap();
-        format!("EVENT_JSON: {}", &json)
-    }
+// ----------------------------- Factory event ------------------------------ //
+#[cfg(feature = "factory-wasm")]
+#[near_events::near_event_data(standard = "mb_store", version = "0.1.0", event = "deploy")]
+pub struct MbStoreDeployData {
+    pub contract_metadata: crate::store_data::NFTContractMetadata,
+    pub owner_id: String,
+    pub store_id: String,
 }

@@ -1,18 +1,13 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use mintbase_deps::common::{
-    NFTContractMetadata,
-    StoreInitArgs,
-};
 use mintbase_deps::constants::{
     gas,
     storage_bytes,
     storage_stake,
-    NO_DEPOSIT,
     YOCTO_PER_BYTE,
 };
-use mintbase_deps::interfaces::factory_self;
+use mintbase_deps::interfaces::ext_factory;
 use mintbase_deps::logging::MbStoreDeployData;
 use mintbase_deps::near_sdk::borsh::{
     self,
@@ -33,6 +28,10 @@ use mintbase_deps::near_sdk::{
     PublicKey,
 };
 use mintbase_deps::serde_json;
+use mintbase_deps::store_data::{
+    NFTContractMetadata,
+    StoreInitArgs,
+};
 // ------------------------------- constants -------------------------------- //
 
 // ----------------------------- smart contract ----------------------------- //
@@ -65,7 +64,8 @@ impl Default for MintbaseStoreFactory {
 
 #[near_bindgen]
 impl MintbaseStoreFactory {
-    pub fn assert_only_owner(&self) {
+    /// Panics if not called by the factory owner
+    fn assert_only_owner(&self) {
         assert_one_yocto();
         assert_eq!(
             env::predecessor_account_id(),
@@ -74,18 +74,7 @@ impl MintbaseStoreFactory {
         );
     }
 
-    /// Sufficient attached deposit is defined as enough to deploy a `Store`,
-    /// plus enough left over for the mintbase deployment cost.
-    pub fn assert_sufficient_attached_deposit(&self) {
-        let min = storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee;
-        assert!(
-            env::attached_deposit() >= min,
-            "Not enough attached deposit to complete store deployment. Need: {}, got: {}",
-            min,
-            env::attached_deposit()
-        );
-    }
-
+    /// Panics if a store with the requested ID already exists
     pub fn assert_no_store_with_id(
         &self,
         store_id: String,
@@ -119,9 +108,21 @@ impl MintbaseStoreFactory {
         (storage_bytes::STORE as u128 * self.storage_price_per_byte + self.mintbase_fee).into()
     }
 
-    /// The sum of `mintbase_fee` and `STORE_STORAGE`.
+    /// Public key that will be attached to any created store.
     pub fn get_admin_public_key(&self) -> &PublicKey {
         &self.admin_public_key
+    }
+
+    /// Retrieve the storage price per byte in yocotNEAR currently registered
+    /// with the factory.
+    pub fn get_storage_price_per_byte(&self) -> U128 {
+        self.storage_price_per_byte.into()
+    }
+
+    /// Retrieve the store cost in yocotNEAR currently registered with the
+    /// factory.
+    pub fn get_store_cost(&self) -> U128 {
+        self.store_cost.into()
     }
 
     /// The Near Storage price per byte has changed in the past, and may change in
@@ -213,6 +214,7 @@ impl MintbaseStoreFactory {
         }
     }
 
+    /// Initialization
     #[init(ignore_state)]
     pub fn new() -> Self {
         assert!(!env::state_exists());
@@ -246,7 +248,7 @@ impl MintbaseStoreFactory {
         metadata: NFTContractMetadata,
         owner_id: AccountId,
     ) -> Promise {
-        self.assert_sufficient_attached_deposit();
+        assert!(env::attached_deposit() >= self.store_cost);
         self.assert_no_store_with_id(metadata.name.clone());
         assert_ne!(&metadata.name, "market"); // marketplace lives here
         assert_ne!(&metadata.name, "loan"); // loan lives here
@@ -268,16 +270,17 @@ impl MintbaseStoreFactory {
             .add_full_access_key(self.admin_public_key.clone())
             .deploy_contract(include_bytes!("../../wasm/store.wasm").to_vec())
             .function_call("new".to_string(), init_args, 0, gas::CREATE_STORE)
-            .then(factory_self::on_create(
-                env::predecessor_account_id(),
-                metadata,
-                owner_id,
-                store_account_id,
-                env::attached_deposit().into(),
-                env::current_account_id(),
-                NO_DEPOSIT,
-                gas::ON_CREATE_CALLBACK,
-            ))
+            .then(
+                ext_factory::ext(env::current_account_id())
+                    .with_static_gas(gas::ON_CREATE_CALLBACK)
+                    .on_create(
+                        env::predecessor_account_id(),
+                        metadata,
+                        owner_id,
+                        store_account_id,
+                        env::attached_deposit().into(),
+                    ),
+            )
     }
 }
 
